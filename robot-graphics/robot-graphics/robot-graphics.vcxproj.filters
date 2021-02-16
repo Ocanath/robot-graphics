@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\app-graphics">
+      <UniqueIdentifier>{e51fb749-de04-451f-91f8-7a1c8584e7eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\app-graphics">
+      <UniqueIdentifier>{bea8da87-af47-46e5-bbbc-ee12fb04b675}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\app-robotics">
+      <UniqueIdentifier>{c1881fbc-fcd7-4eff-9a86-511cdb6943cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\app-robotics">
+      <UniqueIdentifier>{baa2693e-06b7-4ae6-be21-b45f7255b707}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="kinematics.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="spatialAlgebra.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="glfw_interface.cpp">
+      <Filter>Source Files\app-graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="objloader.cpp">
+      <Filter>Source Files\app-graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>Source Files\app-graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="vboindexer.cpp">
+      <Filter>Source Files\app-graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>Source Files\app-graphics</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="kinematics.h">
+      <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="spatialAlgebra.h">
+      <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="glfw_interface.h">
+      <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="objloader.hpp">
+      <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.hpp">
+      <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="vboindexer.hpp">
+      <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.h">
+      <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="shader-reader.h">
+      <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

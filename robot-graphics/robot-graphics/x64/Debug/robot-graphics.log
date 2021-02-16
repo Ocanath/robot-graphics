@@ -1,0 +1,3 @@
+﻿  main.cpp
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(52,11): warning C4101: 'CamDH': unreferenced local variable
+  robot-graphics.vcxproj -> D:\OcanathProj\gramphics\robot-graphics\robot-graphics\x64\Debug\robot-graphics.exe
