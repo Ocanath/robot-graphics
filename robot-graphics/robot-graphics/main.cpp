@@ -105,11 +105,11 @@ int main(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_mult(Hx(PI), mat4_I());
 	Player.CamRobot.hw_b = mat4_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = 0;
-	Player.CamRobot.hw_b.m[1][3] = 0;
-	Player.CamRobot.hw_b.m[2][3] = -2;
-	Player.CamRobot.j[1].q = 2.1822;
-	Player.CamRobot.j[2].q = -1.027796;
+	Player.CamRobot.hw_b.m[0][3] = -8.7596f;
+	Player.CamRobot.hw_b.m[1][3] = -8.809f;
+	Player.CamRobot.hw_b.m[2][3] = 1.04f;
+	Player.CamRobot.j[1].q = fmod(1121.107f + PI, 2*PI)-PI;
+	Player.CamRobot.j[2].q = -1.338593f;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -191,8 +191,10 @@ int main(void)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	unsigned int diffuseMap = loadTexture("img/container2.png");
-	unsigned int specularMap = loadTexture("img/container2_specular.png");
+	unsigned int container_diffuseMap = loadTexture("img/container2.png");
+	unsigned int container_specularMap = loadTexture("img/container2_specular.png");
+	unsigned int stone_diffuse_map = loadTexture("img/large_stone_tiled.png");
+	unsigned int stone_specular_map = loadTexture("img/large_stone_tiled_specular.png");
 
 	lightingShader.use();
 	lightingShader.setInt("material.diffuse", 0);
@@ -217,12 +219,13 @@ int main(void)
 		lightingShader.setVec3("viewPos", camera_position);
 		lightingShader.setFloat("material.shininess", 32.0f);
 		glm::vec3 point_light_positions[4] = {
-			{2,2,2},
-			{4,4,4},
-			{6,6,6},
-			{8,8,8}
+			{-9,-9,9},
+			{-9,9,9},
+			{9,-9,9},
+			{9,9,9}
 		};
-		const float quadratic = 0.001f;
+		const float quadratic = 0.028f;
+
 		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
 		lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
@@ -286,39 +289,16 @@ int main(void)
 
 		// bind diffuse map
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
+		glBindTexture(GL_TEXTURE_2D, stone_diffuse_map);
 		// bind specular map
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularMap);
+		glBindTexture(GL_TEXTURE_2D, stone_specular_map);
 
 		glBindVertexArray(cubeVAO);
-		//for (int xc = -5; xc < 5; xc+= 1)
-		//{
-		//	for (int yc = -5; yc < 5; yc+= 1)
-		//	{
-		//		for (int zc = -5; zc < 5; zc+= 1)
-		//		{
-		//			mat4 hw_cube = { 
-		//				{
-		//					{.33, 0, 0, (float)xc},
-		//					{0, .33, 0, (float)yc},
-		//					{0, 0, .33, (float)zc},
-		//					{0, 0, 0, 1.f}
-		//				}
-		//			};
-		//			glm::mat4 model = ht_matrix_to_mat4(hw_cube);
-		//			//lightingShader.setVec3("objectColor", .4f, .4f, .4f);
-		//			
-		//			lightingShader.setMat4("model", model);
 
-		//			glBindVertexArray(cubeVAO);
-		//			glDrawArrays(GL_TRIANGLES, 0, 36);
-
-		//		}
-		//	}
-		//}
 		const float bcd = 10;
 		const float scf = bcd*2;
+		const float zoff = 10.f;
 		mat4 hw_cube[6] =
 		{
 			{
@@ -372,12 +352,37 @@ int main(void)
 		};
 		for (int i = 0; i < 6; i++)
 		{
+			hw_cube[i].m[2][3] += zoff;
 			glm::mat4 model = ht_matrix_to_mat4(hw_cube[i]);
 			lightingShader.setMat4("model", model);
 
 			glBindVertexArray(cubeVAO);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+
+		//for (int xc = -5; xc < 5; xc+= 1)
+		//{
+		//	for (int yc = -5; yc < 5; yc+= 1)
+		//	{
+		//		for (int zc = -5; zc < 5; zc+= 1)
+		//		{
+		//			mat4 hw_cube = { 
+		//				{
+		//					{.33, 0, 0, (float)xc},
+		//					{0, .33, 0, (float)yc},
+		//					{0, 0, .33, (float)zc},
+		//					{0, 0, 0, 1.f}
+		//				}
+		//			};
+		//			glm::mat4 model = ht_matrix_to_mat4(hw_cube);
+		//			//lightingShader.setVec3("objectColor", .4f, .4f, .4f);
+		//			
+		//			lightingShader.setMat4("model", model);
+		//			glBindVertexArray(cubeVAO);
+		//			glDrawArrays(GL_TRIANGLES, 0, 36);
+		//		}
+		//	}
+		//}
 
 
 		// also draw the lamp object(s)
