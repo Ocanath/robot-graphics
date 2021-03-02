@@ -260,16 +260,16 @@ int main(void)
 		lightingShader.setFloat("pointLights[3].quadratic", 0.032);
 
 		// spotLight
-		lightingShader.setVec3("spotLight.position", camera_position);
-		lightingShader.setVec3("spotLight.direction", glm::vec3(1,0,0) );
-		lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-		lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-		lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-		lightingShader.setFloat("spotLight.constant", 1.0f);
-		lightingShader.setFloat("spotLight.linear", 0.09);
-		lightingShader.setFloat("spotLight.quadratic", 0.032);
-		lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-		lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+		//lightingShader.setVec3("spotLight.position", camera_position);
+		//lightingShader.setVec3("spotLight.direction", glm::vec3(1,0,0) );
+		//lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+		//lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+		//lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+		//lightingShader.setFloat("spotLight.constant", 1.0f);
+		//lightingShader.setFloat("spotLight.linear", 0.09);
+		//lightingShader.setFloat("spotLight.quadratic", 0.032);
+		//lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+		//lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
 		Player.cur_V.v[0] = 0;	Player.cur_V.v[1] = 0;	Player.cur_V.v[2] = 0;
 		Player.xyV = 50.0 * 1.f;
