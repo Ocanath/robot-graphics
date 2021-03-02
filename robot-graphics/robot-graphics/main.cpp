@@ -207,12 +207,13 @@ int main(void)
 
 		// render
 		// ------
-		glClearColor(0, 0, 0, 1.0f);
+		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		lightingShader.use();
 		vect3 cam_origin = h_origin(Player.CamRobot.hw_b);
-		lightingShader.setVec3("viewPos", glm::vec3(cam_origin.v[0], cam_origin.v[1], cam_origin.v[2]));
+		glm::vec3 camera_position = glm::vec3(cam_origin.v[0], cam_origin.v[1], cam_origin.v[2]);
+		lightingShader.setVec3("viewPos", camera_position);
 		lightingShader.setFloat("material.shininess", 32.0f);
 		glm::vec3 point_light_positions[4] = {
 			{15,15,15},
@@ -258,6 +259,17 @@ int main(void)
 		lightingShader.setFloat("pointLights[3].linear", 0.09);
 		lightingShader.setFloat("pointLights[3].quadratic", 0.032);
 
+		// spotLight
+		lightingShader.setVec3("spotLight.position", camera_position);
+		lightingShader.setVec3("spotLight.direction", glm::vec3(1,0,0) );
+		lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+		lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+		lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+		lightingShader.setFloat("spotLight.constant", 1.0f);
+		lightingShader.setFloat("spotLight.linear", 0.09);
+		lightingShader.setFloat("spotLight.quadratic", 0.032);
+		lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+		lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
 		Player.cur_V.v[0] = 0;	Player.cur_V.v[1] = 0;	Player.cur_V.v[2] = 0;
 		Player.xyV = 50.0 * 1.f;
@@ -269,6 +281,10 @@ int main(void)
 		lightingShader.setMat4("view", View);
 
 		lightingShader.setVec3("objectColor", 0.8f, 0.8f, 0.8f);
+
+		// world transformation
+		glm::mat4 model = glm::mat4(1.0f);
+		lightingShader.setMat4("model", model);
 
 		// bind diffuse map
 		glActiveTexture(GL_TEXTURE0);

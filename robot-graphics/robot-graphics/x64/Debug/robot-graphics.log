@@ -1,11 +1,13 @@
 ﻿  main.cpp
-D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(234,56): warning C4305: 'argument': truncation from 'double' to 'float'
-D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(235,60): warning C4305: 'argument': truncation from 'double' to 'float'
-D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(242,56): warning C4305: 'argument': truncation from 'double' to 'float'
-D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(243,60): warning C4305: 'argument': truncation from 'double' to 'float'
-D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(250,56): warning C4305: 'argument': truncation from 'double' to 'float'
-D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(251,60): warning C4305: 'argument': truncation from 'double' to 'float'
-D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(258,56): warning C4305: 'argument': truncation from 'double' to 'float'
-D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(259,60): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(235,56): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(236,60): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(243,56): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(244,60): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(251,56): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(252,60): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(259,56): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(260,60): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(269,51): warning C4305: 'argument': truncation from 'double' to 'float'
+D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(270,55): warning C4305: 'argument': truncation from 'double' to 'float'
 D:\OcanathProj\gramphics\robot-graphics\robot-graphics\robot-graphics\main.cpp(102,11): warning C4101: 'CamDH': unreferenced local variable
   robot-graphics.vcxproj -> D:\OcanathProj\gramphics\robot-graphics\robot-graphics\x64\Debug\robot-graphics.exe
