@@ -149,9 +149,9 @@ void init_cam(CamControlStruct * P, joint * j)
 	//P->cur_V.u = 0;	P->cur_V.v = 0;	P->cur_V.w = 0;	//initial velocity
 	for (i = 0; i < 3;i++)
 		P->cur_V.v[i] = 0;
-	P->xyV = 100.0;											//player movement velocity. if uninitalized, you'll zoom around
-	P->jumpV = 150.0;										//
-	P->telV = 20.0;											//
+	P->xyV = 1.0;											//player movement velocity. if uninitalized, you'll zoom around
+	P->jumpV = 1.0;										//
+	P->telV = .2;											//
 	//Robot kinematics stuff
 	P->CamRobot.num_frames = CAM_NUM_FRAMES;
 	P->CamRobot.j = j;
