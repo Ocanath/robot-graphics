@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2020, assimp team
+Copyright (c) 2006-2021, assimp team
 
 All rights reserved.
 
@@ -919,6 +919,18 @@ extern "C" {
 #define AI_MATKEY_SHADER_TESSELATION "?sh.ts", 0, 0
 #define AI_MATKEY_SHADER_PRIMITIVE "?sh.ps", 0, 0
 #define AI_MATKEY_SHADER_COMPUTE "?sh.cs", 0, 0
+
+// ---------------------------------------------------------------------------
+// PBR material support
+#define AI_MATKEY_USE_COLOR_MAP "$mat.useColorMap", 0, 0
+#define AI_MATKEY_BASE_COLOR "$clr.base", 0, 0
+#define AI_MATKEY_USE_METALLIC_MAP "$mat.useMetallicMap", 0, 0
+#define AI_MATKEY_METALLIC_FACTOR "$mat.metallicFactor", 0, 0
+#define AI_MATKEY_USE_ROUGHNESS_MAP "$mat.useRoughnessMap", 0, 0
+#define AI_MATKEY_ROUGHNESS_FACTOR "$mat.roughnessFactor", 0, 0
+#define AI_MATKEY_USE_EMISSIVE_MAP "$mat.useEmissiveMap", 0, 0
+#define AI_MATKEY_EMISSIVE_INTENSITY "$mat.emissiveIntensity", 0, 0
+#define AI_MATKEY_USE_AO_MAP "$mat.useAOMap", 0, 0
 
 // ---------------------------------------------------------------------------
 // Pure key names for all texture-related properties

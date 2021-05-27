@@ -16,5 +16,12 @@ For GLAD:
 1. GLAD pretty much consists of two header files and a .c file. Look up GLAD online, their website has a little 
 	web client that lets you select files for up-to-date OpenGL extensions (currently on 4.something)
 
+For Assimp:
+1. Clone repository 
+2. Open CMAKE and navigate to the cloned root directory
+3. make a new folder called 'build' as the cmake target, inside the assimp directory
+4. generate, open VS project, build all. Be sure to do a 'release' and a 'debug' build
+5. link dlls and headers to the project (headers should be added in this distro)
+
 For Bullet3:
 

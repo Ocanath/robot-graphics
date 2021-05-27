@@ -385,6 +385,9 @@ int main(void)
 		//}
 
 
+
+
+
 		// also draw the lamp object(s)
 		lightCubeShader.use();
 		lightCubeShader.setMat4("projection", CameraProjection);
