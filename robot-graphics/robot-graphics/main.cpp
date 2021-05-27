@@ -202,10 +202,15 @@ int main(void)
 	AssetModel ourModel("misc_models/backpack/backpack.obj");
 
 	//AssetModel psyhand_thumbcap("misc_models/psyonic-hand/thumb-F2.STL");
-	vector<AssetModel> psyhand_modellist;
-	psyhand_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-C0.STL"));
-	psyhand_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-F1.STL"));
-	psyhand_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-F2.STL"));
+	vector<AssetModel> psy_thumb_modellist;		//vector of thumb stl's
+	psy_thumb_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-C0.STL"));
+	psy_thumb_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-F1.STL"));
+	psy_thumb_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-F2.STL"));
+	vector<AssetModel> psy_finger_modellist;	//vector of finger stl's
+	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F0.STL"));
+	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F1.STL"));
+	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F2.STL"));
+
 	kinematic_hand_t psy_hand_bones;
 	init_finger_kinematics(&psy_hand_bones);
 
@@ -399,14 +404,17 @@ int main(void)
 		lightingShader.setMat4("model", model);
 		ourModel.Draw(lightingShader);
 
-
+		//do the math for the psyonic hand
+		float tr_angle = (-15.f - 5.f * sin(time));	//in degrees
+		float tf_angle = (15.f + 5.f * sin(time));	//in degrees
 		psy_hand_bones.finger[0].chain[1].q = 15.f;
 		psy_hand_bones.finger[1].chain[1].q = 15.f;
 		psy_hand_bones.finger[2].chain[1].q = 15.f;
 		psy_hand_bones.finger[3].chain[1].q = 15.f;
-		psy_hand_bones.finger[4].chain[1].q = (15.f + 5.f*sin(time))*PI/180.f;
-		psy_hand_bones.finger[4].chain[2].q = (15.f + 5.f*cos(time))*PI / 180.f;
+		psy_hand_bones.finger[4].chain[1].q = ((180 + 10.82) + tr_angle) * PI / 180.f;
+		psy_hand_bones.finger[4].chain[2].q = (-19.7f - tf_angle) * PI / 180.f;
 		finger_kinematics(&psy_hand_bones);
+		//render the psyonic hand
 		scf = 0.05f;
 		mat4 tf = {
 			{
@@ -419,30 +427,41 @@ int main(void)
 		mat4 hw_b = Hx(PI / 2);
 		hw_b = mat4_mult(tf, hw_b);
 		hw_b.m[2][3] = 1.5f;
-
 		{
-			mat4 hb_0 = mat4_I();
-			mat4 hw_0 = mat4_mult(hw_b, hb_0);
-			{
+			{//THUMB RENDER
+				mat4 hb_0 = mat4_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
+				mat4 hw_0 = mat4_mult(hw_b, hb_0);
+
 				model = ht_matrix_to_mat4(hw_0);
 				lightingShader.setMat4("model", model);
-				psyhand_modellist[0].Draw(lightingShader);
-			}
+				psy_thumb_modellist[0].Draw(lightingShader);
 
-			{
-				mat4 h0_i = psy_hand_bones.finger[4].chain[1].h0_i;
-				mat4 hw_i = mat4_mult(hw_0, h0_i);
-				model = ht_matrix_to_mat4(hw_i);
-				lightingShader.setMat4("model", model);
-				psyhand_modellist[1].Draw(lightingShader);
+				for (int i = 1; i <= 2; i++)
+				{
+					mat4 h0_i = psy_hand_bones.finger[4].chain[i].h0_i;
+					mat4 hw_i = mat4_mult(hw_0, h0_i);
+					model = ht_matrix_to_mat4(hw_i);
+					lightingShader.setMat4("model", model);
+					psy_thumb_modellist[i].Draw(lightingShader);
+				}
 			}
-			{
-				mat4 h0_i = psy_hand_bones.finger[4].chain[2].h0_i;
-				mat4 hw_i = mat4_mult(hw_0, h0_i);
-				model = ht_matrix_to_mat4(hw_i);
-				model = ht_matrix_to_mat4(hw_i);
+			for(int fidx = 0; fidx < 1; fidx++)
+			{//FINGER RENDER
+				mat4 hb_0 = psy_hand_bones.finger[fidx].chain[0].him1_i;	//store it here
+				mat4 hw_0 = mat4_mult(hw_b, hb_0);
+
+				model = ht_matrix_to_mat4(hw_0);
 				lightingShader.setMat4("model", model);
-				psyhand_modellist[2].Draw(lightingShader);
+				psy_finger_modellist[0].Draw(lightingShader);
+
+				for (int i = 1; i <= 2; i++)
+				{
+					mat4 h0_i = psy_hand_bones.finger[fidx].chain[i].h0_i;
+					mat4 hw_i = mat4_mult(hw_0, h0_i);
+					model = ht_matrix_to_mat4(hw_i);
+					lightingShader.setMat4("model", model);
+					psy_finger_modellist[i].Draw(lightingShader);
+				}
 			}
 		}
 

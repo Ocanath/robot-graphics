@@ -190,4 +190,6 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 		}
 		init_forward_kinematics(j,2);
 	}
+	kh->finger[0].chain[0].him1_i.m[0][3] = 70.f;
+	kh->finger[0].chain[0].him1_i.m[2][3] = 70.f;
 }
