@@ -12,6 +12,7 @@
 
 #include "glfw_interface.h"
 #include "kinematics.h"
+#include "finger-kinematics.h"
 
 #include "utils.h"
 
@@ -200,7 +201,13 @@ int main(void)
 	//Model mf("misc_models/backpack.obj");
 	AssetModel ourModel("misc_models/backpack/backpack.obj");
 
-	AssetModel psyhand_thumbcap("misc_models/psyonic-hand/thumb-F2.STL");
+	//AssetModel psyhand_thumbcap("misc_models/psyonic-hand/thumb-F2.STL");
+	vector<AssetModel> psyhand_modellist;
+	psyhand_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-C0.STL"));
+	psyhand_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-F1.STL"));
+	psyhand_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-F2.STL"));
+	kinematic_hand_t psy_hand_bones;
+	init_finger_kinematics(&psy_hand_bones);
 
 
 	double start_time = glfwGetTime();
@@ -383,34 +390,61 @@ int main(void)
 		mat4 rot = Hx(PI / 2.f);
 		mat4_mult_pbr(&backpack_htm, &rot, &res);
 		copy_mat4(&backpack_htm, &res);
-
-		backpack_htm.m[2][3] = 20.5f;
+		backpack_htm.m[1][3] = 7.5f;
 		backpack_htm.m[2][3] = 1.5f;
-		
 		rot = Hy(time);
 		mat4_mult_pbr(&backpack_htm, &rot, &res);
 		copy_mat4(&backpack_htm, &res);
-
 		model = ht_matrix_to_mat4(backpack_htm);
 		lightingShader.setMat4("model", model);
 		ourModel.Draw(lightingShader);
 
-		{
-			scf = 0.05f;
-			mat4 tf = {
-				{
-					{scf, 0, 0, 0},
-					{0, scf, 0, 0},
-					{0, 0, scf, 0},
-					{0, 0, 0, 1}
-				}
-			};
-			tf.m[2][3] = 5.f;
-			model = ht_matrix_to_mat4(tf);
-		}
-		lightingShader.setMat4("model", model);
-		psyhand_thumbcap.Draw(lightingShader);
 
+		psy_hand_bones.finger[0].chain[1].q = 15.f;
+		psy_hand_bones.finger[1].chain[1].q = 15.f;
+		psy_hand_bones.finger[2].chain[1].q = 15.f;
+		psy_hand_bones.finger[3].chain[1].q = 15.f;
+		psy_hand_bones.finger[4].chain[1].q = (15.f + 5.f*sin(time))*PI/180.f;
+		psy_hand_bones.finger[4].chain[2].q = (15.f + 5.f*cos(time))*PI / 180.f;
+		finger_kinematics(&psy_hand_bones);
+		scf = 0.05f;
+		mat4 tf = {
+			{
+				{scf, 0, 0, 0},
+				{0, scf, 0, 0},
+				{0, 0, scf, 0},
+				{0, 0, 0, 1}
+			}
+		};
+		mat4 hw_b = Hx(PI / 2);
+		hw_b = mat4_mult(tf, hw_b);
+		hw_b.m[2][3] = 1.5f;
+
+		{
+			mat4 hb_0 = mat4_I();
+			mat4 hw_0 = mat4_mult(hw_b, hb_0);
+			{
+				model = ht_matrix_to_mat4(hw_0);
+				lightingShader.setMat4("model", model);
+				psyhand_modellist[0].Draw(lightingShader);
+			}
+
+			{
+				mat4 h0_i = psy_hand_bones.finger[4].chain[1].h0_i;
+				mat4 hw_i = mat4_mult(hw_0, h0_i);
+				model = ht_matrix_to_mat4(hw_i);
+				lightingShader.setMat4("model", model);
+				psyhand_modellist[1].Draw(lightingShader);
+			}
+			{
+				mat4 h0_i = psy_hand_bones.finger[4].chain[2].h0_i;
+				mat4 hw_i = mat4_mult(hw_0, h0_i);
+				model = ht_matrix_to_mat4(hw_i);
+				model = ht_matrix_to_mat4(hw_i);
+				lightingShader.setMat4("model", model);
+				psyhand_modellist[2].Draw(lightingShader);
+			}
+		}
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();
