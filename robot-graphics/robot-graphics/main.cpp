@@ -1,30 +1,23 @@
 #include <glad/glad.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include "stb_header.h"
-
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <assimp/cimport.h>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include "stb_header.h"
+#include "stb_image.h"
+
+#include "model.h"
 
 #include "glfw_interface.h"
 #include "kinematics.h"
 
 #include "utils.h"
 
-#include "shader-reader.h"
 
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
+
 
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -90,6 +83,7 @@ int main(void)
 		return -1;	//glad init failed
 	glViewport(0, 0, winx, winy);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
 
 	glEnable(GL_DEPTH_TEST);
 	//glDepthFunc(GL_LESS);
@@ -200,8 +194,16 @@ int main(void)
 	lightingShader.setInt("material.diffuse", 0);
 	lightingShader.setInt("material.specular", 1);
 
+	// tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+	stbi_set_flip_vertically_on_load(true);
+	Shader model_shader("1.model_loading.vs", "1.model_loading.fs");
+	//Model mf("misc_models/backpack.obj");
+	AssetModel ourModel("misc_models/backpack/backpack.obj");
+
+
 	double start_time = glfwGetTime();
 	double prev_time = start_time;
+	
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -297,7 +299,7 @@ int main(void)
 		glBindVertexArray(cubeVAO);
 
 		const float bcd = 10;
-		const float scf = bcd*2;
+		float scf = bcd*2;
 		const float zoff = 10.f;
 		mat4 hw_cube[6] =
 		{
@@ -359,6 +361,33 @@ int main(void)
 			glBindVertexArray(cubeVAO);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+
+		// don't forget to enable shader before setting uniforms
+		model_shader.use();
+
+		// view/projection transformations
+		model_shader.setMat4("projection", CameraProjection);
+		model_shader.setMat4("view", View);
+		// render the loaded model
+		//model = glm::mat4(1.0f);
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.f)); // translate it down so it's at the center of the scene
+		//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+		scf = .333f;
+		mat4 backpack_htm = {
+			{
+				{scf, 0, 0, 0},
+				{0, scf, 0, 0},
+				{0, 0, scf, 0},
+				{0, 0, 0, 1}
+			}
+		};
+		backpack_htm = mat4_mult(backpack_htm, Hx(PI/2.f));
+		backpack_htm.m[2][3] = 1.5f;
+		backpack_htm = mat4_mult(backpack_htm, Hy(time));
+		model = ht_matrix_to_mat4(backpack_htm);
+		model_shader.setMat4("model", model);
+		ourModel.Draw(model_shader);
+
 
 		//for (int xc = -5; xc < 5; xc+= 1)
 		//{

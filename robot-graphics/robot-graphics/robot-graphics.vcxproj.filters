@@ -83,13 +83,16 @@
     <ClInclude Include="stb_image.h">
       <Filter>Header Files\app-graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Header.h">
-      <Filter>Header Files\app-graphics</Filter>
-    </ClInclude>
     <ClInclude Include="stb_header.h">
       <Filter>Header Files\app-graphics</Filter>
     </ClInclude>
     <ClInclude Include="camera.h">
+      <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
       <Filter>Header Files\app-graphics</Filter>
     </ClInclude>
   </ItemGroup>
