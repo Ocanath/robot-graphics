@@ -200,6 +200,8 @@ int main(void)
 	//Model mf("misc_models/backpack.obj");
 	AssetModel ourModel("misc_models/backpack/backpack.obj");
 
+	AssetModel psyhand_thumbcap("misc_models/psyonic-hand/thumb-F2.STEP");
+
 
 	double start_time = glfwGetTime();
 	double prev_time = start_time;
@@ -382,11 +384,30 @@ int main(void)
 			}
 		};
 		backpack_htm = mat4_mult(backpack_htm, Hx(PI/2.f));
+		backpack_htm.m[2][3] = 20.5f;
 		backpack_htm.m[2][3] = 1.5f;
 		backpack_htm = mat4_mult(backpack_htm, Hy(time));
 		model = ht_matrix_to_mat4(backpack_htm);
 		model_shader.setMat4("model", model);
 		ourModel.Draw(model_shader);
+
+
+		{
+			scf = 1.f;
+			mat4 tf = {
+				{
+					{scf, 0, 0, 0},
+					{0, scf, 0, 0},
+					{0, 0, scf, 0},
+					{0, 0, 0, 1}
+				}
+			};
+			tf.m[2][3] = 5.f;
+			model = ht_matrix_to_mat4(tf);
+		}
+		model_shader.setMat4("model", model);
+		psyhand_thumbcap.Draw(model_shader);
+
 
 
 		//for (int xc = -5; xc < 5; xc+= 1)
