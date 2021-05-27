@@ -145,11 +145,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="finger-kinematics.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="glfw_interface.cpp" />
     <ClCompile Include="kinematics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="objloader.cpp" />
+    <ClCompile Include="sin_fast.cpp" />
     <ClCompile Include="spatialAlgebra.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="utils.cpp" />
@@ -157,12 +159,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="finger-kinematics.h" />
     <ClInclude Include="glfw_interface.h" />
     <ClInclude Include="kinematics.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="objloader.hpp" />
     <ClInclude Include="shader-reader.h" />
+    <ClInclude Include="sin_fast.h" />
     <ClInclude Include="spatialAlgebra.h" />
     <ClInclude Include="stb_header.h" />
     <ClInclude Include="stb_image.h" />

@@ -66,8 +66,8 @@ extern const mat3 mat3_Identity;
 
 vect6 spatial_vect6_cross(vect6 a, vect6 b);
 mat6 spatial_cross_operator(vect6 v);
-
 vect3 cross(vect3 v_a, vect3 v_b);
+void cross_pbr(vect3* v_a, vect3* v_b, vect3* ret);
 mat3 skew(vect3 vin);
 vect6 vect6_scale(vect6 v_a, float scale);
 vect4 vect4_scale(vect4 v_a, float scale);
@@ -87,6 +87,7 @@ vect3 mat4_vect3_mult(mat4 m, vect3 v);	//untested
 vect3 mat3_vect3_mult(mat3 m, vect3 v);
 mat6 mat6_mult(mat6 m1, mat6 m2);
 mat4 mat4_mult(mat4 m1, mat4 m2);
+void mat4_mult_pbr(mat4* m1, mat4* m2, mat4* ret);
 mat3 mat3_mult(mat3 m1, mat3 m2);
 mat6 mat6_add(mat6 m1, mat6 m2);
 mat4 mat4_add(mat4 m1, mat4 m2);

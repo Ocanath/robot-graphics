@@ -54,6 +54,12 @@
     <ClCompile Include="utils.cpp">
       <Filter>Source Files\app-graphics</Filter>
     </ClCompile>
+    <ClCompile Include="finger-kinematics.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="sin_fast.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -94,6 +100,12 @@
     </ClInclude>
     <ClInclude Include="model.h">
       <Filter>Header Files\app-graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="finger-kinematics.h">
+      <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="sin_fast.h">
+      <Filter>Header Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

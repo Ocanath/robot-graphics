@@ -160,9 +160,9 @@ void init_cam(CamControlStruct * P, joint * j)
 	//P->CamRobot.DH_Table[2].d = 0;			P->CamRobot.DH_Table[2].a = 0;			P->CamRobot.DH_Table[2].alpha = -PI / 2; 
 	//P->CamRobot.DH_Table[3].d = 0;			P->CamRobot.DH_Table[3].a = 0;			P->CamRobot.DH_Table[3].alpha = 0;
 
-	P->CamRobot.j[1].dh_params.d = 0;		P->CamRobot.j[1].dh_params.a = 0;		P->CamRobot.j[1].dh_params.alpha = PI/2;
-	P->CamRobot.j[2].dh_params.d = 0;		P->CamRobot.j[2].dh_params.a = 0;		P->CamRobot.j[2].dh_params.alpha = -PI / 2;
-	P->CamRobot.j[3].dh_params.d = 0;		P->CamRobot.j[3].dh_params.a = 0;		P->CamRobot.j[3].dh_params.alpha = 0;
+	P->CamRobot.j[1].dh.d = 0;		P->CamRobot.j[1].dh.a = 0;		P->CamRobot.j[1].dh.alpha = PI/2;
+	P->CamRobot.j[2].dh.d = 0;		P->CamRobot.j[2].dh.a = 0;		P->CamRobot.j[2].dh.alpha = -PI / 2;
+	P->CamRobot.j[3].dh.d = 0;		P->CamRobot.j[3].dh.a = 0;		P->CamRobot.j[3].dh.alpha = 0;
 
 
 	 P->CamRobot.j[1].q = -PI / 2;
@@ -171,7 +171,7 @@ void init_cam(CamControlStruct * P, joint * j)
 	
 	//init fk
 	//init_forward_kinematics_KC(&(P->CamRobot));
-	init_forward_kinematics(&(P->CamRobot));
+	init_forward_kinematics(P->CamRobot.j, P->CamRobot.num_frames-1);
 }
 
 
@@ -306,7 +306,7 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 	}
 
 
-	 forward_kinematics(&P->CamRobot);
+	forward_kinematics(P->CamRobot.j, P->CamRobot.num_frames-1);
 
 	mat4 HW_C3;
 	mat4 HW_C1;

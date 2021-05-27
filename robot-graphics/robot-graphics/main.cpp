@@ -378,10 +378,19 @@ int main(void)
 				{0, 0, 0, 1}
 			}
 		};
-		backpack_htm = mat4_mult(backpack_htm, Hx(PI/2.f));
+		mat4 res;
+		
+		mat4 rot = Hx(PI / 2.f);
+		mat4_mult_pbr(&backpack_htm, &rot, &res);
+		copy_mat4(&backpack_htm, &res);
+
 		backpack_htm.m[2][3] = 20.5f;
 		backpack_htm.m[2][3] = 1.5f;
-		backpack_htm = mat4_mult(backpack_htm, Hy(time));
+		
+		rot = Hy(time);
+		mat4_mult_pbr(&backpack_htm, &rot, &res);
+		copy_mat4(&backpack_htm, &res);
+
 		model = ht_matrix_to_mat4(backpack_htm);
 		lightingShader.setMat4("model", model);
 		ourModel.Draw(lightingShader);

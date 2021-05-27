@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "sin_fast.h"
 
 ///*
 //load a const q, dh table
@@ -42,74 +43,158 @@
 //	delete chain->j;
 //}
 
+
+
+/*
+	Copies the contents of one mat4 to the other. could use memcpy interchangably
+*/
+void copy_mat4(mat4 * dest, mat4 * src)
+{
+	for (int r = 0; r < 4; r++)
+	{
+		for (int c = 0; c < 4; c++)
+		{
+			dest->m[r][c] = src->m[r][c];
+		}
+	}
+}
+
 /*
 load the kinematic chain Si, h0_i, him1_i variables based on the dh_table.
 NOTE: only done ONCE, as the forward kinematics function only loads the elements which change with q
 
 */
-void init_forward_kinematics(kinematic_chain * chain)
+/*
+	load the kinematic chain Si, h0_i, him1_i variables based on the dh_table.
+	NOTE: only done ONCE, as the forward kinematics function only loads the elements which change with q
+*/
+void init_forward_kinematics(joint* j, int num_joints)
 {
-	chain->j[0].h0_i = mat4_I();
-	chain->j[0].him1_i = mat4_I();
+//	j[0].h0_i = mat4_I();
+//	j[0].him1_i = mat4_I();
 
 	int i;
-	for (i = 1; i < chain->num_frames; i++)
+	for (i = 1; i <= num_joints; i++)
 	{
+		j[i].dh.sin_alpha = sin_fast(j[i].dh.alpha);
+		j[i].dh.cos_alpha = cos_fast(j[i].dh.alpha);
+
 		//[row][column]
-		chain->j[i].him1_i.m[0][0] = cos(chain->j[i].dh_params.theta);	chain->j[i].him1_i.m[0][1] = -1.0f*sin(chain->j[i].dh_params.theta)*cos(chain->j[i].dh_params.alpha);	chain->j[i].him1_i.m[0][2] = sin(chain->j[i].dh_params.theta)*sin(chain->j[i].dh_params.alpha); 		chain->j[i].him1_i.m[0][3] = chain->j[i].dh_params.a*cos(chain->j[i].dh_params.theta);
-		chain->j[i].him1_i.m[1][0] = sin(chain->j[i].dh_params.theta);	chain->j[i].him1_i.m[1][1] = cos(chain->j[i].dh_params.theta)*cos(chain->j[i].dh_params.alpha);			chain->j[i].him1_i.m[1][2] = -1.0f*cos(chain->j[i].dh_params.theta)*sin(chain->j[i].dh_params.alpha);	chain->j[i].him1_i.m[1][3] = chain->j[i].dh_params.a*sin(chain->j[i].dh_params.theta);
-		chain->j[i].him1_i.m[2][0] = 0;									chain->j[i].him1_i.m[2][1] = sin(chain->j[i].dh_params.alpha);											chain->j[i].him1_i.m[2][2] = cos(chain->j[i].dh_params.alpha);											chain->j[i].him1_i.m[2][3] = chain->j[i].dh_params.d;
-		chain->j[i].him1_i.m[3][0] = 0;									chain->j[i].him1_i.m[3][1] = 0;																			chain->j[i].him1_i.m[3][2] = 0;																			chain->j[i].him1_i.m[3][3] = 1.0f;
+		j[i].him1_i.m[0][0] = 1;
+		j[i].him1_i.m[0][1] = 0;
+		j[i].him1_i.m[0][2] = 0;
+		j[i].him1_i.m[0][3] = j[i].dh.a;
+
+		j[i].him1_i.m[1][0] = 0;
+		j[i].him1_i.m[1][1] = j[i].dh.cos_alpha;
+		j[i].him1_i.m[1][2] = -j[i].dh.sin_alpha;
+		j[i].him1_i.m[1][3] = 0;
+
+		j[i].him1_i.m[2][0] = 0;
+		j[i].him1_i.m[2][1] = j[i].dh.sin_alpha;
+		j[i].him1_i.m[2][2] = j[i].dh.cos_alpha;
+		j[i].him1_i.m[2][3] = j[i].dh.d;
+
+		j[i].him1_i.m[3][0] = 0;
+		j[i].him1_i.m[3][1] = 0;
+		j[i].him1_i.m[3][2] = 0;
+		j[i].him1_i.m[3][3] = 1.0f;
 	}
-	//copy_HT(&(HTbase[1]), &(HTadj[1]));
-	chain->j[1].h0_i = chain->j[1].him1_i;
-	for (i = 2; i < chain->num_frames; i++)
-		chain->j[i].h0_i = mat4_mult(chain->j[i-1].h0_i, chain->j[i].him1_i);
+
+	copy_mat4(&j[1].h0_i, &j[1].him1_i);
+	for (i = 2; i <= num_joints; i++)
+		mat4_mult_pbr(&j[i - 1].h0_i, &j[i].him1_i, &j[i].h0_i);
 }
 
 /*
 calculate the forward kinematics of chain, pass by reference-pointer
 */
-void forward_kinematics(kinematic_chain * chain)
+void forward_kinematics(joint * j, int num_joints)
 {
 	int i;
-	for (i = 1; i < chain->num_frames; i++)
+	for (i = 1; i <= num_joints; i++)
 	{
-		chain->j[i].dh_params.theta = chain->j[i].q;
+		float sth = sin_fast(j[i].q);
+		float cth = cos_fast(j[i].q);
+
 		//update all variable entries (only rotational joints for this framework, although uncommenting the d line below will allow for FK for prismatic joints. 
-		chain->j[i].him1_i.m[0][0] = cos(chain->j[i].dh_params.theta);		chain->j[i].him1_i.m[0][1] = -sin(chain->j[i].dh_params.theta)*cos(chain->j[i].dh_params.alpha);			chain->j[i].him1_i.m[0][2] = sin(chain->j[i].dh_params.theta)*sin(chain->j[i].dh_params.alpha); 		chain->j[i].him1_i.m[0][3] = chain->j[i].dh_params.a*cos(chain->j[i].dh_params.theta);
-		chain->j[i].him1_i.m[1][0] = sin(chain->j[i].dh_params.theta);		chain->j[i].him1_i.m[1][1] = cos(chain->j[i].dh_params.theta)*cos(chain->j[i].dh_params.alpha);				chain->j[i].him1_i.m[1][2] = -cos(chain->j[i].dh_params.theta)*sin(chain->j[i].dh_params.alpha);		chain->j[i].him1_i.m[1][3] = chain->j[i].dh_params.a*sin(chain->j[i].dh_params.theta);
-		//chain->j[i].him1_i.m[2][3] = chain->j[i].dh_params.d;
+		j[i].him1_i.m[0][0] = cth;
+		j[i].him1_i.m[0][1] = -sth * j[i].dh.cos_alpha;
+		j[i].him1_i.m[0][2] = sth * j[i].dh.sin_alpha;
+		j[i].him1_i.m[0][3] = j[i].dh.a * cth;
+
+		j[i].him1_i.m[1][0] = sth;
+		j[i].him1_i.m[1][1] = cth * j[i].dh.cos_alpha;
+		j[i].him1_i.m[1][2] = -cth * j[i].dh.sin_alpha;
+		j[i].him1_i.m[1][3] = j[i].dh.a * sth;
 	}
-	chain->j[1].h0_i = chain->j[1].him1_i;
-	for (i = 2; i < chain->num_frames; i++)
-		chain->j[i].h0_i = mat4_mult(chain->j[i - 1].h0_i, chain->j[i].him1_i);
+	copy_mat4(&j[1].h0_i, &j[1].him1_i);
+	for (i = 2; i <= num_joints; i++)
+		mat4_mult_pbr(&j[i - 1].h0_i, &j[i].him1_i, &j[i].h0_i);		//j[i].h0_i = mat4_mult(j[i - 1].h0_i, j[i].him1_i);
 }
 
-void calc_J_point(kinematic_chain * chain, vect3 point)
+
+/*
+	Calculates the robot jacobian matrix satisfying the relationship v = J*qdot, where qdot is a vector of generalized joint velocities,
+	and v is the linear velocity of the argument 'point' (expressed in chain frame 0, and rigidly attached to the end effector frame).
+
+INPUTS:
+	j : pointer to a list of joints, sized 'num_joints'. This function loads the Si vector in this list, which is eqal to the column vector of the jacobian matrix for that joint
+	num_joints : number of joints in the joint list
+	point: point, rigidly attached to the end effector (highest numerical index of the joint matrix) frame, expressed in frame 0
+
+OUTPUTS:
+	Si vectors in the joint list j.
+NOTE:
+	This jacobian matrix is following the jacobian matrix convention defined in Featherstone's texts, which
+	loads the 'linear' (cross product) component in the latter 3 elements of the 6 vector. Therefore the resulting
+	velocity vector of the jacobian multiply will be:
+	{
+		w0,
+		w1,
+		w2,
+		v0,
+		v1,
+		v2
+	};
+	where v is the linear and w is the rotational component.
+*******************************************************************************************************************
+	Note also that the torque component for a given end effector force, for a given joint is given as follows:
+
+		1. tau_i = dot(Si  f)
+
+	Where f is the (6 vector) force and torque expressed in the 0 frame, Si is the column vector of
+	the jacobian, and tau_i is the torque of that joint. This is equivalent to:
+
+		2. [tau] = J^T * f
+
+	Where [tau] is a vector of torques (size n/number of joints), J^T is the transpose of the jacobian matrix defined above, and
+	f is the same generalized force/torque 6 vector expressed in the 0 frame.
+*/
+void calc_J_point(joint * j, int num_joints, vect3 point)
 {
 	int i, v_idx;
 	vect3 z;
 	vect3 d;
-	for (i = 1; i < chain->num_frames; i++)
+	for (i = 1; i <= num_joints; i++)
 	{
-		//h0_i[0] = I
 		for (v_idx = 0; v_idx < 3; v_idx++)
-			z.v[v_idx] = chain->j[i - 1].h0_i.m[v_idx][2];					//extract the unit vector corresponding to the axis of rotation of frame i-1 (i.e., the axis of rotation of q)
-		for (v_idx = 0; v_idx < 3; v_idx++)	
-			d.v[v_idx] = point.v[v_idx] - chain->j[i - 1].h0_i.m[v_idx][3];	//extract the difference between the target point in frame 0 and the origin of frame i-1
-		vect3 res = cross(z, d);
-			
-		chain->j[i].Si.v[0] = z.v[0];		//Si = [w, v]^T; 
-		chain->j[i].Si.v[1] = z.v[1];		//z_im1*q = w
-		chain->j[i].Si.v[2] = z.v[2];
+			z.v[v_idx] = j[i - 1].h0_i.m[v_idx][2];					//extract the unit vector corresponding to the axis of rotation of frame i-1 (i.e., the axis of rotation of q)
+		for (v_idx = 0; v_idx < 3; v_idx++)
+			d.v[v_idx] = point.v[v_idx] - j[i - 1].h0_i.m[v_idx][3];	//extract the difference between the target point in frame 0 and the origin of frame i-1
+		vect3 res;
+		cross_pbr(&z, &d, &res);
 
-		chain->j[i].Si.v[3] = res.v[0];	//(z_im1 x (p - o_im1))*q = v
-		chain->j[i].Si.v[4] = res.v[1];
-		chain->j[i].Si.v[5] = res.v[2];
+		j[i].Si.v[0] = z.v[0];		//Si = [w, v]^T; 
+		j[i].Si.v[1] = z.v[1];		//z_im1*q = w
+		j[i].Si.v[2] = z.v[2];
+
+		j[i].Si.v[3] = res.v[0];	//(z_im1 x (p - o_im1))*q = v
+		j[i].Si.v[4] = res.v[1];
+		j[i].Si.v[5] = res.v[2];
 	}
-
 }
+
 
 vect6 calc_w_v(kinematic_chain * chain, vect3 * w, vect3 * v)
 {

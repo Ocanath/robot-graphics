@@ -1,5 +1,5 @@
 #include "spatialAlgebra.h"
-
+#include "sin_fast.h"
 /*
 TOOD: Benchmark speed
 TODO: implement bottom method using float pointers instead of copying the top and bottom of each into a new location (for speed increase)
@@ -21,8 +21,13 @@ vect6 spatial_vect6_cross(vect6 a, vect6 b)
 		top_b.v[i] = b.v[i];
 		bot_b.v[i] = b.v[i + 3];
 	}
-	vect3 top = cross(top_a, top_b);
-	vect3 bot = vect3_add(cross(bot_a, top_b), cross(top_a, bot_b));	
+	vect3 top, res1, res2;
+	cross_pbr(&top_a, &top_b, &top);
+
+	cross_pbr(&bot_a, &top_b, &res1);
+	cross_pbr(&top_a, &bot_b, &res2);
+	vect3 bot = vect3_add(res1, res2);	
+
 	vect6 ret;
 	for (i = 0; i < 3; i++)
 	{
@@ -139,25 +144,25 @@ mat3 Rx(float angle)
 {
 	mat3 ret;
 	ret.m[0][0] = 1;	ret.m[0][1] = 0;			ret.m[0][2] = 0;			
-	ret.m[1][0] = 0;	ret.m[1][1] = cos(angle);	ret.m[1][2] = -sin(angle);	
-	ret.m[2][0] = 0;	ret.m[2][1] = sin(angle);	ret.m[2][2] = cos(angle);		
+	ret.m[1][0] = 0;	ret.m[1][1] = cos_fast(angle);	ret.m[1][2] = -sin_fast(angle);
+	ret.m[2][0] = 0;	ret.m[2][1] = sin_fast(angle);	ret.m[2][2] = cos_fast(angle);
 	return ret;
 }
 /*Returns rotation about coordinate. 0 = identity*/
 mat3 Ry(float angle)
 {
 	mat3 ret;
-	ret.m[0][0] = cos(angle);	ret.m[0][1] = 0;	ret.m[0][2] = sin(angle);	
+	ret.m[0][0] = cos_fast(angle);	ret.m[0][1] = 0;	ret.m[0][2] = sin_fast(angle);
 	ret.m[1][0] = 0;			ret.m[1][1] = 1;	ret.m[1][2] = 0;			
-	ret.m[2][0] = -sin(angle);	ret.m[2][1] = 0;	ret.m[2][2] = cos(angle);			
+	ret.m[2][0] = -sin_fast(angle);	ret.m[2][1] = 0;	ret.m[2][2] = cos_fast(angle);
 	return ret;
 }
 /*Returns rotation about coordinate. 0 = identity*/
 mat3 Rz(float angle)
 {
 	mat3 ret;
-	ret.m[0][0] = cos(angle);	ret.m[0][1] = -sin(angle);		ret.m[0][2] = 0;
-	ret.m[1][0] = sin(angle);	ret.m[1][1] = cos(angle);		ret.m[1][2] = 0;	
+	ret.m[0][0] = cos_fast(angle);	ret.m[0][1] = -sin_fast(angle);		ret.m[0][2] = 0;
+	ret.m[1][0] = sin_fast(angle);	ret.m[1][1] = cos_fast(angle);		ret.m[1][2] = 0;
 	ret.m[2][0] = 0;			ret.m[2][1] = 0;				ret.m[2][2] = 1;	
 
 	return ret;
@@ -187,10 +192,10 @@ mat4 ht_inverse(mat4 hin)
 mat4 Hx(float angle)
 {
 	mat4 ret;
-	ret.m[0][0] = 1;	ret.m[0][1] = 0;			ret.m[0][2] = 0;			ret.m[0][3] = 0;
-	ret.m[1][0] = 0;	ret.m[1][1] = cos(angle);	ret.m[1][2] = -sin(angle);	ret.m[1][3] = 0;
-	ret.m[2][0] = 0;	ret.m[2][1] = sin(angle);	ret.m[2][2] = cos(angle);	ret.m[2][3] = 0;
-	ret.m[3][0] = 0;	ret.m[3][1] = 0;			ret.m[3][2] = 0;			ret.m[3][3] = 1;
+	ret.m[0][0] = 1;	ret.m[0][1] = 0;				ret.m[0][2] = 0;				ret.m[0][3] = 0;
+	ret.m[1][0] = 0;	ret.m[1][1] = cos_fast(angle);	ret.m[1][2] = -sin_fast(angle);	ret.m[1][3] = 0;
+	ret.m[2][0] = 0;	ret.m[2][1] = sin_fast(angle);	ret.m[2][2] = cos_fast(angle);	ret.m[2][3] = 0;
+	ret.m[3][0] = 0;	ret.m[3][1] = 0;				ret.m[3][2] = 0;				ret.m[3][3] = 1;
 	return ret;
 }
 
@@ -198,30 +203,41 @@ mat4 Hx(float angle)
 mat4 Hy(float angle)
 {
 	mat4 ret;
-	ret.m[0][0] = cos(angle);	ret.m[0][1] = 0;	ret.m[0][2] = sin(angle);	ret.m[0][3] = 0;
-	ret.m[1][0] = 0;			ret.m[1][1] = 1;	ret.m[1][2] = 0;			ret.m[1][3] = 0;
-	ret.m[2][0] = -sin(angle);	ret.m[2][1] = 0;	ret.m[2][2] = cos(angle);	ret.m[2][3] = 0;
-	ret.m[3][0] = 0;			ret.m[3][1] = 0;	ret.m[3][2] = 0;			ret.m[3][3] = 1;
-	return ret;
+	ret.m[0][0] = cos_fast(angle);	ret.m[0][1] = 0;	ret.m[0][2] = sin_fast(angle);	ret.m[0][3] = 0;
+	ret.m[1][0] = 0;				ret.m[1][1] = 1;	ret.m[1][2] = 0;				ret.m[1][3] = 0;
+	ret.m[2][0] = -sin_fast(angle);	ret.m[2][1] = 0;	ret.m[2][2] = cos_fast(angle);	ret.m[2][3] = 0;
+	ret.m[3][0] = 0;				ret.m[3][1] = 0;	ret.m[3][2] = 0;				ret.m[3][3] = 1;
+	return ret;	
 }
 /*Returns rotation about coordinate. 0 = identity*/
 mat4 Hz(float angle)
 {
 	mat4 ret;
-	ret.m[0][0] = cos(angle);	ret.m[0][1] = -sin(angle);		ret.m[0][2] = 0;	ret.m[0][3] = 0;
-	ret.m[1][0] = sin(angle);	ret.m[1][1] = cos(angle);		ret.m[1][2] = 0;	ret.m[1][3] = 0;
-	ret.m[2][0] = 0;			ret.m[2][1] = 0;				ret.m[2][2] = 1;	ret.m[2][3] = 0;
-	ret.m[3][0] = 0;			ret.m[3][1] = 0;				ret.m[3][2] = 0;	ret.m[3][3] = 1;
+	ret.m[0][0] = cos_fast(angle);		ret.m[0][1] = -sin_fast(angle);		ret.m[0][2] = 0;	ret.m[0][3] = 0;
+	ret.m[1][0] = sin_fast(angle);		ret.m[1][1] = cos_fast(angle);		ret.m[1][2] = 0;	ret.m[1][3] = 0;
+	ret.m[2][0] = 0;					ret.m[2][1] = 0;					ret.m[2][2] = 1;	ret.m[2][3] = 0;
+	ret.m[3][0] = 0;					ret.m[3][1] = 0;					ret.m[3][2] = 0;	ret.m[3][3] = 1;
 	return ret;
 }
-/*Returns vector cross product between 3 vectors A and B*/
+/*
+	Returns vector cross product between 3 vectors A and B.
+*/
 vect3 cross(vect3 v_a, vect3 v_b)
 {
 	vect3 ret;
-	ret.v[0] = -v_a.v[2]*v_b.v[1] + v_a.v[1]*v_b.v[2];
-	ret.v[1] = v_a.v[2]*v_b.v[0] - v_a.v[0]*v_b.v[2];
-	ret.v[2] = -v_a.v[1]*v_b.v[0] + v_a.v[0]*v_b.v[1];
+	ret.v[0] = -v_a.v[2] * v_b.v[1] + v_a.v[1] * v_b.v[2];
+	ret.v[1] = v_a.v[2] * v_b.v[0] - v_a.v[0] * v_b.v[2];
+	ret.v[2] = -v_a.v[1] * v_b.v[0] + v_a.v[0] * v_b.v[1];
 	return ret;
+}
+/*
+	Returns vector cross product between 3 vectors A and B. Faster pass by pointer version
+*/
+void cross_pbr(vect3 * v_a, vect3 * v_b, vect3 * ret)
+{
+	ret->v[0] = -v_a->v[2]*v_b->v[1] + v_a->v[1]*v_b->v[2];
+	ret->v[1] = v_a->v[2]*v_b->v[0] - v_a->v[0]*v_b->v[2];
+	ret->v[2] = -v_a->v[1]*v_b->v[0] + v_a->v[0]*v_b->v[1];
 }
 /*Returns skew symmetric matrix of 3 vector vin*/
 mat3 skew(vect3 vin)
@@ -422,7 +438,9 @@ mat6 mat6_mult(mat6 m1, mat6 m2)
 	}
 	return ret;
 }
-
+/*
+	Multiplies two mat4 matrices
+*/
 mat4 mat4_mult(mat4 m1, mat4 m2)
 {
 	mat4 ret;
@@ -441,6 +459,26 @@ mat4 mat4_mult(mat4 m1, mat4 m2)
 		}
 	}
 	return ret;
+}
+/*
+	Multiplies two mat4 matrices, pass by pointer
+*/
+void mat4_mult_pbr(mat4 * m1, mat4 * m2, mat4 * ret)
+{
+	int dim = 4;
+	int out_r; int out_c; int i;
+	for (out_r = 0; out_r < dim; out_r++)
+	{
+		for (out_c = 0; out_c < dim; out_c++)
+		{
+			float tmp = 0;
+			for (i = 0; i < dim; i++)
+			{
+				tmp = tmp + m1->m[out_r][i] * m2->m[i][out_c];
+			}
+			ret->m[out_r][out_c] = tmp;
+		}
+	}
 }
 
 mat3 mat3_mult(mat3 m1, mat3 m2)
