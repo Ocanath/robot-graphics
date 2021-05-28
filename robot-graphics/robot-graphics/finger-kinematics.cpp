@@ -161,7 +161,7 @@ void finger_kinematics(kinematic_hand_t * kh)
 			float q2 = get_4bar_driven_angle(q1);
 			j[2].q = q2;
 			forward_kinematics(j,2);			
-			vect3 ref = {26.6442f, 15.1816f, 0.f};
+			vect3 ref = {24.32f, -11.61f, 0.59f};
 			vect3 * res = &kh->finger[ch].ef_pos_0;
 			htmatrix_vect3_mult(&j[2].h0_i, &ref, res);
 			calc_J_point(j, 2, *res);
@@ -169,9 +169,14 @@ void finger_kinematics(kinematic_hand_t * kh)
 		else
 		{
 			forward_kinematics(j,2);
-			for(int r = 0; r < 3; r++)
-				kh->finger[ch].ef_pos_0.v[r] = j[2].h0_i.m[r][3];
-			calc_J_point(j, 2, kh->finger[ch].ef_pos_0);
+			vect3 ref = { -0.75f, -1.03f, -0.21f };
+			vect3* res = &kh->finger[ch].ef_pos_0;
+			htmatrix_vect3_mult(&j[2].h0_i, &ref, res);
+			calc_J_point(j, 2, *res);
+
+			//for(int r = 0; r < 3; r++)
+			//	kh->finger[ch].ef_pos_0.v[r] = j[2].h0_i.m[r][3];
+			//calc_J_point(j, 2, kh->finger[ch].ef_pos_0);
 		}
 	}
 }
