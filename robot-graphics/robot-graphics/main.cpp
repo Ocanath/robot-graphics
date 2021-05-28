@@ -433,12 +433,28 @@ int main(void)
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(q, &psy_hand_bones);
 		finger_kinematics(&psy_hand_bones);
-		//float tau1 = 0.f;
-		float tau[3] = { 0,0,0 };	//num joints + 1
-		vect6 f = { 0,0,0, -.001f, 0.001f, 0 };
+		
+		vect3 o_idx_b;
+		htmatrix_vect3_mult(&psy_hand_bones.finger[0].chain[0].him1_i, &psy_hand_bones.finger[0].ef_pos_0, &o_idx_b);	//wow. wordy
+		vect3 o_thumb_b = psy_hand_bones.finger[4].ef_pos_0;
 
+		float tau[3] = { 0,0,0 };	//num joints + 1
+
+		vect6 f = { 0,0,0, 0, 0, 0 };
+
+		vect3 idx_force = vect3_add(o_thumb_b, vect3_scale(o_idx_b,-1.f));
+		for (int r = 0; r < 3; r++)
+			f.v[r + 3] = .001f*idx_force.v[r];
 		calc_tau(psy_hand_bones.finger[0].chain, 2, f, tau);
 		q[0] += tau[1];
+
+		vect3 thumb_force = vect3_scale(idx_force, -1.f);
+		for (int r = 0; r < 3; r++)
+			f.v[r + 3] = .001f*thumb_force.v[r];
+		calc_tau(psy_hand_bones.finger[4].chain, 2, f, tau);
+		q[5] += tau[1];
+		q[4] -= tau[2];
+
 
 		//render the psyonic hand
 		lightingShader.setVec3("objectColor", 2.0f, 2.0f, 2.0f);
