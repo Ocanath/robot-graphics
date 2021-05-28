@@ -210,6 +210,7 @@ int main(void)
 	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F0.STL"));
 	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F1.STL"));
 	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F2.STL"));
+	AssetModel psy_palm("misc_models/PALM_BASE_FRAME.STL");
 
 	kinematic_hand_t psy_hand_bones;
 	init_finger_kinematics(&psy_hand_bones);
@@ -405,15 +406,15 @@ int main(void)
 		ourModel.Draw(lightingShader);
 
 		//do the math for the psyonic hand
-		float tr_angle = (-15.f - 5.f * sin(time));	//in degrees
-		float tf_angle = (15.f + 5.f * sin(time));	//in degrees
-		
-		float sweep = 85 * (.5 * sin(time) + .5);
-		float fangle = (15.f+sweep) * PI / 180.f;
-		psy_hand_bones.finger[0].chain[1].q = fangle;
-		psy_hand_bones.finger[1].chain[1].q = fangle;
-		psy_hand_bones.finger[2].chain[1].q = fangle;
-		psy_hand_bones.finger[3].chain[1].q = fangle;
+		float sw_b = (.5 * sin(time) + .5);
+		float tr_angle = (-15.f - 30.f*sw_b);	//in degrees
+		float tf_angle = (15.f + 30.f * sw_b);	//in degrees
+				
+		float fangle = (15.f + 85.f * sw_b);
+		psy_hand_bones.finger[0].chain[1].q = (fangle + 4.84f) * PI / 180.f;
+		psy_hand_bones.finger[1].chain[1].q = (fangle + 4.84f) * PI / 180.f;
+		psy_hand_bones.finger[2].chain[1].q = (fangle + 4.84f) * PI / 180.f;
+		psy_hand_bones.finger[3].chain[1].q = (fangle + 4.84f) * PI / 180.f;
 		psy_hand_bones.finger[4].chain[1].q = ((180 + 10.82) + tr_angle) * PI / 180.f;
 		psy_hand_bones.finger[4].chain[2].q = (-19.7f - tf_angle) * PI / 180.f;
 		finger_kinematics(&psy_hand_bones);
@@ -438,7 +439,7 @@ int main(void)
 				model = ht_matrix_to_mat4(hw_0);
 				lightingShader.setMat4("model", model);
 				psy_thumb_modellist[0].Draw(lightingShader);
-
+				psy_palm.Draw(lightingShader);	//render the palm too
 				for (int i = 1; i <= 2; i++)
 				{
 					mat4 h0_i = psy_hand_bones.finger[4].chain[i].h0_i;
