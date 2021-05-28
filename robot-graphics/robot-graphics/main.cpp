@@ -407,10 +407,13 @@ int main(void)
 		//do the math for the psyonic hand
 		float tr_angle = (-15.f - 5.f * sin(time));	//in degrees
 		float tf_angle = (15.f + 5.f * sin(time));	//in degrees
-		psy_hand_bones.finger[0].chain[1].q = 15.f;
-		psy_hand_bones.finger[1].chain[1].q = 15.f;
-		psy_hand_bones.finger[2].chain[1].q = 15.f;
-		psy_hand_bones.finger[3].chain[1].q = 15.f;
+		
+		float sweep = 85 * (.5 * sin(time) + .5);
+		float fangle = (15.f+sweep) * PI / 180.f;
+		psy_hand_bones.finger[0].chain[1].q = fangle;
+		psy_hand_bones.finger[1].chain[1].q = fangle;
+		psy_hand_bones.finger[2].chain[1].q = fangle;
+		psy_hand_bones.finger[3].chain[1].q = fangle;
 		psy_hand_bones.finger[4].chain[1].q = ((180 + 10.82) + tr_angle) * PI / 180.f;
 		psy_hand_bones.finger[4].chain[2].q = (-19.7f - tf_angle) * PI / 180.f;
 		finger_kinematics(&psy_hand_bones);

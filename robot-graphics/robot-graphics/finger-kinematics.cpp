@@ -5,10 +5,10 @@
 #include "kinematics.h"
 
 
-static const float l0 = 1.f;
-static const float l1 = 3.f;
-static const float l2 = 3.f;
-static const float l3 = 1.f;
+static const float l0 = 9.5f;
+static const float l1 = 38.6104f;
+static const float l2 = 36.875f;
+static const float l3 = 9.1241f;
 //static const vect3_t p0 = {0,0,0};
 static const vect3 p3 = {l0,0,0};
 
@@ -133,7 +133,7 @@ void htmatrix_vect3_mult(mat4 * m, vect3 * v, vect3 * ret)
 
 const dh_entry generic_finger_dh[2] = {
 	{0.f, 38.6104f, 0.f, 0.f, 0.f},	//d, a, alpha, sin_alpha, cos_alpha
-	{0.f, 36.875f, 0.f, 0.f, 0.f}	//d, a, alpha, sin_alpha, cos_alpha
+	{0.f, 9.1241f, 0.f, 0.f, 0.f}	//d, a, alpha, sin_alpha, cos_alpha
 };
 
 /*

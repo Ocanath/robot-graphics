@@ -70,8 +70,8 @@ NOTE: only done ONCE, as the forward kinematics function only loads the elements
 */
 void init_forward_kinematics(joint* j, int num_joints)
 {
-//	j[0].h0_i = mat4_I();
-//	j[0].him1_i = mat4_I();
+	j[0].h0_i = mat4_I();
+	j[0].him1_i = mat4_I();
 
 	int i;
 	for (i = 1; i <= num_joints; i++)
