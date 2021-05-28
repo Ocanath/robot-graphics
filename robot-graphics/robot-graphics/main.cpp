@@ -116,11 +116,11 @@ int main(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_mult(Hx(PI), mat4_I());
 	Player.CamRobot.hw_b = mat4_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = 0.4734;
-	Player.CamRobot.hw_b.m[1][3] = -2.022f;
-	Player.CamRobot.hw_b.m[2][3] = 3.091f;
-	Player.CamRobot.j[1].q = fmod(83.191f + PI, 2*PI)-PI;
-	Player.CamRobot.j[2].q = -2.118;
+	Player.CamRobot.hw_b.m[0][3] = -2.18f;
+	Player.CamRobot.hw_b.m[1][3] = 0.73f;
+	Player.CamRobot.hw_b.m[2][3] = 2.08f;
+	Player.CamRobot.j[1].q = fmod(-3.08f + PI, 2*PI)-PI;
+	Player.CamRobot.j[2].q = -1.73f;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -230,7 +230,7 @@ int main(void)
 
 	kinematic_hand_t psy_hand_bones;
 	init_finger_kinematics(&psy_hand_bones);
-	float q[6] = { 15,15,15,15,30,-15 };
+	float q[6] = { 15,15,15,15, 0,-90 };
 	transform_mpos_to_kpos(q, &psy_hand_bones);
 
 	double start_time = glfwGetTime();
@@ -442,20 +442,32 @@ int main(void)
 
 		vect6 f = { 0,0,0, 0, 0, 0 };
 
-		vect3 idx_force = vect3_add(o_thumb_b, vect3_scale(o_idx_b,-1.f));
+		vect3 idx_force_b = vect3_add(o_thumb_b, vect3_scale(o_idx_b,-1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
+		vect3 thumb_force = vect3_scale(idx_force_b, -1.f);	//Thumb force IN THE THUMB 0 FRAME/BASE FRAME. NO CHANGE OF FRAME NECESSARY
+
+		mat4 hidx0_b = ht_inverse(psy_hand_bones.finger[0].chain[0].him1_i);	//consider loading in the other unoccupied 0 frame transform...?
+		for(int r = 0; r <3; r++)
+			hidx0_b.m[r][3] = 0;
+		vect3 idx_force_0;
+		htmatrix_vect3_mult(&hidx0_b, &idx_force_b, &idx_force_0);
+
 		for (int r = 0; r < 3; r++)
-			f.v[r + 3] = .001f*idx_force.v[r];
+			f.v[r + 3] = .003f* idx_force_0.v[r];
 		calc_tau(psy_hand_bones.finger[0].chain, 2, f, tau);
 		q[0] += tau[1];
 
-		vect3 thumb_force = vect3_scale(idx_force, -1.f);
+		
 		for (int r = 0; r < 3; r++)
-			f.v[r + 3] = .001f*thumb_force.v[r];
+			f.v[r + 3] = .0003f*thumb_force.v[r];
 		calc_tau(psy_hand_bones.finger[4].chain, 2, f, tau);
 		q[5] += tau[1];
 		q[4] -= tau[2];
 
-
+		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+		{
+			print_vect3(idx_force_b);
+			printf("\r\n");
+		}
 		//render the psyonic hand
 		lightingShader.setVec3("objectColor", 2.0f, 2.0f, 2.0f);
 		//lightingShader.setFloat("material.shininess", 32.0f);
