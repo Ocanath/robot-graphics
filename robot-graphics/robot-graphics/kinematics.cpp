@@ -213,12 +213,20 @@ vect6 calc_w_v(kinematic_chain * chain, vect3 * w, vect3 * v)
 	return ret;
 }
 
-void calc_tau(kinematic_chain * chain, vect6 f, float * tau)
+//void calc_tau(kinematic_chain * chain, vect6 f, float * tau)
+//{
+//	int i;
+//	for (i = 1; i < chain->num_frames; i++)
+//		tau[i] = vect6_dot(chain->j[i].Si, f);
+//}
+
+void calc_tau(joint * j, int num_joints, vect6 f, float * tau)
 {
 	int i;
-	for (i = 1; i < chain->num_frames; i++)
-		tau[i] = vect6_dot(chain->j[i].Si, f);
+	for (i = 1; i <= num_joints; i++)
+		tau[i] = vect6_dot(j[i].Si, f);
 }
+
 
 /*
 helper function for extracting the origin of a ht matrix

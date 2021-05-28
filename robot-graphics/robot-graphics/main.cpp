@@ -70,6 +70,18 @@ unsigned int loadTexture(char const* path)
 	return textureID;
 }
 
+void transform_mpos_to_kpos(float qin[6], kinematic_hand_t * hand)
+{
+	enum { THR = 5, THF = 4 };	//thumb mapping enum
+	for (int finger = 0; finger < 4; finger++)
+	{
+		float fangle = (qin[finger] + 4.84f) * PI / 180.f;
+		hand->finger[finger].chain[1].q = fangle;
+	}
+	hand->finger[4].chain[1].q = ((180 + 10.82) + qin[THR]) * PI / 180.f;
+	hand->finger[4].chain[2].q = (-19.7f - qin[THF]) * PI / 180.f;
+}
+
 int main(void)
 {	
 	glfwInit();
@@ -78,13 +90,17 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	int winx = 1200;
 	int winy = 800;
-	GLFWwindow* window = glfwCreateWindow(winx, winy, "Jesse's Crappy World", NULL, NULL);
+	//GLFWmonitor* m = glfwGetPrimaryMonitor();
+	//int xpos, ypos;
+	//glfwGetMonitorWorkarea(m, &xpos, &ypos, &winx, &winy);
+	GLFWmonitor* m = NULL;
+	GLFWwindow* window = glfwCreateWindow(winx, winy, "Jesse's Crappy World", m, NULL);
 	glfwMakeContextCurrent(window);
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 		return -1;	//glad init failed
 	glViewport(0, 0, winx, winy);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
+	  
 
 	glEnable(GL_DEPTH_TEST);
 	//glDepthFunc(GL_LESS);
@@ -100,11 +116,11 @@ int main(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_mult(Hx(PI), mat4_I());
 	Player.CamRobot.hw_b = mat4_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = -8.7596f;
-	Player.CamRobot.hw_b.m[1][3] = -8.809f;
-	Player.CamRobot.hw_b.m[2][3] = 1.04f;
-	Player.CamRobot.j[1].q = fmod(1121.107f + PI, 2*PI)-PI;
-	Player.CamRobot.j[2].q = -1.338593f;
+	Player.CamRobot.hw_b.m[0][3] = 0.4734;
+	Player.CamRobot.hw_b.m[1][3] = -2.022f;
+	Player.CamRobot.hw_b.m[2][3] = 3.091f;
+	Player.CamRobot.j[1].q = fmod(83.191f + PI, 2*PI)-PI;
+	Player.CamRobot.j[2].q = -2.118;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -210,11 +226,12 @@ int main(void)
 	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F0.STL"));
 	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F1.STL"));
 	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F2.STL"));
-	AssetModel psy_palm("misc_models/PALM_BASE_FRAME.STL");
+	AssetModel psy_palm("misc_models/psyonic-hand/PALM_BASE_FRAME.STL");
 
 	kinematic_hand_t psy_hand_bones;
 	init_finger_kinematics(&psy_hand_bones);
-
+	float q[6] = { 15,15,15,15,30,-15 };
+	transform_mpos_to_kpos(q, &psy_hand_bones);
 
 	double start_time = glfwGetTime();
 	double prev_time = start_time;
@@ -290,10 +307,13 @@ int main(void)
 		View = keyboard_cam_control(window, &Player, fps, h_origin(mat4_Identity));
 		MVP = CameraProjection * View * Model;
 		
-		vect3 player_pos;
-		for(int r = 0; r < 3; r++)
-			player_pos.v[r] = Player.CamRobot.hw_b.m[r][3];
-		point_light_positions[4] = glm::vec3(player_pos.v[0], player_pos.v[1], player_pos.v[2] + 4.f);
+		//vect3 player_pos;
+		//for(int r = 0; r < 3; r++)
+		//	player_pos.v[r] = Player.CamRobot.hw_b.m[r][3];
+		//point_light_positions[4] = glm::vec3(player_pos.v[0], player_pos.v[1], player_pos.v[2] + 4.f);
+
+
+
 
 		lightingShader.setMat4("projection", CameraProjection);
 		lightingShader.setMat4("view", View);
@@ -396,30 +416,34 @@ int main(void)
 		mat4 rot = Hx(PI / 2.f);
 		mat4_mult_pbr(&backpack_htm, &rot, &res);
 		copy_mat4(&backpack_htm, &res);
-		backpack_htm.m[1][3] = 7.5f;
+		backpack_htm.m[0][3] = cos(time) * 7.5f;
+		backpack_htm.m[1][3] = sin(time)*7.5f;
 		backpack_htm.m[2][3] = 1.5f;
 		rot = Hy(time);
+		rot = mat4_mult(rot, Hz(time*4.f));
 		mat4_mult_pbr(&backpack_htm, &rot, &res);
 		copy_mat4(&backpack_htm, &res);
 		model = ht_matrix_to_mat4(backpack_htm);
 		lightingShader.setMat4("model", model);
 		ourModel.Draw(lightingShader);
 
+		/*Make the light follow the backpack*/
+		point_light_positions[4] = glm::vec3(backpack_htm.m[0][3], backpack_htm.m[1][3], backpack_htm.m[2][3] + 1.f);
+
 		//do the math for the psyonic hand
-		float sw_b = (.5 * sin(time) + .5);
-		float tr_angle = (-15.f - 30.f*sw_b);	//in degrees
-		float tf_angle = (15.f + 30.f * sw_b);	//in degrees
-				
-		float fangle = (15.f + 85.f * sw_b);
-		psy_hand_bones.finger[0].chain[1].q = (fangle + 4.84f) * PI / 180.f;
-		psy_hand_bones.finger[1].chain[1].q = (fangle + 4.84f) * PI / 180.f;
-		psy_hand_bones.finger[2].chain[1].q = (fangle + 4.84f) * PI / 180.f;
-		psy_hand_bones.finger[3].chain[1].q = (fangle + 4.84f) * PI / 180.f;
-		psy_hand_bones.finger[4].chain[1].q = ((180 + 10.82) + tr_angle) * PI / 180.f;
-		psy_hand_bones.finger[4].chain[2].q = (-19.7f - tf_angle) * PI / 180.f;
+		transform_mpos_to_kpos(q, &psy_hand_bones);
 		finger_kinematics(&psy_hand_bones);
+		//float tau1 = 0.f;
+		float tau[3] = { 0,0,0 };	//num joints + 1
+		vect6 f = { 0,0,0, -.001f, 0.001f, 0 };
+
+		calc_tau(psy_hand_bones.finger[0].chain, 2, f, tau);
+		q[0] += tau[1];
+
 		//render the psyonic hand
-		scf = 0.05f;
+		lightingShader.setVec3("objectColor", 2.0f, 2.0f, 2.0f);
+		//lightingShader.setFloat("material.shininess", 32.0f);
+		scf = 0.01f;
 		mat4 tf = {
 			{
 				{scf, 0, 0, 0},
@@ -428,9 +452,12 @@ int main(void)
 				{0, 0, 0, 1}
 			}
 		};
-		mat4 hw_b = Hx(PI / 2);
+
+		mat4 hw_b = Hx(PI / 2 + .2*sin(time) );
+		hw_b = mat4_mult(hw_b, Hy(.2*sin(time + 1)));
+		hw_b = mat4_mult(hw_b, Hz(.2*sin(time + 2)));
 		hw_b = mat4_mult(tf, hw_b);
-		hw_b.m[2][3] = 1.5f;
+		hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
 		{
 			{//THUMB RENDER
 				mat4 hb_0 = mat4_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
@@ -449,7 +476,7 @@ int main(void)
 					psy_thumb_modellist[i].Draw(lightingShader);
 				}
 			}
-			for(int fidx = 0; fidx < 1; fidx++)
+			for(int fidx = 0; fidx < 4; fidx++)
 			{//FINGER RENDER
 				mat4 hb_0 = psy_hand_bones.finger[fidx].chain[0].him1_i;	//store it here
 				mat4 hw_0 = mat4_mult(hw_b, hb_0);

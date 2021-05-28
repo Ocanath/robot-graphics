@@ -12,6 +12,7 @@ static const float l3 = 9.1241f;
 //static const vect3_t p0 = {0,0,0};
 static const vect3 p3 = {l0,0,0};
 
+enum { INDEX, MIDDLE, RING, PINKY };
 
 /*helper function to copy memory vect3s*/
 void copy_vect3(vect3* dest, vect3* ref)
@@ -161,13 +162,16 @@ void finger_kinematics(kinematic_hand_t * kh)
 			j[2].q = q2;
 			forward_kinematics(j,2);			
 			vect3 ref = {26.6442f, 15.1816f, 0.f};
-			htmatrix_vect3_mult(&j[2].h0_i, &ref, &kh->finger[ch].ef_pos_0);
+			vect3 * res = &kh->finger[ch].ef_pos_0;
+			htmatrix_vect3_mult(&j[2].h0_i, &ref, res);
+			calc_J_point(j, 2, *res);
 		}
 		else
 		{
 			forward_kinematics(j,2);
 			for(int r = 0; r < 3; r++)
 				kh->finger[ch].ef_pos_0.v[r] = j[2].h0_i.m[r][3];
+			calc_J_point(j, 2, kh->finger[ch].ef_pos_0);
 		}
 	}
 }
@@ -190,6 +194,43 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 		}
 		init_forward_kinematics(j,2);
 	}
-	kh->finger[0].chain[0].him1_i.m[0][3] = 70.f;
-	kh->finger[0].chain[0].him1_i.m[2][3] = 70.f;
+
+	{
+		int fidx = INDEX;
+		mat4 tf = Hy(PI / 2 + 0.051012f);	//ish
+		tf = mat4_mult(tf, Hz(-0.250689f));	//post first rotation rotation about z
+		tf.m[0][3] = -9.49f;
+		tf.m[1][3] = -13.04f;
+		tf.m[2][3] = -62.95f;
+		copy_mat4(&kh->finger[fidx].chain[0].him1_i, &tf);	//him1_0 = hb_0
+	}
+	{
+		int fidx = MIDDLE;
+		mat4 tf = Hy(PI / 2 + 0.086766f);	//ish
+		tf = mat4_mult(tf, Hz(-0.252478f));	//post first rotation rotation about z
+		tf.m[0][3] = 9.65;
+		tf.m[1][3] = -15.31;
+		tf.m[2][3] = -67.85f;
+		copy_mat4(&kh->finger[fidx].chain[0].him1_i, &tf);	//him1_0 = hb_0
+	}
+	{
+		int fidx = RING;
+		mat4 tf = Hy(PI / 2 + 0.051012f);	//ish
+		tf = mat4_mult(tf, Hz(-0.250689f));	//post first rotation rotation about z
+		tf.m[0][3] = 29.95f;
+		tf.m[1][3] = -14.21f;
+		tf.m[2][3] = -67.29f; 
+		copy_mat4(&kh->finger[fidx].chain[0].him1_i, &tf);	//him1_0 = hb_0
+	}
+	{
+		int fidx = PINKY;
+		mat4 tf = Hy(PI / 2 + 0.111526539f);	//ish
+		tf = mat4_mult(tf, Hz(-0.2486f));	//post first rotation rotation about z
+		tf.m[0][3] = 49.52;
+		tf.m[1][3] = -11.f;
+		tf.m[2][3] = -63.03;
+		copy_mat4(&kh->finger[fidx].chain[0].him1_i, &tf);	//him1_0 = hb_0
+	}
+
+	
 }
