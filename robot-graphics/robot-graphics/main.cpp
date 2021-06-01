@@ -30,7 +30,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-
 // utility function for loading a 2D texture from file
 // ---------------------------------------------------
 unsigned int loadTexture(char const* path)
@@ -69,6 +68,19 @@ unsigned int loadTexture(char const* path)
 
 	return textureID;
 }
+
+/**/
+typedef struct light_params_t
+{
+	glm::vec3 position;
+	glm::vec3 ambient;
+	glm::vec3 diffuse;
+	glm::vec3 specular;
+	float constant;
+	float linear;
+	float quadratic;
+}light_params_t;
+
 
 void transform_mpos_to_kpos(float qin[6], kinematic_hand_t * hand)
 {
@@ -236,13 +248,28 @@ int main(void)
 	double start_time = glfwGetTime();
 	double prev_time = start_time;
 
-	glm::vec3 point_light_positions[NUM_LIGHTS] = {
-		{-9,-9,9},
-		{-9,9,9},
-		{9,-9,9},
-		{9,9,9},
-		{0,0,6}
-	};
+	float xw, yw, zh;
+	xw = 9.f;
+	yw = 9.f;
+	zh = 3.f;
+	light_params_t light[NUM_LIGHTS];
+	for (uint8_t i = 0; i < 4; i++)
+	{
+		float xsign = (i & 1) ? -1.f : 1.f;
+		float ysign = (i & 2) ? -1.f : 1.f;
+		light[i].position = glm::vec3(xw * xsign, yw * ysign, zh);
+	}
+	light[4].position = glm::vec3(0, 0, 6);
+	for (int i = 0; i < NUM_LIGHTS; i++)
+	{
+		light[i].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
+		light[i].diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+		light[i].specular = glm::vec3(0.9f, 0.9f, 0.9f);
+		light[i].constant = 1.f;
+		light[i].linear = .09f;
+		light[i].quadratic = .028f;
+	}
+	float shininess = 32.f;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -259,8 +286,8 @@ int main(void)
 		vect3 cam_origin = h_origin(Player.CamRobot.hw_b);
 		glm::vec3 camera_position = glm::vec3(cam_origin.v[0], cam_origin.v[1], cam_origin.v[2]);
 		lightingShader.setVec3("viewPos", camera_position);
-		lightingShader.setFloat("material.shininess", 32.0f);
-		const float quadratic = 0.028f;
+		lightingShader.setFloat("material.shininess", shininess);
+		
 
 		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
@@ -271,25 +298,25 @@ int main(void)
 		{
 			char buf[32] = { 0 };
 			sprintf_s(buf, "pointLights[%d].position", i);
-			lightingShader.setVec3(buf, point_light_positions[i]);
+			lightingShader.setVec3(buf, light[i].position);
 
 			sprintf_s(buf, "pointLights[%d].ambient", i);
-			lightingShader.setVec3(buf, 0.05f, 0.05f, 0.05f);
+			lightingShader.setVec3(buf, light[i].ambient);
 
 			sprintf_s(buf, "pointLights[%d].diffuse", i);
-			lightingShader.setVec3(buf, 0.8f, 0.8f, 0.8f);
+			lightingShader.setVec3(buf, light[i].diffuse);
 
 			sprintf_s(buf, "pointLights[%d].specular", i);
-			lightingShader.setVec3(buf, 1.0f, 1.0f, 1.0f);
+			lightingShader.setVec3(buf, light[i].specular);
 
 			sprintf_s(buf, "pointLights[%d].constant", i);
-			lightingShader.setFloat(buf, 1.0f);
+			lightingShader.setFloat(buf, light[i].constant);
 
 			sprintf_s(buf, "pointLights[%d].linear", i);
-			lightingShader.setFloat(buf, 0.09);
+			lightingShader.setFloat(buf, light[i].linear);
 
 			sprintf_s(buf, "pointLights[%d].quadratic", i);
-			lightingShader.setFloat(buf, quadratic);			
+			lightingShader.setFloat(buf, light[i].quadratic);			
 		}
 
 		// spotLight
@@ -311,8 +338,6 @@ int main(void)
 		//for(int r = 0; r < 3; r++)
 		//	player_pos.v[r] = Player.CamRobot.hw_b.m[r][3];
 		//point_light_positions[4] = glm::vec3(player_pos.v[0], player_pos.v[1], player_pos.v[2] + 4.f);
-
-
 
 
 		lightingShader.setMat4("projection", CameraProjection);
@@ -411,25 +436,28 @@ int main(void)
 				{0, 0, 0, 1}
 			}
 		};
-		mat4 res;
-		
+		mat4 res;		
 		mat4 rot = Hx(PI / 2.f);
 		mat4_mult_pbr(&backpack_htm, &rot, &res);
 		copy_mat4(&backpack_htm, &res);
-		backpack_htm.m[0][3] = cos(time) * 7.5f;
-		backpack_htm.m[1][3] = sin(time)*7.5f;
-		backpack_htm.m[2][3] = 1.5f;
-		rot = Hy(time);
-		rot = mat4_mult(rot, Hz(time*4.f));
-		mat4_mult_pbr(&backpack_htm, &rot, &res);
-		copy_mat4(&backpack_htm, &res);
+		backpack_htm.m[0][3] = 0;
+		backpack_htm.m[1][3] = 8.f;
+		backpack_htm.m[2][3] = 1.3f;
 		model = ht_matrix_to_mat4(backpack_htm);
 		lightingShader.setMat4("model", model);
 		ourModel.Draw(lightingShader);
 
 		/*Make the light follow the backpack*/
-		point_light_positions[4] = glm::vec3(backpack_htm.m[0][3], backpack_htm.m[1][3], backpack_htm.m[2][3] + 1.f);
-
+		//light[4].position = glm::vec3(backpack_htm.m[0][3], backpack_htm.m[1][3], backpack_htm.m[2][3] + 1.f);
+		if (glfwGetKey(window, GLFW_KEY_R))
+		{
+			q[0] = 60.f;
+			q[1] = 60.f;
+			q[2] = 60.f;
+			q[3] = 60.f;
+			q[5] = -50.f;
+			q[4] = 10.f;
+		}
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(q, &psy_hand_bones);
 		finger_kinematics(&psy_hand_bones);
@@ -442,32 +470,70 @@ int main(void)
 
 		vect6 f = { 0,0,0, 0, 0, 0 };
 
-		vect3 idx_force_b = vect3_add(o_thumb_b, vect3_scale(o_idx_b,-1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
-		vect3 thumb_force = vect3_scale(idx_force_b, -1.f);	//Thumb force IN THE THUMB 0 FRAME/BASE FRAME. NO CHANGE OF FRAME NECESSARY
+		vect3 thumb_force = vect3_add(o_idx_b, vect3_scale(o_thumb_b, -1.f));	//Thumb force IN THE THUMB 0 FRAME/BASE FRAME. NO CHANGE OF FRAME NECESSARY
 
-		mat4 hidx0_b = ht_inverse(psy_hand_bones.finger[0].chain[0].him1_i);	//consider loading in the other unoccupied 0 frame transform...?
-		for(int r = 0; r <3; r++)
-			hidx0_b.m[r][3] = 0;
-		vect3 idx_force_0;
-		htmatrix_vect3_mult(&hidx0_b, &idx_force_b, &idx_force_0);
+		for (int i = 0; i < 4; i++)
+		{
+			vect3 o_f_b;
+			htmatrix_vect3_mult(&psy_hand_bones.finger[i].chain[0].him1_i, &psy_hand_bones.finger[i].ef_pos_0, &o_f_b);	//wow. wordy
+			vect3 finger_force_b = vect3_add(o_thumb_b, vect3_scale(o_f_b, -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
 
-		for (int r = 0; r < 3; r++)
-			f.v[r + 3] = .003f* idx_force_0.v[r];
-		calc_tau(psy_hand_bones.finger[0].chain, 2, f, tau);
-		q[0] += tau[1];
+			//float xsq = finger_force_b.v[0] * finger_force_b.v[0];
+			float xf = finger_force_b.v[0] - 10.f;
+			if (xf < 3.16227766f)
+				xf = 3.16227766f;
+			xf = 1.f / (xf*xf);
 
-		
+			float shirk = 0.f;
+			float zc = finger_force_b.v[2] - 2.f;
+			if (zc < 0.f)
+				shirk = -zc * zc * .1f * xf;
+			
+			//float box_xdim = 15.f;
+			//if (finger_force_b.v[0] < -box_xdim || finger_force_b.v[0] > box_xdim)
+			//	shirk = 0.f;
+
+			//float shirk = -.07f * (5.f - dist_exp);
+			//if (shirk > 0.f)
+			//	shirk = 0.f;
+			//float shirk = 0;
+			//shirk += over_component;
+			q[i] += shirk;
+		}
+
+
+		//mat4 hidx0_b = ht_inverse(psy_hand_bones.finger[0].chain[0].him1_i);	//consider loading in the other unoccupied 0 frame transform...?
+		//for(int r = 0; r <3; r++)
+		//	hidx0_b.m[r][3] = 0;
+		//vect3 idx_force_0;
+		//htmatrix_vect3_mult(&hidx0_b, &idx_force_b, &idx_force_0);
+		///*Apply index finger force*/
+		//for (int r = 0; r < 3; r++)
+		//	f.v[r + 3] = .003f*idx_force_0.v[r];
+		//calc_tau(psy_hand_bones.finger[0].chain, 2, f, tau);
+
+		/*Apply Thumb force*/
 		for (int r = 0; r < 3; r++)
 			f.v[r + 3] = .0003f*thumb_force.v[r];
 		calc_tau(psy_hand_bones.finger[4].chain, 2, f, tau);
 		q[5] += tau[1];
 		q[4] -= tau[2];
+		for ( int i = 0; i < 5; i++)
+		{
+			if (q[i] < 0.f)
+				q[i] = 0.f;
+			if (q[i] > 90.f)
+				q[i] = 90.f;
+		}
+		if (q[5] > 0.f)
+			q[5]= 0.f;
+		if (q[5] < -110.f)
+			q[5] = -110.f;
 
 		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 		{
-			print_vect3(idx_force_b);
-			printf("\r\n");
 		}
+
 		//render the psyonic hand
 		lightingShader.setVec3("objectColor", 2.0f, 2.0f, 2.0f);
 		//lightingShader.setFloat("material.shininess", 32.0f);
@@ -481,11 +547,13 @@ int main(void)
 			}
 		};
 
-		mat4 hw_b = Hx(PI / 2 + .2*sin(time) );
-		hw_b = mat4_mult(hw_b, Hy(.2*sin(time + 1)));
-		hw_b = mat4_mult(hw_b, Hz(.2*sin(time + 2)));
+		//mat4 hw_b = Hx(PI / 2 + .2*sin(time) );
+		//hw_b = mat4_mult(hw_b, Hy(.2*sin(time + 1)));
+		//hw_b = mat4_mult(hw_b, Hz(.2*sin(time + 2)));
+		mat4 hw_b = Hx(PI / 2);
 		hw_b = mat4_mult(tf, hw_b);
-		hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
+		//hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
+		hw_b.m[2][3] = 1.5f;
 		{
 			{//THUMB RENDER
 				mat4 hb_0 = mat4_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
@@ -533,8 +601,8 @@ int main(void)
 		glBindVertexArray(lightCubeVAO);
 		for (unsigned int i = 0; i < NUM_LIGHTS; i++)
 		{
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, point_light_positions[i]);
+			glm::mat4 model = glm::mat4(2.0f);
+			model = glm::translate(model, light[i].position);
 			model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
 			lightCubeShader.setMat4("model", model);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
