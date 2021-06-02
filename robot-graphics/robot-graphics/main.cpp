@@ -13,6 +13,7 @@
 #include "glfw_interface.h"
 #include "kinematics.h"
 #include "finger-kinematics.h"
+#include "Grips.h"
 
 #include "utils.h"
 
@@ -91,8 +92,32 @@ void transform_mpos_to_kpos(float qin[6], kinematic_hand_t * hand)
 		hand->finger[finger].chain[1].q = fangle;
 	}
 	hand->finger[4].chain[1].q = ((180 + 10.82) + qin[THR]) * PI / 180.f;
+	//hand->finger[4].chain[2].q = (-19.7f - qin[THF]) * PI / 180.f;
 	hand->finger[4].chain[2].q = (-19.7f - qin[THF]) * PI / 180.f;
 }
+
+#define NUM_GRIPKEYS 12
+
+struct key_lookup_entry
+{
+	int key_val;
+	int grip_cfg_idx;
+};
+struct key_lookup_entry key_lookup[NUM_GRIPKEYS] = {
+	{GLFW_KEY_1, CHUCK_GRASP_CFG_IDX},
+	{GLFW_KEY_2, CHUCK_OK_GRASP_CFG_IDX},
+	{GLFW_KEY_3, PINCH_GRASP_CFG_IDX},
+	{GLFW_KEY_4, POWER_GRASP_CFG_IDX},
+	{GLFW_KEY_5, KEY_GRASP_CFG_IDX},
+	{GLFW_KEY_6, HANDSHAKE_CFG_IDX},
+	{GLFW_KEY_7, TRIGGER_CFG_IDX},
+	{GLFW_KEY_8, POINT_GRASP_CFG_IDX},
+	{GLFW_KEY_T, SIGN_OF_THE_HORNS_CFG_IDX},
+	{GLFW_KEY_Y, RUDE_POINT_GRASP_CFG_IDX},
+	{GLFW_KEY_U, MODE_SWITCH_CLOSE_CFG_IDX},
+	{GLFW_KEY_I, UTILITY_GRASP_CFG_IDX},
+};
+
 
 int main(void)
 {	
@@ -243,6 +268,7 @@ int main(void)
 	kinematic_hand_t psy_hand_bones;
 	init_finger_kinematics(&psy_hand_bones);
 	float q[6] = { 15,15,15,15, 0,-90 };
+	float qd[6] = { 15,15,15,15,0,-90 };
 	transform_mpos_to_kpos(q, &psy_hand_bones);
 
 	double start_time = glfwGetTime();
@@ -270,6 +296,16 @@ int main(void)
 		light[i].quadratic = .028f;
 	}
 	float shininess = 32.f;
+	int cfg_idx = 32;
+
+	for (int i = 0; i < 4; i++)
+	{
+		printf("%d HB_0: \r\n", i);
+		print_mat4(psy_hand_bones.finger[i].chain[0].him1_i);
+		printf("%d H0_B: \r\n", i);
+		print_mat4( ht_inverse( psy_hand_bones.finger[i].chain[0].him1_i) );
+		printf("%d......................\r\n\r\n",i);
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -449,75 +485,154 @@ int main(void)
 
 		/*Make the light follow the backpack*/
 		//light[4].position = glm::vec3(backpack_htm.m[0][3], backpack_htm.m[1][3], backpack_htm.m[2][3] + 1.f);
-		if (glfwGetKey(window, GLFW_KEY_R))
+		int prev_cfg = cfg_idx;
+		for (int i = 0; i < NUM_GRIPKEYS; i++)
 		{
-			q[0] = 60.f;
-			q[1] = 60.f;
-			q[2] = 60.f;
-			q[3] = 60.f;
-			q[5] = -50.f;
-			q[4] = 10.f;
+			if (glfwGetKey(window, key_lookup[i].key_val))
+			{
+				cfg_idx = key_lookup[i].grip_cfg_idx;
+			}
 		}
+		if (glfwGetKey(window, GLFW_KEY_SPACE))
+		{
+			if (cfg_idx < 32)
+				cfg_idx += 32;
+		}
+		for (int ch = 0; ch < NUM_CHANNELS; ch++)
+			qd[ch] = system_griplist_default[cfg_idx]->wp[ch].qd;
+
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(q, &psy_hand_bones);
 		finger_kinematics(&psy_hand_bones);
 		
-		vect3 o_idx_b;
-		htmatrix_vect3_mult(&psy_hand_bones.finger[0].chain[0].him1_i, &psy_hand_bones.finger[0].ef_pos_0, &o_idx_b);	//wow. wordy
+		float tau[3] = { 0,0,0 };	//num joints + 1
+		vect3 f = { 0,0,0 };
+		vect3 thumb_force = { 0,0,0 };
 		vect3 o_thumb_b = psy_hand_bones.finger[4].ef_pos_0;
 
-		float tau[3] = { 0,0,0 };	//num joints + 1
 
-		vect6 f = { 0,0,0, 0, 0, 0 };
 
-		vect3 thumb_force = vect3_add(o_idx_b, vect3_scale(o_thumb_b, -1.f));	//Thumb force IN THE THUMB 0 FRAME/BASE FRAME. NO CHANGE OF FRAME NECESSARY
-
+		/*Shirk Implementation/Test*/
+		float k = .02f;
+		float tau4 = k * (qd[4] - q[4]);
+		float tau5 = k * (qd[5] - q[5]);
+		float sferr = 0.f;
+		float finger_error[4];
 		for (int i = 0; i < 4; i++)
 		{
-			vect3 o_f_b;
-			htmatrix_vect3_mult(&psy_hand_bones.finger[i].chain[0].him1_i, &psy_hand_bones.finger[i].ef_pos_0, &o_f_b);	//wow. wordy
-			vect3 finger_force_b = vect3_add(o_thumb_b, vect3_scale(o_f_b, -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
+			float error = qd[i] - q[i];
+			finger_error[i] = error;
+			q[i] += k * error;
 
-			//float xsq = finger_force_b.v[0] * finger_force_b.v[0];
-			float xf = finger_force_b.v[0] - 10.f;
-			if (xf < 3.16227766f)
-				xf = 3.16227766f;
-			xf = 1.f / (xf*xf);
-
-			float shirk = 0.f;
-			float zc = finger_force_b.v[2] - 2.f;
-			if (zc < 0.f)
-				shirk = -zc * zc * .1f * xf;
-			
-			//float box_xdim = 15.f;
-			//if (finger_force_b.v[0] < -box_xdim || finger_force_b.v[0] > box_xdim)
-			//	shirk = 0.f;
-
-			//float shirk = -.07f * (5.f - dist_exp);
-			//if (shirk > 0.f)
-			//	shirk = 0.f;
-			//float shirk = 0;
-			//shirk += over_component;
-			q[i] += shirk;
+			if (error < 0.f)
+				error = -error;	//take absolute value of error
+			sferr += error;
 		}
+		
+		#define NUM_THUMB_REFPOINTS 4
+		vect3 o_thumb_mid, o_thumb_low, o_thumb_side;
+		vect3 thumb_midref_2 = { -21.39, -9.25, -2.81 };
+		vect3 thumb_lowref_2 = { -46.09, -5.32, -2.58 };
+		vect3 thumb_sideref_2 = { -34.52f, 0, 11.f };
+		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].h0_i, &thumb_midref_2, &o_thumb_mid);
+		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].h0_i, &thumb_lowref_2, &o_thumb_low);
+		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].h0_i, &thumb_sideref_2, &o_thumb_side);
+		vect3* thumb_pos_b[NUM_THUMB_REFPOINTS] = { &o_thumb_b, &o_thumb_mid, &o_thumb_low, &o_thumb_side };
+		float weight[NUM_THUMB_REFPOINTS] = { 44.f, 44.f, 44.f, 44.f };
+				
+		float shirk = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			joint* j = psy_hand_bones.finger[i].chain;
+			vect3 o_f_b;
+			htmatrix_vect3_mult(&j[0].him1_i, &psy_hand_bones.finger[i].ef_pos_0, &o_f_b);	//wow. wordy
+
+			vect3 knuckle_1 = { -15.44f, -6.91f, 0.f, };
+			vect3 knuckle_0, knuckle_b, knuckle_force_b;
+			htmatrix_vect3_mult(&j[1].h0_i, &knuckle_1, &knuckle_0);
+			htmatrix_vect3_mult(&j[0].him1_i, &knuckle_0, &knuckle_b);
+			/*As the figner approaches its setpoint, reduce the repulsive field between the fingertip and the thumb*/
+			float abserr = finger_error[i];
+			if (abserr < 0)
+				abserr = -abserr;
+			float tip_scalef = 1.f - (1.f / abserr);
+			if (tip_scalef < 0.f)
+				tip_scalef = 0.f;	//
+
+			abserr = qd[5] - q[5];
+			if (abserr < 0)
+				abserr = -abserr;
+			float knuckle_scalef = 1.f - (1.f / abserr);
+			if (knuckle_scalef < 0.f)
+				knuckle_scalef = 0.f;
+
+			for (int thumbref_idx = 0; thumbref_idx < NUM_THUMB_REFPOINTS; thumbref_idx++)
+			{
+				vect3 thumb_force_b = vect3_add(o_f_b, vect3_scale(*thumb_pos_b[thumbref_idx], -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
+				float m1 = 0;
+				for (int r = 0; r < 3; r++)
+					m1 += thumb_force_b.v[r] * thumb_force_b.v[r];
+
+				for (int r = 0; r < 3; r++)
+					knuckle_force_b.v[r] = knuckle_b.v[r] - thumb_pos_b[thumbref_idx]->v[r];
+				float m2 = 0;
+				for (int r = 0; r < 3; r++)
+					m2 += knuckle_force_b.v[r] * knuckle_force_b.v[r];
+
+				float weight_m1 = weight[thumbref_idx] * tip_scalef;
+				float weight_m2 = weight[thumbref_idx] * knuckle_scalef;
+
+				float shirk_v = -weight_m1 / m1 - weight_m2 / m2;
+				shirk += shirk_v;	//accumulate thumb rotator torque
+			}
+		}
+		
+		q[4] += tau4+shirk;
+		q[5] += tau5;
+		/*END SHIRK TEST*/
 
 
-		//mat4 hidx0_b = ht_inverse(psy_hand_bones.finger[0].chain[0].him1_i);	//consider loading in the other unoccupied 0 frame transform...?
-		//for(int r = 0; r <3; r++)
-		//	hidx0_b.m[r][3] = 0;
-		//vect3 idx_force_0;
-		//htmatrix_vect3_mult(&hidx0_b, &idx_force_b, &idx_force_0);
-		///*Apply index finger force*/
-		//for (int r = 0; r < 3; r++)
-		//	f.v[r + 3] = .003f*idx_force_0.v[r];
-		//calc_tau(psy_hand_bones.finger[0].chain, 2, f, tau);
+		//for (int i = 0; i < 4; i++)
+		//{
+		//	/*Get finger position in the base frame*/
+		//	vect3 o_f_b = psy_hand_bones.finger[i].ef_pos_b;
+		//	//htmatrix_vect3_mult(&psy_hand_bones.finger[i].chain[0].him1_i, &psy_hand_bones.finger[i].ef_pos_0, &o_f_b);	//wow. wordy
+		//	
+		//	/*Set some force to act on the fingertip*/
+		//	vect3 finger_force_b = { 0, 0, 0 };
+		//	if (i == 0)
+		//		finger_force_b = vect3_add(o_thumb_b, vect3_scale(o_f_b, -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
+		//	else if (i == 1)
+		//		finger_force_b = vect3_add(o_thumb_b, vect3_scale(o_f_b, -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
 
-		/*Apply Thumb force*/
-		for (int r = 0; r < 3; r++)
-			f.v[r + 3] = .0003f*thumb_force.v[r];
-		calc_tau(psy_hand_bones.finger[4].chain, 2, f, tau);
-		q[5] += tau[1];
-		q[4] -= tau[2];
+		//	/*Transform the force from the base frame to the 0 frame*/
+		//	mat4 hidx0_b = ht_inverse(psy_hand_bones.finger[i].chain[0].him1_i);	//consider loading in the other unoccupied 0 frame transform...?
+		//	for (int r = 0; r < 3; r++)
+		//		hidx0_b.m[r][3] = 0;
+		//	vect3 force_0;
+		//	htmatrix_vect3_mult(&hidx0_b, &finger_force_b, &force_0);
+
+		//	/*Apply index finger force*/
+		//	for (int r = 0; r < 3; r++)
+		//		f.v[r] = .0003f * force_0.v[r];
+		//	calc_tau3(psy_hand_bones.finger[i].chain, 2, &f, tau);
+		//	q[i] += tau[1];
+		//}
+		///*Create an attraction force between the thumb tip and index + middle finger tip*/
+		//for (int i = 0; i < 2; i++)
+		//{
+		//	vect3 * o_anchor_b = &psy_hand_bones.finger[i].ef_pos_b;
+		//	for (int r = 0; r < 3; r++)
+		//		thumb_force.v[r] += .0003f * (o_anchor_b->v[r] - o_thumb_b.v[r]);
+		//}
+		///*Apply Thumb force*/
+		//calc_tau3(psy_hand_bones.finger[4].chain, 2, &thumb_force, tau);
+		//q[5] += tau[1];
+		//q[4] -= tau[2];
+
+
+
+
 		for ( int i = 0; i < 5; i++)
 		{
 			if (q[i] < 0.f)
@@ -532,6 +647,7 @@ int main(void)
 
 		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 		{
+
 		}
 
 		//render the psyonic hand

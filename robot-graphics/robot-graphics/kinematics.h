@@ -49,5 +49,6 @@ vect3 h_origin(mat4 h);
 vect4 h_origin_vect4(mat4 h);
 mat4 quat_to_mat4(vect4 quat, vect3 origin);
 void calc_tau(joint* j, int num_joints, vect6 f, float* tau);
+void calc_tau3(joint* j, int num_joints, vect3* f, float* tau);	//faster alt to calc_tau
 
 #endif

@@ -151,6 +151,7 @@
     <ClCompile Include="kinematics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="objloader.cpp" />
+    <ClCompile Include="psy-grips.cpp" />
     <ClCompile Include="sin_fast.cpp" />
     <ClCompile Include="spatialAlgebra.cpp" />
     <ClCompile Include="texture.cpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="finger-kinematics.h" />
     <ClInclude Include="glfw_interface.h" />
+    <ClInclude Include="Grips.h" />
     <ClInclude Include="kinematics.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />

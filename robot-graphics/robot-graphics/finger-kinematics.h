@@ -10,6 +10,7 @@ typedef struct kinematic_finger_t
 {
 	joint chain[3];
 	vect3 ef_pos_0;
+	vect3 ef_pos_b;
 }kinematic_finger_t;
 
 typedef struct kinematic_hand_t

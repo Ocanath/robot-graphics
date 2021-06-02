@@ -227,6 +227,17 @@ void calc_tau(joint * j, int num_joints, vect6 f, float * tau)
 		tau[i] = vect6_dot(j[i].Si, f);
 }
 
+void calc_tau3(joint * j, int num_joints, vect3 * f, float* tau)
+{
+	for (int i = 1; i <= num_joints; i++)
+	{
+		float dp = 0.f;
+		for (int r = 0; r < 3; r++)
+			dp += j[i].Si.v[r + 3] * f->v[r];
+		tau[i] = dp;
+	}
+}
+
 
 /*
 helper function for extracting the origin of a ht matrix

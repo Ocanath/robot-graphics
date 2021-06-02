@@ -165,6 +165,10 @@ void finger_kinematics(kinematic_hand_t * kh)
 			vect3 * res = &kh->finger[ch].ef_pos_0;
 			htmatrix_vect3_mult(&j[2].h0_i, &ref, res);
 			calc_J_point(j, 2, *res);
+
+			vect3 * ref_p = res;
+			res = &kh->finger[ch].ef_pos_b;
+			htmatrix_vect3_mult(&j[0].him1_i, ref_p, res);
 		}
 		else
 		{
@@ -174,9 +178,9 @@ void finger_kinematics(kinematic_hand_t * kh)
 			htmatrix_vect3_mult(&j[2].h0_i, &ref, res);
 			calc_J_point(j, 2, *res);
 
-			//for(int r = 0; r < 3; r++)
-			//	kh->finger[ch].ef_pos_0.v[r] = j[2].h0_i.m[r][3];
-			//calc_J_point(j, 2, kh->finger[ch].ef_pos_0);
+			vect3* ref_p = res;
+			res = &kh->finger[ch].ef_pos_b;
+			htmatrix_vect3_mult(&j[0].him1_i, ref_p, res);
 		}
 	}
 }
@@ -236,6 +240,4 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 		tf.m[2][3] = -63.03;
 		copy_mat4(&kh->finger[fidx].chain[0].him1_i, &tf);	//him1_0 = hb_0
 	}
-
-	
 }
