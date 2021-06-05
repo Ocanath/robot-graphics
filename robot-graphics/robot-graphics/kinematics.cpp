@@ -70,9 +70,7 @@ NOTE: only done ONCE, as the forward kinematics function only loads the elements
 */
 void init_forward_kinematics(joint* j, int num_joints)
 {
-	j[0].h0_i = mat4_I();
-	j[0].him1_i = mat4_I();
-
+	//assume all hb_0 and h(-1)_0 came pre-loaded before this call.
 	int i;
 	for (i = 1; i <= num_joints; i++)
 	{
@@ -100,10 +98,10 @@ void init_forward_kinematics(joint* j, int num_joints)
 		j[i].him1_i.m[3][2] = 0;
 		j[i].him1_i.m[3][3] = 1.0f;
 	}
-
-	copy_mat4(&j[1].h0_i, &j[1].him1_i);
-	for (i = 2; i <= num_joints; i++)
-		mat4_mult_pbr(&j[i - 1].h0_i, &j[i].him1_i, &j[i].h0_i);
+	//copy_mat4(&j[1].h0_i, &j[1].him1_i); 
+	//j[1].hb_i = j[0].hb_i * j[1].him1_i;
+	for (i = 1; i <= num_joints; i++)
+		mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
 }
 
 /*
@@ -128,9 +126,9 @@ void forward_kinematics(joint * j, int num_joints)
 		j[i].him1_i.m[1][2] = -cth * j[i].dh.sin_alpha;
 		j[i].him1_i.m[1][3] = j[i].dh.a * sth;
 	}
-	copy_mat4(&j[1].h0_i, &j[1].him1_i);
-	for (i = 2; i <= num_joints; i++)
-		mat4_mult_pbr(&j[i - 1].h0_i, &j[i].him1_i, &j[i].h0_i);		//j[i].h0_i = mat4_mult(j[i - 1].h0_i, j[i].him1_i);
+	//copy_mat4(&j[1].h0_i, &j[1].him1_i);
+	for (i = 1; i <= num_joints; i++)
+		mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);		//j[i].h0_i = mat4_mult(j[i - 1].h0_i, j[i].him1_i);
 }
 
 
@@ -179,9 +177,9 @@ void calc_J_point(joint * j, int num_joints, vect3 point)
 	for (i = 1; i <= num_joints; i++)
 	{
 		for (v_idx = 0; v_idx < 3; v_idx++)
-			z.v[v_idx] = j[i - 1].h0_i.m[v_idx][2];					//extract the unit vector corresponding to the axis of rotation of frame i-1 (i.e., the axis of rotation of q)
+			z.v[v_idx] = j[i - 1].hb_i.m[v_idx][2];					//extract the unit vector corresponding to the axis of rotation of frame i-1 (i.e., the axis of rotation of q)
 		for (v_idx = 0; v_idx < 3; v_idx++)
-			d.v[v_idx] = point.v[v_idx] - j[i - 1].h0_i.m[v_idx][3];	//extract the difference between the target point in frame 0 and the origin of frame i-1
+			d.v[v_idx] = point.v[v_idx] - j[i - 1].hb_i.m[v_idx][3];	//extract the difference between the target point in the base frame and the origin of frame i-1
 		vect3 res;
 		cross_pbr(&z, &d, &res);
 

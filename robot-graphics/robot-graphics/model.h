@@ -12,6 +12,7 @@
 
 #include "mesh.h"
 #include "shader-reader.h"
+#include "kinematics.h"
 
 #include <string>
 #include <fstream>
@@ -31,16 +32,25 @@ public:
     vector<Mesh>    meshes;
     string directory;
     bool gammaCorrection;
+    mat4* hb_model; //hw_b 
 
     // constructor, expects a filepath to a 3D model.
     AssetModel(string const& path, bool gamma = false) : gammaCorrection(gamma)
     {
+        hb_model = NULL;
         loadModel(path);
     }
 
     // draws the model, and thus all its meshes
-    void Draw(Shader& shader)
+    void Draw(Shader& shader, mat4* hw_b)
     {
+        if (hw_b != NULL && hb_model != NULL)
+        {
+            mat4 hw_model;
+            mat4_mult_pbr(hw_b, hb_model, &hw_model);
+            glm::mat4 model = ht_matrix_to_mat4(hw_model);
+            shader.setMat4("model", model);
+        }
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }

@@ -20,8 +20,8 @@ typedef struct joint
 	float dq;			//joint velocity
 	float ddq;			//joint acceleration
 	vect6 Si;			//vector corresponding to the i'th column of the jacobian matrix. Si*q(i) = vi, where vi is the ith's joint's contribution to the total chain velocity in frame 0
-	mat4 h0_i;			//homogeneous transformation relating the 0 frame to the current frame (i)
-	mat4 him1_i;		//homogeneous transformation describing the rotation and translation from frame i-1 to the current frame (i)
+	mat4 hb_i;			//homogeneous transformation relating the BASE frame to the current frame (i). hb_0 = him1_0
+	mat4 him1_i;		//homogeneous transformation describing the rotation and translation from frame i-1 to the current frame (i). 
 	dh_entry dh;	//dh parameter describing the offset and angles from frame i-1 to the current frame (i)
 	
 	mat6 I_hat;			//6 matrix describing the spatial inertia of each frame with respect to the origin.

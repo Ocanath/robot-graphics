@@ -8,8 +8,6 @@
 #include "stb_header.h"
 #include "stb_image.h"
 
-#include "model.h"
-
 #include "glfw_interface.h"
 #include "kinematics.h"
 #include "finger-kinematics.h"
@@ -17,6 +15,8 @@
 
 #include "utils.h"
 
+#include "model.h"
+#include "dynahex.h"
 
 #include <iostream>
 
@@ -265,6 +265,32 @@ int main(void)
 	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F2.STL"));
 	AssetModel psy_palm("misc_models/psyonic-hand/PALM_BASE_FRAME.STL");
 
+
+
+
+	dynahex_t dynahex_bones;
+	init_dh_kinematics(&dynahex_bones);
+	forward_kinematics_dynahexleg(&dynahex_bones);
+	vector<AssetModel> dynahex_modellist;
+	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F0-stripped.STL"));
+	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F1-stripped.STL"));
+	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F2-stripped.STL"));
+	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F3-stripped.STL"));
+	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/FB-stripped.STL"));
+	mat4 dynahex_hw_b = mat4_I();
+	for (int l = 0; l < NUM_LEGS; l++)
+	{
+		joint* j = dynahex_bones.leg[l].chain;
+		for (int i = 1; i <= NUM_JOINTS_HEXLEG; i++)
+		{
+			j[i].q = 0.f;
+		}
+	}
+	printf("!!!!!!!!!!!!!!!\r\n");
+	print_mat4(dynahex_bones.leg[1].chain[3].hb_i);
+	printf("!!!!!!!!!!!!!!!\r\n");
+
+
 	kinematic_hand_t psy_hand_bones;
 	init_finger_kinematics(&psy_hand_bones);
 	float q[6] = { 15,15,15,15, 0,-90 };
@@ -481,10 +507,9 @@ int main(void)
 		backpack_htm.m[2][3] = 1.3f;
 		model = ht_matrix_to_mat4(backpack_htm);
 		lightingShader.setMat4("model", model);
-		ourModel.Draw(lightingShader);
+		ourModel.Draw(lightingShader, NULL);
 
-		/*Make the light follow the backpack*/
-		//light[4].position = glm::vec3(backpack_htm.m[0][3], backpack_htm.m[1][3], backpack_htm.m[2][3] + 1.f);
+
 		int prev_cfg = cfg_idx;
 		for (int i = 0; i < NUM_GRIPKEYS; i++)
 		{
@@ -508,7 +533,7 @@ int main(void)
 		float tau[3] = { 0,0,0 };	//num joints + 1
 		vect3 f = { 0,0,0 };
 		vect3 thumb_force = { 0,0,0 };
-		vect3 o_thumb_b = psy_hand_bones.finger[4].ef_pos_0;
+		vect3 o_thumb_b = psy_hand_bones.finger[4].ef_pos_b;
 
 
 
@@ -534,9 +559,9 @@ int main(void)
 		vect3 thumb_midref_2 = { -21.39, -9.25, -2.81 };
 		vect3 thumb_lowref_2 = { -46.09, -5.32, -2.58 };
 		vect3 thumb_sideref_2 = { -34.52f, 0, 11.f };
-		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].h0_i, &thumb_midref_2, &o_thumb_mid);
-		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].h0_i, &thumb_lowref_2, &o_thumb_low);
-		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].h0_i, &thumb_sideref_2, &o_thumb_side);
+		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].hb_i, &thumb_midref_2, &o_thumb_mid);
+		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].hb_i, &thumb_lowref_2, &o_thumb_low);
+		htmatrix_vect3_mult(&psy_hand_bones.finger[4].chain[2].hb_i, &thumb_sideref_2, &o_thumb_side);
 		vect3* thumb_pos_b[NUM_THUMB_REFPOINTS] = { &o_thumb_b, &o_thumb_mid, &o_thumb_low, &o_thumb_side };
 		float weight[NUM_THUMB_REFPOINTS] = { 44.f, 44.f, 44.f, 44.f };
 				
@@ -544,13 +569,13 @@ int main(void)
 		for (int i = 0; i < 4; i++)
 		{
 			joint* j = psy_hand_bones.finger[i].chain;
-			vect3 o_f_b;
-			htmatrix_vect3_mult(&j[0].him1_i, &psy_hand_bones.finger[i].ef_pos_0, &o_f_b);	//wow. wordy
+			vect3 o_f_b = psy_hand_bones.finger[i].ef_pos_b;
+			//htmatrix_vect3_mult(&j[0].him1_i, &psy_hand_bones.finger[i].ef_pos_0, &o_f_b);	//wow. wordy
 
 			vect3 knuckle_1 = { -15.44f, -6.91f, 0.f, };
-			vect3 knuckle_0, knuckle_b, knuckle_force_b;
-			htmatrix_vect3_mult(&j[1].h0_i, &knuckle_1, &knuckle_0);
-			htmatrix_vect3_mult(&j[0].him1_i, &knuckle_0, &knuckle_b);
+			vect3 knuckle_b, knuckle_force_b;
+			htmatrix_vect3_mult(&j[1].hb_i, &knuckle_1, &knuckle_b);
+
 			/*As the figner approaches its setpoint, reduce the repulsive field between the fingertip and the thumb*/
 			float abserr = finger_error[i];
 			if (abserr < 0)
@@ -672,20 +697,20 @@ int main(void)
 		hw_b.m[2][3] = 1.5f;
 		{
 			{//THUMB RENDER
-				mat4 hb_0 = mat4_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
+				//mat4 hb_0 = mat4_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
+				mat4 hb_0 = psy_hand_bones.finger[4].chain[0].hb_i;
 				mat4 hw_0 = mat4_mult(hw_b, hb_0);
 
 				model = ht_matrix_to_mat4(hw_0);
 				lightingShader.setMat4("model", model);
-				psy_thumb_modellist[0].Draw(lightingShader);
-				psy_palm.Draw(lightingShader);	//render the palm too
+				psy_thumb_modellist[0].Draw(lightingShader, NULL);
+				psy_palm.Draw(lightingShader, NULL);	//render the palm too
 				for (int i = 1; i <= 2; i++)
 				{
-					mat4 h0_i = psy_hand_bones.finger[4].chain[i].h0_i;
-					mat4 hw_i = mat4_mult(hw_0, h0_i);
+					mat4 hw_i = mat4_mult(hw_b, psy_hand_bones.finger[4].chain[i].hb_i);
 					model = ht_matrix_to_mat4(hw_i);
 					lightingShader.setMat4("model", model);
-					psy_thumb_modellist[i].Draw(lightingShader);
+					psy_thumb_modellist[i].Draw(lightingShader, NULL);
 				}
 			}
 			for(int fidx = 0; fidx < 4; fidx++)
@@ -695,18 +720,58 @@ int main(void)
 
 				model = ht_matrix_to_mat4(hw_0);
 				lightingShader.setMat4("model", model);
-				psy_finger_modellist[0].Draw(lightingShader);
+				psy_finger_modellist[0].Draw(lightingShader, NULL);
 
 				for (int i = 1; i <= 2; i++)
 				{
-					mat4 h0_i = psy_hand_bones.finger[fidx].chain[i].h0_i;
-					mat4 hw_i = mat4_mult(hw_0, h0_i);
+//					mat4 h0_i = psy_hand_bones.finger[fidx].chain[i].h0_i;
+//					mat4 hw_i = mat4_mult(hw_0, h0_i);
+					mat4 hw_i = mat4_mult(hw_b, psy_hand_bones.finger[fidx].chain[i].hb_i);
 					model = ht_matrix_to_mat4(hw_i);
 					lightingShader.setMat4("model", model);
-					psy_finger_modellist[i].Draw(lightingShader);
+					psy_finger_modellist[i].Draw(lightingShader, NULL);
 				}
 			}
 		}
+
+		for (int l = 0; l < 6; l++)
+		{
+			joint* j = dynahex_bones.leg[l].chain;
+			vect3 o_attractor_b = { 0,0,-250.f };
+		}
+
+		scf = .005f;
+		mat4 H_scf = {
+			{
+				{scf, 0, 0, 0},
+				{0, scf, 0, 0},
+				{0, 0, scf, 0},
+				{0, 0, 0, 1}
+			}
+		};
+		mat4 id = mat4_I();
+		mat4_mult_pbr(&H_scf, &id, &dynahex_hw_b);
+		dynahex_hw_b.m[0][3] = 5.f;
+		dynahex_hw_b.m[2][3] = 3.f;
+		model = ht_matrix_to_mat4(dynahex_hw_b);
+		lightingShader.setMat4("model", model);
+		dynahex_modellist[4].Draw(lightingShader, NULL);
+		forward_kinematics_dynahexleg(&dynahex_bones);
+		for (int l = 0; l < 6; l++)
+		{
+			joint* j = dynahex_bones.leg[l].chain;
+			for (int i = 0; i < 4; i++)
+			{
+				//dynahex_modellist[i].hb_model = &j[i].hb_i;
+				mat4 hw_i;
+				mat4_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
+
+				model = ht_matrix_to_mat4(hw_i);
+				lightingShader.setMat4("model", model);
+				dynahex_modellist[i].Draw(lightingShader, NULL);
+			}
+		}
+		
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();

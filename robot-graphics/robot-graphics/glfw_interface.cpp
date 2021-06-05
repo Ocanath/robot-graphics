@@ -171,6 +171,8 @@ void init_cam(CamControlStruct * P, joint * j)
 	
 	//init fk
 	//init_forward_kinematics_KC(&(P->CamRobot));
+	 P->CamRobot.j[0].hb_i = mat4_I();
+	 P->CamRobot.j[0].him1_i = mat4_I();
 	init_forward_kinematics(P->CamRobot.j, P->CamRobot.num_frames-1);
 }
 
@@ -312,9 +314,9 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 	mat4 HW_C1;
 	mat4 HW_0;
 	HW_0 = mat4_mult(P->CamRobot.hw_b, P->CamRobot.hb_0);		//HT_Multiply(P->CamRobot.HW_B, P->CamRobot.HB_0, &HW_0);
-	HW_C1 = mat4_mult(HW_0, P->CamRobot.j[1].h0_i);	//HT_Multiply(HW_0, P->CamRobot.HT0_idx[1], &HW_C1);
-	HW_C3 = mat4_mult(HW_0, P->CamRobot.j[3].h0_i); //HT_Multiply(HW_0, P->CamRobot.HT0_idx[3], &HW_C3);	//HW_B*HB_0*H0_3
-
+	HW_C1 = mat4_mult(HW_0, P->CamRobot.j[1].hb_i);	//HT_Multiply(HW_0, P->CamRobot.HT0_idx[1], &HW_C1);
+	HW_C3 = mat4_mult(HW_0, P->CamRobot.j[3].hb_i); //HT_Multiply(HW_0, P->CamRobot.HT0_idx[3], &HW_C3);	//HW_B*HB_0*H0_3
+	//^ in this case, 0=b
 	if (P->look_at_flag)
 	{
 		vect3 v_targ = vect3_add(h_origin(P->CamRobot.hw_b), vect3_scale(otarg_w, -1));

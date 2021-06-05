@@ -63,6 +63,9 @@
     <ClCompile Include="psy-grips.cpp">
       <Filter>Header Files\app-robotics</Filter>
     </ClCompile>
+    <ClCompile Include="dynahex.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -111,6 +114,12 @@
       <Filter>Header Files\app-robotics</Filter>
     </ClInclude>
     <ClInclude Include="Grips.h">
+      <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="dynahex.h">
+      <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderRobot.h">
       <Filter>Header Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>
