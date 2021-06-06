@@ -66,6 +66,9 @@
     <ClCompile Include="dynahex.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
+    <ClCompile Include="physics_thread.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -120,6 +123,9 @@
       <Filter>Header Files\app-robotics</Filter>
     </ClInclude>
     <ClInclude Include="RenderRobot.h">
+      <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="physics_thread.h">
       <Filter>Header Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>

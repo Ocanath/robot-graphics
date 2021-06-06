@@ -20,6 +20,7 @@
 
 #include <iostream>
 #include <thread>
+#include "physics_thread.h"
 
 #define NUM_LIGHTS 5
 
@@ -348,7 +349,6 @@ int main_render_thread(void)
 		lightingShader.setVec3("viewPos", camera_position);
 		lightingShader.setFloat("material.shininess", shininess);
 		
-
 		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
 		lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);

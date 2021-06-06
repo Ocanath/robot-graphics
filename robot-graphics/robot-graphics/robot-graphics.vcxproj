@@ -120,11 +120,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\external\bullet\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;assimp-vc142-mtd.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;assimp-vc142-mtd.lib;opengl32.lib;BulletDynamics_vs2010_x64_debug.lib;BulletCollision_vs2010_x64_debug.lib;LinearMath_vs2010_x64_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -135,13 +137,18 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)\external\bullet\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;assimp-vc142-mt.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>BulletDynamics_vs2010_x64_release.lib;BulletCollision_vs2010_x64_release.lib;LinearMath_vs2010_x64_release.lib;glfw3.lib;assimp-vc142-mt.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -152,6 +159,7 @@
     <ClCompile Include="kinematics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="objloader.cpp" />
+    <ClCompile Include="physics_thread.cpp" />
     <ClCompile Include="psy-grips.cpp" />
     <ClCompile Include="sin_fast.cpp" />
     <ClCompile Include="spatialAlgebra.cpp" />
@@ -169,6 +177,7 @@
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="objloader.hpp" />
+    <ClInclude Include="physics_thread.h" />
     <ClInclude Include="RenderRobot.h" />
     <ClInclude Include="shader-reader.h" />
     <ClInclude Include="sin_fast.h" />
