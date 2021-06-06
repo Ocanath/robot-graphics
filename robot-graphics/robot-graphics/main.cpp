@@ -277,21 +277,23 @@ int main(void)
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F1-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F2-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F3-stripped.STL"));
+	//dynahex_modellist.push_back(AssetModel("misc_models/dynahex/FB.obj"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/FB-stripped.STL"));
 	mat4 dynahex_hw_b = mat4_I();
 	for (int l = 0; l < NUM_LEGS; l++)
 	{
 		joint* j = dynahex_bones.leg[l].chain;
-		for (int i = 1; i <= NUM_JOINTS_HEXLEG; i++)
-		{
-			j[i].q = 0.f;
-		}
+		j[1].q = 0.f;
+		j[2].q = 0.f;
+		j[3].q = 1.f;
 	}
+	forward_kinematics_dynahexleg(&dynahex_bones);
+
 	printf("!!!!!!!!!!!!!!!\r\n");
 	print_mat4(dynahex_bones.leg[1].chain[3].hb_i);
 	printf("!!!!!!!!!!!!!!!\r\n");
 
-
+	
 	kinematic_hand_t psy_hand_bones;
 	init_finger_kinematics(&psy_hand_bones);
 	float q[6] = { 15,15,15,15, 0,-90 };
@@ -695,10 +697,12 @@ int main(void)
 		//mat4 hw_b = Hx(PI / 2 + .2*sin(time) );
 		//hw_b = mat4_mult(hw_b, Hy(.2*sin(time + 1)));
 		//hw_b = mat4_mult(hw_b, Hz(.2*sin(time + 2)));
-		mat4 hw_b = Hx(PI / 2);
+		mat4 hw_b = Hx(PI);
+		hw_b = mat4_mult(hw_b, Hz(PI/2));
 		hw_b = mat4_mult(tf, hw_b);
 		//hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
-		hw_b.m[2][3] = 1.5f;
+		hw_b.m[0][3] = 7.f;
+		hw_b.m[2][3] = 1.f;
 		{
 			{//THUMB RENDER
 				//mat4 hb_0 = mat4_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
@@ -738,27 +742,6 @@ int main(void)
 			}
 		}
 
-		vect3 o_attractor_b = { 0,0,-250.f+15.f*sin(time) };
-		const float angle_f = (2 * PI) / 6;
-		for (int leg = 0; leg < 6; leg++)
-		{
-			float angle = angle_f *(float)leg;
-			o_attractor_b.v[0] = 10.f * cos(angle);
-			o_attractor_b.v[1] = 10.f * sin(angle);
-
-			joint* j = dynahex_bones.leg[leg].chain;
-			vect3 f_attract_b;
-			for (int r = 0; r < 3; r++)
-				f_attract_b.v[r] = (o_attractor_b.v[r] - dynahex_bones.leg[leg].ef_b.v[r]) * .00001f;
-			for (int j_idx = 1; j_idx <= NUM_JOINTS_HEXLEG; j_idx++)
-			{
-				vect6* Si = &j[j_idx].Si;
-				float tau = 0.f;
-				for (int dpi = 0; dpi < 3; dpi++)
-					tau += Si->v[dpi + 3] * f_attract_b.v[dpi];
-				j[j_idx].q += tau;
-			}
-		}
 
 		//float v = .1f * sin(time);
 		//for (int leg = 0; leg < 6; leg++)
@@ -780,10 +763,14 @@ int main(void)
 				{0, 0, 0, 1}
 			}
 		};
-		mat4 id = mat4_I();
-		mat4_mult_pbr(&H_scf, &id, &dynahex_hw_b);
-		dynahex_hw_b.m[0][3] = 5.f;
-		dynahex_hw_b.m[2][3] = 3.f;
+		//mat4 id = mat4_I();
+		hw_b = mat4_I();
+		//hw_b.m[0][3] = 100.f*cos(time);
+		//hw_b.m[1][3] = 100.f*sin(time);
+		hw_b.m[2][3] = 400.f;
+
+		mat4_mult_pbr(&H_scf, &hw_b, &dynahex_hw_b);
+
 		model = ht_matrix_to_mat4(dynahex_hw_b);
 		lightingShader.setMat4("model", model);
 		dynahex_modellist[4].Draw(lightingShader, NULL);
@@ -803,16 +790,6 @@ int main(void)
 			}
 		}
 		
-		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
-		{
-			for (int leg = 0; leg < 6; leg++)
-			{
-				for (int jidx = 1; jidx <= 3; jidx++)
-				{
-					printf("leg[%d].q[%d] = %f\r\n", leg, jidx, dynahex_bones.leg[leg].chain[jidx].q);
-				}
-			}
-		}
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();
