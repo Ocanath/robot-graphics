@@ -37,14 +37,17 @@ void init_dh_kinematics(dynahex_t * h)
 	}
 }
 
+static vect3 o_foottip_3 = { -15.31409f, -9.55025f, 0.f };
+
 void forward_kinematics_dynahexleg(dynahex_t* h)
 {
 	for (int leg = 0; leg < NUM_LEGS; leg++)
 	{
 		joint* j = h->leg[leg].chain;
 		forward_kinematics(j, NUM_JOINTS_HEXLEG);
-		for (int r = 0; r < 3; r++)
-			h->leg[leg].ef_b.v[r] = j[3].hb_i.m[r][3];
+		
+		htmatrix_vect3_mult(&j[3].hb_i, &o_foottip_3, &h->leg[leg].ef_b);
+
 		calc_J_point(j, NUM_JOINTS_HEXLEG, h->leg[leg].ef_b);
 	}
 }

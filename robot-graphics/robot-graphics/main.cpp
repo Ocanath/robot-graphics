@@ -243,6 +243,7 @@ int main(void)
 	unsigned int container_specularMap = loadTexture("img/container2_specular.png");
 	unsigned int stone_diffuse_map = loadTexture("img/large_stone_tiled.png");
 	unsigned int stone_specular_map = loadTexture("img/large_stone_tiled_specular.png");
+	unsigned int white_map = loadTexture("img/white.png");
 
 	lightingShader.use();
 	lightingShader.setInt("material.diffuse", 0);
@@ -670,13 +671,16 @@ int main(void)
 		if (q[5] < -110.f)
 			q[5] = -110.f;
 
-		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
-		{
 
-		}
 
 		//render the psyonic hand
-		lightingShader.setVec3("objectColor", 2.0f, 2.0f, 2.0f);
+		// bind diffuse map
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, white_map);
+		// bind specular map
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, white_map);
+
 		//lightingShader.setFloat("material.shininess", 32.0f);
 		scf = 0.01f;
 		mat4 tf = {
@@ -734,11 +738,38 @@ int main(void)
 			}
 		}
 
-		for (int l = 0; l < 6; l++)
+		vect3 o_attractor_b = { 0,0,-250.f+15.f*sin(time) };
+		const float angle_f = (2 * PI) / 6;
+		for (int leg = 0; leg < 6; leg++)
 		{
-			joint* j = dynahex_bones.leg[l].chain;
-			vect3 o_attractor_b = { 0,0,-250.f };
+			float angle = angle_f *(float)leg;
+			o_attractor_b.v[0] = 10.f * cos(angle);
+			o_attractor_b.v[1] = 10.f * sin(angle);
+
+			joint* j = dynahex_bones.leg[leg].chain;
+			vect3 f_attract_b;
+			for (int r = 0; r < 3; r++)
+				f_attract_b.v[r] = (o_attractor_b.v[r] - dynahex_bones.leg[leg].ef_b.v[r]) * .00001f;
+			for (int j_idx = 1; j_idx <= NUM_JOINTS_HEXLEG; j_idx++)
+			{
+				vect6* Si = &j[j_idx].Si;
+				float tau = 0.f;
+				for (int dpi = 0; dpi < 3; dpi++)
+					tau += Si->v[dpi + 3] * f_attract_b.v[dpi];
+				j[j_idx].q += tau;
+			}
 		}
+
+		//float v = .1f * sin(time);
+		//for (int leg = 0; leg < 6; leg++)
+		//{
+		//	joint* j = dynahex_bones.leg[leg].chain;
+		//	for (int jidx = 1; jidx <= NUM_JOINTS_HEXLEG; jidx++)
+		//	{
+		//		j[jidx].q = v;
+		//	}
+		//}
+
 
 		scf = .005f;
 		mat4 H_scf = {
@@ -772,6 +803,16 @@ int main(void)
 			}
 		}
 		
+		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+		{
+			for (int leg = 0; leg < 6; leg++)
+			{
+				for (int jidx = 1; jidx <= 3; jidx++)
+				{
+					printf("leg[%d].q[%d] = %f\r\n", leg, jidx, dynahex_bones.leg[leg].chain[jidx].q);
+				}
+			}
+		}
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();

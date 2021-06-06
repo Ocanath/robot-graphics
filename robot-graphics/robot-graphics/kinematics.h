@@ -45,6 +45,7 @@ void forward_kinematics(joint* j, int num_joints);
 void calc_J_point(joint* j, int num_joints, vect3 point);
 void copy_mat4(mat4* dest, mat4* src);
 vect6 calc_w_v(kinematic_chain * chain, vect3 * w, vect3 * v);
+void htmatrix_vect3_mult(mat4* m, vect3* v, vect3* ret);
 vect3 h_origin(mat4 h);
 vect4 h_origin_vect4(mat4 h);
 mat4 quat_to_mat4(vect4 quat, vect3 origin);

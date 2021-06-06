@@ -236,6 +236,24 @@ void calc_tau3(joint * j, int num_joints, vect3 * f, float* tau)
 	}
 }
 
+/*pass by reference htmatrix (special subset of mat4) and 3 vector)*/
+void htmatrix_vect3_mult(mat4* m, vect3* v, vect3* ret)
+{
+	int rsize = 3; int vsize = 4;
+	int r, i;
+	for (r = 0; r < rsize; r++)
+	{
+		float tmp = 0;
+		for (i = 0; i < vsize; i++)
+		{
+			if (i < 3)
+				tmp = tmp + m->m[r][i] * v->v[i];
+			if (i == 3)
+				tmp = tmp + m->m[r][i];
+		}
+		ret->v[r] = tmp;
+	}
+}
 
 /*
 helper function for extracting the origin of a ht matrix

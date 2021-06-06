@@ -110,24 +110,6 @@ const mat4 id_matrix = {
 		{0.f,0.f,0.f,1.f},
 	}
 };
-
-void htmatrix_vect3_mult(mat4 * m, vect3 * v, vect3 * ret)
-{
-	int rsize = 3; int vsize = 4;
-	int r, i;
-	for (r = 0; r < rsize; r++)
-	{
-		float tmp = 0;
-		for (i = 0; i < vsize; i++)
-		{
-			if (i < 3)
-				tmp = tmp + m->m[r][i] * v->v[i];
-			if (i == 3)
-				tmp = tmp + m->m[r][i];
-		}
-		ret->v[r] = tmp;
-	}
-}
 	
 //l1 = a1
 //l3 = a2
