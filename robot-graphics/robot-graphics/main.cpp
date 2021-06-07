@@ -170,8 +170,8 @@ int main_render_thread(void)
 	Player.CamRobot.hw_b.m[0][3] = -2.18f;
 	Player.CamRobot.hw_b.m[1][3] = 0.73f;
 	Player.CamRobot.hw_b.m[2][3] = 2.08f;
-	Player.CamRobot.j[1].q = fmod(-3.08f + PI, 2*PI)-PI;
-	Player.CamRobot.j[2].q = -1.73f;
+	Player.CamRobot.j[1].q = fmod(96.58 + PI, 2*PI)-PI;
+	Player.CamRobot.j[2].q = -1.63f;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -259,6 +259,10 @@ int main_render_thread(void)
 	unsigned int stone_specular_map = loadTexture("img/large_stone_tiled_specular.png");
 	unsigned int white_map = loadTexture("img/white.png");
 
+	AssetModel cube("misc_models/primitive_shapes/cube.obj");
+	cube.hb_model = new mat4;
+	*cube.hb_model = mat4_I();
+
 	lightingShader.use();
 	lightingShader.setInt("material.diffuse", 0);
 	lightingShader.setInt("material.specular", 1);
@@ -334,6 +338,11 @@ int main_render_thread(void)
 	float shininess = 32.f;
 	int cfg_idx = 32;
 
+
+	double ambient_press_time = 0.f;
+	double movement_press_time = 0.f;
+
+
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -394,6 +403,54 @@ int main_render_thread(void)
 
 		View = keyboard_cam_control(window, &Player, fps, h_origin(mat4_Identity));
 		MVP = CameraProjection * View * Model;
+		
+
+		//manual control of the overhead light position
+		int mnljki = (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) << 0;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) << 1;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) << 2;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) << 3;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) << 4;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) << 5;
+		if (mnljki == 0)
+			movement_press_time = time;
+		else
+		{
+			float displacement_per_sec = .01f*(time-movement_press_time) + 1.f/fps;
+			if ( (mnljki & (1 << 0)) != 0)
+				light[4].position += glm::vec3(displacement_per_sec, 0, 0);
+			if ((mnljki & (1 << 1)) != 0)
+				light[4].position += glm::vec3(-displacement_per_sec, 0, 0);
+			if ((mnljki & (1 << 2)) != 0)
+				light[4].position += glm::vec3(0, displacement_per_sec, 0);
+			if ((mnljki & (1 << 3)) != 0)
+				light[4].position += glm::vec3(0, -displacement_per_sec, 0);
+			if ((mnljki & (1 << 4)) != 0)
+				light[4].position += glm::vec3(0, 0, displacement_per_sec);
+			if ((mnljki & (1 << 5)) != 0)
+				light[4].position += glm::vec3(0, 0, -displacement_per_sec);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		{
+			float v = .01f * (time - ambient_press_time);
+			light[4].ambient += glm::vec3(v,v,v);
+			float mag = 0;
+			for (int r = 0; r < 3; r++)
+				mag += light[4].ambient[r] * light[4].ambient[r];
+			printf("%f\r\n", mag);
+		}
+		else if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		{
+			float v = .01f * (time - ambient_press_time);
+			light[4].ambient += glm::vec3(-v,-v,-v);
+			float mag = 0;
+			for (int r = 0; r < 3; r++)
+				mag += light[4].ambient[r] * light[4].ambient[r];
+			printf("%f\r\n", mag);
+		}
+		else
+			ambient_press_time = time;
 		
 		//vect3 player_pos;
 		//for(int r = 0; r < 3; r++)
@@ -482,6 +539,9 @@ int main_render_thread(void)
 			glBindVertexArray(cubeVAO);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
+		mat4 cube_hw_b = Hz(time);
+		cube_hw_b.m[2][3] = 2.f;
+		cube.Draw(lightingShader, &cube_hw_b);
 
 		// don't forget to enable shader before setting uniforms
 		//model_shader.use();// view/projection transformations
@@ -738,7 +798,6 @@ int main_render_thread(void)
 			}
 		}
 
-
 		//float v = .1f * sin(time);
 		//for (int leg = 0; leg < 6; leg++)
 		//{
@@ -750,7 +809,7 @@ int main_render_thread(void)
 		//}
 
 
-		scf = .005f;
+		scf = .001f;
 		mat4 H_scf = {
 			{
 				{scf, 0, 0, 0},
@@ -763,9 +822,10 @@ int main_render_thread(void)
 		hw_b = mat4_I();
 		//hw_b.m[0][3] = 100.f*cos(time);
 		//hw_b.m[1][3] = 100.f*sin(time);
-		hw_b.m[2][3] = 400.f;
-
+		//hw_b.m[2][3] = 400.f;
 		mat4_mult_pbr(&H_scf, &hw_b, &dynahex_hw_b);
+		dynahex_hw_b.m[1][3] = -6.f;
+		dynahex_hw_b.m[2][3] = 1.f;
 
 		model = ht_matrix_to_mat4(dynahex_hw_b);
 		lightingShader.setMat4("model", model);

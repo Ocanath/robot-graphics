@@ -274,7 +274,7 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 		move_v.v[1] = -(float)TPF(P->jumpV, fps);
 		act = 1;
 	}
-	if ((glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) && P->lkeydown == 0)
+	if ((glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) && P->lkeydown == 0 && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		P->lkeydown = 1;
 	if ((glfwGetKey(window, GLFW_KEY_L) == GLFW_RELEASE) && P->lkeydown == 1)
 	{
