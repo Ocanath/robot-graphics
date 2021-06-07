@@ -126,6 +126,8 @@ int main_render_thread(void);
 
 int main(void)
 {
+	std::thread t2(physics_thread);
+	t2.join();
 	std::thread t1(main_render_thread);
 	t1.join();
 }
