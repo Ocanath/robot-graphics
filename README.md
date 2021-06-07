@@ -25,3 +25,8 @@ For Assimp:
 
 For Bullet3:
 
+1. Pull Bullet
+2. Use built in script (or cmake) to make visual studio projects
+3. Use example code to figure out what .libs you need
+4. compile the code for each lib. be sure to switch to MD (multithreaded-dll) for compatibility
+5. match EXACTLY the same project settings. The one that caused linker errors just now was the 'preprocessor definitions'. 
