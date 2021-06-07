@@ -158,9 +158,11 @@
     <ClCompile Include="glfw_interface.cpp" />
     <ClCompile Include="kinematics.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="model.cpp" />
     <ClCompile Include="objloader.cpp" />
     <ClCompile Include="physics_thread.cpp" />
     <ClCompile Include="psy-grips.cpp" />
+    <ClCompile Include="RenderBullet.cpp" />
     <ClCompile Include="sin_fast.cpp" />
     <ClCompile Include="spatialAlgebra.cpp" />
     <ClCompile Include="texture.cpp" />
@@ -178,6 +180,7 @@
     <ClInclude Include="model.h" />
     <ClInclude Include="objloader.hpp" />
     <ClInclude Include="physics_thread.h" />
+    <ClInclude Include="RenderBullet.h" />
     <ClInclude Include="RenderRobot.h" />
     <ClInclude Include="shader-reader.h" />
     <ClInclude Include="sin_fast.h" />

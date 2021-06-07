@@ -69,6 +69,12 @@
     <ClCompile Include="physics_thread.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
+    <ClCompile Include="RenderBullet.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="model.cpp">
+      <Filter>Source Files\app-graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -127,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="physics_thread.h">
       <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderBullet.h">
+      <Filter>Source Files\app-graphics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

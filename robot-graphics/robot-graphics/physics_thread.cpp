@@ -1,166 +1,163 @@
 #include "physics_thread.h"
 
-#include "btBulletDynamicsCommon.h"
-#include <stdio.h>
+int gl_start_dynamics_flag = 0;
+int run_dynamics_thread = 0;
+vect3 keyboard_ctl_vect = { 0,0,0 };
+std::vector<RenderBulletObject*> gl_shared_cubes;
+RenderBulletObject * gl_player_cube = NULL;
+RenderBulletObject ground_cube;
+
+
+btRigidBody* load_cube(btScalar mass, vect3 dim, vect3 initpos, btDiscreteDynamicsWorld* dynamics_world)
+{
+	btCollisionShape* col_shape = new btBoxShape(btVector3(btScalar(dim.v[0] / 2), btScalar(dim.v[1] / 2), btScalar(dim.v[2] / 2)));
+	btTransform start_transform;
+	start_transform.setIdentity();
+	start_transform.setOrigin(btVector3(btScalar(initpos.v[0]), btScalar(initpos.v[1]), btScalar(initpos.v[2])));
+
+	bool is_dynamic = (mass != 0.f);
+	btVector3 local_inertia(0, 0, 0);
+	if (is_dynamic)
+		col_shape->calculateLocalInertia(mass, local_inertia);
+
+	btDefaultMotionState* motion_state = new btDefaultMotionState(start_transform);
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motion_state, col_shape, local_inertia);
+	btRigidBody* body = new btRigidBody(rbInfo);
+	dynamics_world->addRigidBody(body);
+	return body;
+}
 
 
 void physics_thread(void)
 {
-	///-----includes_end-----
-
-	int i;
-	///-----initialization_start-----
-
-	///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
-
-	///use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
-
-	///btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
+	btDefaultCollisionConfiguration* collision_config = new btDefaultCollisionConfiguration();
+	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_config);
 	btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
-
-	///the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+	btDiscreteDynamicsWorld* dynamics_world = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collision_config);
 
-	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+	dynamics_world->setGravity(btVector3(0, 0, 0));
 
-	dynamicsWorld->setGravity(btVector3(0, -10, 0));
+	printf("dynamics thread prepared, waiting for signal from render thread\n");
+	while (gl_start_dynamics_flag == 0);
+	printf("signal received. starting dynamics now\n");
+	double prev_time = glfwGetTime();
 
-	///-----initialization_end-----
-
-	//keep track of the shapes, we release memory at exit.
-	//make sure to re-use collision shapes among rigid bodies whenever possible!
-	btAlignedObjectArray<btCollisionShape*> collisionShapes;
-
-	///create a few basic rigid bodies
-
-	//the ground is a cube of side 100 at position y = -56.
-	//the sphere will hit it at y = -6, with center at -5
+	std::vector<RenderBulletObject> cubelist;
+	for (int x = -200; x < 200; x += 50)
 	{
-		btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
-
-		collisionShapes.push_back(groundShape);
-
-		btTransform groundTransform;
-		groundTransform.setIdentity();
-		groundTransform.setOrigin(btVector3(0, -56, 0));
-
-		btScalar mass(0.);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = (mass != 0.f);
-
-		btVector3 localInertia(0, 0, 0);
-		if (isDynamic)
-			groundShape->calculateLocalInertia(mass, localInertia);
-
-		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-		btRigidBody* body = new btRigidBody(rbInfo);
-
-		//add the body to the dynamics world
-		dynamicsWorld->addRigidBody(body);
-	}
-
-	{
-		//create a dynamic rigidbody
-
-		//btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
-		btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-		collisionShapes.push_back(colShape);
-
-		/// Create Dynamic Objects
-		btTransform startTransform;
-		startTransform.setIdentity();
-
-		btScalar mass(1.f);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = (mass != 0.f);
-
-		btVector3 localInertia(0, 0, 0);
-		if (isDynamic)
-			colShape->calculateLocalInertia(mass, localInertia);
-
-		startTransform.setOrigin(btVector3(2, 10, 0));
-
-		//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
-		btRigidBody* body = new btRigidBody(rbInfo);
-
-		dynamicsWorld->addRigidBody(body);
-	}
-
-	/// Do some simulation
-
-	///-----stepsimulation_start-----
-	for (i = 0; i < 150; i++)
-	{
-		dynamicsWorld->stepSimulation(1.f / 60.f, 10);
-
-		//print positions of all objects
-		for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+		for (int y = -200; y < 200; y += 50)
 		{
-			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+			for (int z = 1; z < 200; z += 50)
+			{
+				RenderBulletObject cube;
+				cube.hw_cube = mat4_Identity;
+				cube.hw_cube.m[0][3] = x;
+				cube.hw_cube.m[1][3] = y;
+				cube.hw_cube.m[2][3] = z;
+				//cube[i].cube_dim = { {i, i, i*i/10+1} };
+				cube.cube_dim = { { 3, 1, 1 } };
+				float cubevol = cube.cube_dim.v[0] * cube.cube_dim.v[1] * cube.cube_dim.v[2];
+				cube.body = load_cube(1 * cubevol, cube.cube_dim, h_origin(cube.hw_cube), dynamics_world);
+				cubelist.push_back(cube);
+				btVector3 av = btVector3(x, y, z);
+				av.normalize();
+				av = av * (btScalar(3));
+				cube.body->setAngularVelocity(av);
+			}
+		}
+	}
+	for (int i = 0; i < cubelist.size(); i++)
+		gl_shared_cubes.push_back(&(cubelist[i]));
+
+	//ground_cube.cube_color = { { 1 * .1, .5 * .1, .31 * .1 } };
+	ground_cube.cube_dim = { { 10000, 10000, 1000 } };
+	ground_cube.hw_cube = { {
+		{ 1, 0, 0, 0 },
+		{ 0, 1, 0, 0 },
+		{ 0, 0, 1, -510 },
+		{ 0, 0, 0, 1 }
+	} };
+	ground_cube.body = load_cube(0, ground_cube.cube_dim, h_origin(ground_cube.hw_cube), dynamics_world);
+	gl_shared_cubes.push_back(&ground_cube);
+
+
+	RenderBulletObject player_cube;
+	player_cube.cube_dim = { { 5, 5, 5 } };
+	//player_cube.body = load_cube(1, player_cube.cube_dim, h_origin(player_cube.hw_cube), dynamics_world);
+	btCollisionShape* col_shape = new btSphereShape(10.0f);//btBoxShape(btVector3(btScalar(dim.v[0] / 2), btScalar(dim.v[1] / 2), btScalar(dim.v[2] / 2)));
+	btTransform start_transform;
+	start_transform.setIdentity();
+	start_transform.setOrigin(btVector3(0, 0, 20));
+	btScalar mass = 10.0f;
+	bool is_dynamic = (mass != 0.f);
+	btVector3 local_inertia(0, 0, 0);
+	if (is_dynamic)
+		col_shape->calculateLocalInertia(mass, local_inertia);
+	btDefaultMotionState* motion_state = new btDefaultMotionState(start_transform);
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, motion_state, col_shape, local_inertia);
+	player_cube.body = new btRigidBody(rbInfo);
+	dynamics_world->addRigidBody(player_cube.body);
+	gl_player_cube = &player_cube;
+
+
+	while (run_dynamics_thread == 1)
+	{
+		double time = glfwGetTime();
+		dynamics_world->stepSimulation(time - prev_time, 10);
+		prev_time = time;
+		for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
+		{
+			btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];
 			btRigidBody* body = btRigidBody::upcast(obj);
-			btTransform trans;
-			if (body && body->getMotionState())
-			{
-				body->getMotionState()->getWorldTransform(trans);
-			}
-			else
-			{
-				trans = obj->getWorldTransform();
-			}
-			printf("world pos object %d = %f,%f,%f\n", j, float(trans.getOrigin().getX()), float(trans.getOrigin().getY()), float(trans.getOrigin().getZ()));
+			body->getMotionState();
 		}
+		cubelist[0].body->applyCentralForce(btVector3(0, 0, -9.8));
+
+
+		gl_player_cube->body->applyCentralForce(btVector3(0, 0, keyboard_ctl_vect.v[2]));
+		btVector3 refV = btVector3(keyboard_ctl_vect.v[0], keyboard_ctl_vect.v[1], keyboard_ctl_vect.v[2]);
+		btVector3 ctl = btScalar(300.0) * (refV - gl_player_cube->body->getLinearVelocity());
+		ctl.setZ(0.);
+
+		gl_player_cube->body->applyCentralForce(ctl);
+		//gl_player_cube->body->setLinearVelocity((btVector3(keyboard_ctl_vect.v[0], keyboard_ctl_vect.v[1], 0)));
+		btScalar m = gl_player_cube->body->getMass();
+		gl_player_cube->body->applyCentralForce(btVector3(0, 0, -9.8 * m));
+
+		//btVector3 o_targ = btVector3(20 * sin(time), 20 * cos(time), 10);
+		//if (gl_shared_cubes.size() >= 10)
+		//{
+		//	for (int i = 1; i < 10; i++)
+		//	{
+		//		btRigidBody * body = gl_shared_cubes[i]->body;
+
+		//		btScalar m = body->getMass();
+		//		btScalar k = 30.0f*m;
+		//		btScalar d = 30.0f;
+
+
+		//		btVector3 o_obj = btVector3(gl_shared_cubes[i]->hw_cube.m[0][3], gl_shared_cubes[i]->hw_cube.m[1][3], gl_shared_cubes[i]->hw_cube.m[2][3]);
+
+		//		btVector3 velocity = body->getLinearVelocity();
+		//		btVector3 vtarg = (o_targ - o_obj)*k - velocity*d;
+
+		//		body->applyCentralForce(vtarg);
+		//		body->applyCentralForce(btVector3(0, 0, -9.8*m));
+		//	}
+		//}
+
 	}
-
-	///-----stepsimulation_end-----
-
-	//cleanup in the reverse order of creation/initialization
-
-	///-----cleanup_start-----
-
-	//remove the rigidbodies from the dynamics world and delete them
-	for (i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+	for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
 	{
-		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+		btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];
 		btRigidBody* body = btRigidBody::upcast(obj);
-		if (body && body->getMotionState())
-		{
-			delete body->getMotionState();
-		}
-		dynamicsWorld->removeCollisionObject(obj);
-		delete obj;
+		delete body->getCollisionShape();
 	}
 
-	//delete collision shapes
-	for (int j = 0; j < collisionShapes.size(); j++)
-	{
-		btCollisionShape* shape = collisionShapes[j];
-		collisionShapes[j] = 0;
-		delete shape;
-	}
-
-	//delete dynamics world
-	delete dynamicsWorld;
-
-	//delete solver
+	delete dynamics_world;
 	delete solver;
-
-	//delete broadphase
 	delete overlappingPairCache;
-
-	//delete dispatcher
 	delete dispatcher;
-
-	delete collisionConfiguration;
-
-	//next line is optional: it will be cleared by the destructor when the array goes out of scope
-	collisionShapes.clear();
-
+	delete collision_config;
 }

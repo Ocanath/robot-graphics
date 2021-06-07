@@ -15,12 +15,13 @@
 
 #include "utils.h"
 
+#include "physics_thread.h"
+
 #include "model.h"
 #include "dynahex.h"
 
 #include <iostream>
 #include <thread>
-#include "physics_thread.h"
 
 #define NUM_LIGHTS 5
 
@@ -259,9 +260,14 @@ int main_render_thread(void)
 	unsigned int stone_specular_map = loadTexture("img/large_stone_tiled_specular.png");
 	unsigned int white_map = loadTexture("img/white.png");
 
-	AssetModel cube("misc_models/primitive_shapes/cube.obj");
-	cube.hb_model = new mat4;
-	*cube.hb_model = mat4_I();
+	AssetModel * cube = new AssetModel("misc_models/primitive_shapes/cube.obj");
+	cube->hb_model = new mat4;
+	*cube->hb_model = mat4_I();
+	cube->hb_model->m[0][0] = .1f;
+	cube->hb_model->m[1][1] = .1f;
+	cube->hb_model->m[2][2] = .1f;
+	cube->hb_model->m[0][3] = .1f;
+	cube->hb_model->m[1][3] = .1f;
 
 	lightingShader.use();
 	lightingShader.setInt("material.diffuse", 0);
@@ -478,70 +484,86 @@ int main_render_thread(void)
 
 		const float bcd = 10;
 		float scf = bcd*2;
-		const float zoff = 10.f;
-		mat4 hw_cube[6] =
-		{
-			{
-				{
-					{1, 0, 0, -bcd},
-					{0, scf, 0, 0.f},
-					{0, 0, scf, 0.f},
-					{0, 0, 0, 1.f}
-				}
-			},
-			{
-				{
-					{1, 0, 0, bcd},
-					{0, scf, 0, 0.f},
-					{0, 0, scf, 0.f},
-					{0, 0, 0, 1.f}
-				}
-			},
-			{
-				{
-					{scf, 0, 0, 0.f},
-					{0, 1, 0, -bcd},
-					{0, 0, scf, 0.f},
-					{0, 0, 0, 1.f}
-				}
-			},
-			{
-				{
-					{scf, 0, 0, 0.f},
-					{0, 1, 0, bcd},
-					{0, 0, scf, 0.f},
-					{0, 0, 0, 1.f}
-				}
-			},
-			{
-				{
-					{scf, 0, 0, 0.f},
-					{0, scf, 0, 0.f},
-					{0, 0, 1, -bcd},
-					{0, 0, 0, 1.f}
-				}
-			},
-			{
-				{
-					{scf, 0, 0, 0.f},
-					{0, scf, 0, 0.f},
-					{0, 0, 1, bcd},
-					{0, 0, 0, 1.f}
-				}
-			}
-		};
-		for (int i = 0; i < 6; i++)
-		{
-			hw_cube[i].m[2][3] += zoff;
-			glm::mat4 model = ht_matrix_to_mat4(hw_cube[i]);
-			lightingShader.setMat4("model", model);
+		//const float zoff = 10.f;
+		//mat4 hw_cube[6] =
+		//{
+		//	{
+		//		{
+		//			{1, 0, 0, -bcd},
+		//			{0, scf, 0, 0.f},
+		//			{0, 0, scf, 0.f},
+		//			{0, 0, 0, 1.f}
+		//		}
+		//	},
+		//	{
+		//		{
+		//			{1, 0, 0, bcd},
+		//			{0, scf, 0, 0.f},
+		//			{0, 0, scf, 0.f},
+		//			{0, 0, 0, 1.f}
+		//		}
+		//	},
+		//	{
+		//		{
+		//			{scf, 0, 0, 0.f},
+		//			{0, 1, 0, -bcd},
+		//			{0, 0, scf, 0.f},
+		//			{0, 0, 0, 1.f}
+		//		}
+		//	},
+		//	{
+		//		{
+		//			{scf, 0, 0, 0.f},
+		//			{0, 1, 0, bcd},
+		//			{0, 0, scf, 0.f},
+		//			{0, 0, 0, 1.f}
+		//		}
+		//	},
+		//	{
+		//		{
+		//			{scf, 0, 0, 0.f},
+		//			{0, scf, 0, 0.f},
+		//			{0, 0, 1, -bcd},
+		//			{0, 0, 0, 1.f}
+		//		}
+		//	},
+		//	{
+		//		{
+		//			{scf, 0, 0, 0.f},
+		//			{0, scf, 0, 0.f},
+		//			{0, 0, 1, bcd},
+		//			{0, 0, 0, 1.f}
+		//		}
+		//	}
+		//};
+		//for (int i = 0; i < 6; i++)
+		//{
+		//	hw_cube[i].m[2][3] += zoff;
+		//	glm::mat4 model = ht_matrix_to_mat4(hw_cube[i]);
+		//	lightingShader.setMat4("model", model);
+		//	glBindVertexArray(cubeVAO);
+		//	glDrawArrays(GL_TRIANGLES, 0, 36);
+		//}
 
-			glBindVertexArray(cubeVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+		mat4 cube_hw_b = mat4_I();
+		//mat4 cube_hw_b = Hz(time);
+		//cube_hw_b.m[0][3] = cos(time);
+		//cube_hw_b.m[1][3] = sin(time);
+		//cube_hw_b.m[2][3] = 2.f;
+		//cube->Draw(lightingShader, &cube_hw_b);
+		for (int i = 0; i < cube->meshes.size(); i++)
+		{
+			for (int j = 0; j < cube->meshes[i].vertices.size(); j++)
+			{
+				for (int r = 0; r < 3; r++)
+					cube_hw_b.m[r][3] = cube->meshes[i].vertices[j].Position[r];
+				cube_hw_b.m[2][3] += 2.f;
+				cube->Draw(lightingShader, &cube_hw_b);
+			}
 		}
-		mat4 cube_hw_b = Hz(time);
-		cube_hw_b.m[2][3] = 2.f;
-		cube.Draw(lightingShader, &cube_hw_b);
+
 
 		// don't forget to enable shader before setting uniforms
 		//model_shader.use();// view/projection transformations
@@ -713,9 +735,6 @@ int main_render_thread(void)
 		//calc_tau3(psy_hand_bones->finger[4].chain, 2, &thumb_force, tau);
 		//q[5] += tau[1];
 		//q[4] -= tau[2];
-
-
-
 
 		for ( int i = 0; i < 5; i++)
 		{
