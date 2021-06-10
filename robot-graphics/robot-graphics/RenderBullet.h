@@ -25,9 +25,10 @@ public:
 	vect3 cube_dim;
 	mat4 hw_cube;
 	AssetModel * modelref;
+	float dyn_to_render_f; //sim coordinates might not be the same as render for calculability reasons
 	RenderBulletObject();
 	//~RenderBulletCube();
-	void render(glm::mat4 CameraProjection, glm::mat4 View, Shader& shader, unsigned int cubeVAO);
+	void render(Shader& shader);
 };
 
 //class RenderBulletSphere

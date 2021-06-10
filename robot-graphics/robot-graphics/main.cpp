@@ -127,15 +127,21 @@ int main_render_thread(void);
 
 int main(void)
 {
-	std::thread t2(physics_thread);
-	t2.join();
 	std::thread t1(main_render_thread);
+	std::thread t2(physics_thread);
 	t1.join();
+	t2.join();
+
 }
 
 
 int main_render_thread(void)
 {	
+
+
+	gl_start_dynamics_flag = 1;
+
+
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -168,11 +174,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_mult(Hx(PI), mat4_I());
 	Player.CamRobot.hw_b = mat4_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = -2.18f;
-	Player.CamRobot.hw_b.m[1][3] = 0.73f;
-	Player.CamRobot.hw_b.m[2][3] = 2.08f;
-	Player.CamRobot.j[1].q = fmod(96.58 + PI, 2*PI)-PI;
-	Player.CamRobot.j[2].q = -1.63f;
+	Player.CamRobot.hw_b.m[0][3] = -8.f;
+	Player.CamRobot.hw_b.m[1][3] = -10.f;
+	Player.CamRobot.hw_b.m[2][3] = 8.f;
+	Player.CamRobot.j[1].q = fmod(209.5962f + PI, 2*PI)-PI;
+	Player.CamRobot.j[2].q = -2.067593;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -347,8 +353,7 @@ int main_render_thread(void)
 
 	double ambient_press_time = 0.f;
 	double movement_press_time = 0.f;
-
-
+	run_dynamics_thread = 1;
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -758,6 +763,18 @@ int main_render_thread(void)
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, white_map);
 
+		
+		
+		for (int i = 0; i < gl_shared_cubes.size(); i++)
+		{
+			if(gl_shared_cubes[i]->modelref != NULL)
+				gl_shared_cubes[i]->render(lightingShader);
+			else
+				gl_shared_cubes[i]->modelref = cube;
+		}
+
+
+
 		//lightingShader.setFloat("material.shininess", 32.0f);
 		scf = 0.01f;
 		mat4 tf = {
@@ -888,5 +905,6 @@ int main_render_thread(void)
 			glfwSetWindowShouldClose(window, true);
 	}
 	glfwTerminate();
+	run_dynamics_thread = 0;
 	return 0;
 }

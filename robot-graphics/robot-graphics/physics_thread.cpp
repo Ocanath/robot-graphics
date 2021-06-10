@@ -1,7 +1,7 @@
 #include "physics_thread.h"
 
-int gl_start_dynamics_flag = 0;
-int run_dynamics_thread = 0;
+volatile int gl_start_dynamics_flag = 0;
+volatile int run_dynamics_thread = 0;
 vect3 keyboard_ctl_vect = { 0,0,0 };
 std::vector<RenderBulletObject*> gl_shared_cubes;
 RenderBulletObject * gl_player_cube = NULL;
@@ -10,7 +10,7 @@ RenderBulletObject ground_cube;
 
 btRigidBody* load_cube(btScalar mass, vect3 dim, vect3 initpos, btDiscreteDynamicsWorld* dynamics_world)
 {
-	btCollisionShape* col_shape = new btBoxShape(btVector3(btScalar(dim.v[0] / 2), btScalar(dim.v[1] / 2), btScalar(dim.v[2] / 2)));
+	btCollisionShape* col_shape = new btBoxShape(btVector3(btScalar(dim.v[0]), btScalar(dim.v[1]), btScalar(dim.v[2])));
 	btTransform start_transform;
 	start_transform.setIdentity();
 	start_transform.setOrigin(btVector3(btScalar(initpos.v[0]), btScalar(initpos.v[1]), btScalar(initpos.v[2])));
@@ -36,46 +36,48 @@ void physics_thread(void)
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 	btDiscreteDynamicsWorld* dynamics_world = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collision_config);
 
-	dynamics_world->setGravity(btVector3(0, 0, 0));
 
-	printf("dynamics thread prepared, waiting for signal from render thread\n");
+	printf("dynamics thread started, waiting for signal from render thread to initialize\n");
 	while (gl_start_dynamics_flag == 0);
-	printf("signal received. starting dynamics now\n");
+	printf("signal received. initializing dynamics now\n");
 	double prev_time = glfwGetTime();
 
 	std::vector<RenderBulletObject> cubelist;
-	for (int x = -200; x < 200; x += 50)
-	{
-		for (int y = -200; y < 200; y += 50)
-		{
-			for (int z = 1; z < 200; z += 50)
+	//for (int x = -9; x < 9; x += 1)
+	//{
+	//	for (int y = -9; y < 9; y += 1)
+	//	{
+	//		for (int z = 1; z < 20; z += 1)
 			{
+				float x = 0.f; float y = 0.f; float z = 6.f;
 				RenderBulletObject cube;
 				cube.hw_cube = mat4_Identity;
 				cube.hw_cube.m[0][3] = x;
 				cube.hw_cube.m[1][3] = y;
 				cube.hw_cube.m[2][3] = z;
 				//cube[i].cube_dim = { {i, i, i*i/10+1} };
-				cube.cube_dim = { { 3, 1, 1 } };
+				//cube.cube_dim = { { .3, .1, .1 } };
+				cube.cube_dim = { { 1, 1, 3 } };
 				float cubevol = cube.cube_dim.v[0] * cube.cube_dim.v[1] * cube.cube_dim.v[2];
 				cube.body = load_cube(1 * cubevol, cube.cube_dim, h_origin(cube.hw_cube), dynamics_world);
 				cubelist.push_back(cube);
-				btVector3 av = btVector3(x, y, z);
-				av.normalize();
-				av = av * (btScalar(3));
+				btVector3 av = btVector3(3, 1, 2);
+				//av.normalize();
+				//av = av * (btScalar(.03));
 				cube.body->setAngularVelocity(av);
+				cube.body->setLinearVelocity(btVector3(0, 0, 0));
 			}
-		}
-	}
+	//	}
+	//}
 	for (int i = 0; i < cubelist.size(); i++)
 		gl_shared_cubes.push_back(&(cubelist[i]));
 
 	//ground_cube.cube_color = { { 1 * .1, .5 * .1, .31 * .1 } };
-	ground_cube.cube_dim = { { 10000, 10000, 1000 } };
+	ground_cube.cube_dim = { { 10, 10, 1 } };
 	ground_cube.hw_cube = { {
 		{ 1, 0, 0, 0 },
 		{ 0, 1, 0, 0 },
-		{ 0, 0, 1, -510 },
+		{ 0, 0, 1, -2.f }, 
 		{ 0, 0, 0, 1 }
 	} };
 	ground_cube.body = load_cube(0, ground_cube.cube_dim, h_origin(ground_cube.hw_cube), dynamics_world);
@@ -99,13 +101,17 @@ void physics_thread(void)
 	player_cube.body = new btRigidBody(rbInfo);
 	dynamics_world->addRigidBody(player_cube.body);
 	gl_player_cube = &player_cube;
-
-
+	dynamics_world->setGravity(btVector3(0, 0, 0));
+ 
+	printf("waiting for signal to start dynamics...\r\n");
+	while (run_dynamics_thread != 1);
+	printf("signal received. running dynamics simulation now\r\n");
 	while (run_dynamics_thread == 1)
 	{
 		double time = glfwGetTime();
 		dynamics_world->stepSimulation(time - prev_time, 10);
 		prev_time = time;
+
 		for (int i = dynamics_world->getNumCollisionObjects() - 1; i >= 0; i--)
 		{
 			btCollisionObject* obj = dynamics_world->getCollisionObjectArray()[i];

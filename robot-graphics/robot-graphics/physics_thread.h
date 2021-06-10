@@ -5,8 +5,8 @@
 #include "btBulletDynamicsCommon.h"
 #include <stdio.h>
 
-extern int gl_start_dynamics_flag;
-extern int run_dynamics_thread;
+extern volatile int gl_start_dynamics_flag;
+extern volatile int run_dynamics_thread;
 extern vect3 keyboard_ctl_vect;
 extern std::vector<RenderBulletObject*> gl_shared_cubes;
 extern RenderBulletObject* gl_player_cube;

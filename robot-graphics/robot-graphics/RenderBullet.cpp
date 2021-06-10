@@ -11,10 +11,11 @@ RenderBulletObject::RenderBulletObject()
 		{0,0,1,0},
 		{0,0,0,1}
 	} };
+	dyn_to_render_f = 0.1f;
 	body = NULL;
 }
 
-void RenderBulletObject::render(glm::mat4 CameraProjection, glm::mat4 View, Shader & shader, unsigned int cubeVAO)
+void RenderBulletObject::render(Shader & shader)
 {
 	btTransform trans;
 	body->getMotionState()->getWorldTransform(trans);
@@ -33,9 +34,7 @@ void RenderBulletObject::render(glm::mat4 CameraProjection, glm::mat4 View, Shad
 
 	glm::mat4 model = ht_matrix_to_mat4(hw_cube);
 	shader.setMat4("model", model);
-
-	glBindVertexArray(cubeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	modelref->Draw(shader, NULL);
 }
 
 //RenderBulletCube::~RenderBulletCube()
