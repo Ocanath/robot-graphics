@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "sin_fast.h"
 
 ///*
 //load a const q, dh table
@@ -60,77 +59,107 @@ void copy_mat4(mat4 * dest, mat4 * src)
 }
 
 /*
+*	Initialize links with urdf-style inputs (xyz and roll pitch yaw)
+*/
+void init_forward_kinematics_urdf(joint* j, vect3 * xyz, vect3 * rpy, int num_joints)
+{
+	for(int i = 1; i <= num_joints; i++)
+	{
+		mat4 Hlink = Hz(rpy[i].v[2]);
+		Hlink = mat4_mult(Hlink, Hy(rpy[i].v[1]));
+		Hlink = mat4_mult(Hlink, Hx(rpy[i].v[0]));	//obtained Hrpy
+		for(int r = 0; r < 3; r++)
+			Hlink.m[r][3] = xyz[i].v[r];
+		copy_mat4(&j[i].h_link, &Hlink);	//load result into joint matrix
+		copy_mat4(&j[i].him1_i, &j[i].h_link);	//initial q=0 loading for him1_i
+		j[i - 1].child = &j[i];	//load child reference in case we want to traverse this as a singly linked list
+	}	
+	copy_mat4(&j[0].h_link, &j[0].hb_i);
+	j[0].q = 0;
+	j[num_joints].child = NULL;
+	for (int i = 1; i <= num_joints; i++)
+		mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
+}
+
+/*
 load the kinematic chain Si, h0_i, him1_i variables based on the dh_table.
 NOTE: only done ONCE, as the forward kinematics function only loads the elements which change with q
 
 */
 /*
-	load the kinematic chain Si, h0_i, him1_i variables based on the dh_table.
-	NOTE: only done ONCE, as the forward kinematics function only loads the elements which change with q
+	load the kinematic chain Si, variables based on the dh_table.
+	TODO: make this a linked list
 */
-void init_forward_kinematics(joint* j, int num_joints)
+void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints)
 {
-	//assume all hb_0 and h(-1)_0 came pre-loaded before this call.
-	int i;
-	for (i = 1; i <= num_joints; i++)
+	for (int i = 1; i <= num_joints; i++)
 	{
-		j[i].dh.sin_alpha = sin_fast(j[i].dh.alpha);
-		j[i].dh.cos_alpha = cos_fast(j[i].dh.alpha);
-
-		//[row][column]
-		j[i].him1_i.m[0][0] = 1;
-		j[i].him1_i.m[0][1] = 0;
-		j[i].him1_i.m[0][2] = 0;
-		j[i].him1_i.m[0][3] = j[i].dh.a;
-
-		j[i].him1_i.m[1][0] = 0;
-		j[i].him1_i.m[1][1] = j[i].dh.cos_alpha;
-		j[i].him1_i.m[1][2] = -j[i].dh.sin_alpha;
-		j[i].him1_i.m[1][3] = 0;
-
-		j[i].him1_i.m[2][0] = 0;
-		j[i].him1_i.m[2][1] = j[i].dh.sin_alpha;
-		j[i].him1_i.m[2][2] = j[i].dh.cos_alpha;
-		j[i].him1_i.m[2][3] = j[i].dh.d;
-
-		j[i].him1_i.m[3][0] = 0;
-		j[i].him1_i.m[3][1] = 0;
-		j[i].him1_i.m[3][2] = 0;
-		j[i].him1_i.m[3][3] = 1.0f;
+		float sin_alpha = sin_fast(dh[i].alpha);
+		float cos_alpha = cos_fast(dh[i].alpha);
+		/*Precomputed Hd*Ha*Halpha*/
+		j[i].h_link = {
+			{
+				{1,		0,				0,				dh[i].a},
+				{0,		cos_alpha,		-sin_alpha,		0},
+				{0,		sin_alpha,		cos_alpha,		dh[i].d},
+				{0,		0,				0,				1}
+			}
+		};
+		copy_mat4(&j[i].him1_i, &j[i].h_link);	//htheta of 0 is the identity
+		j[i - 1].child = &j[i];
 	}
-	//copy_mat4(&j[1].h0_i, &j[1].him1_i); 
-	//j[1].hb_i = j[0].hb_i * j[1].him1_i;
-	for (i = 1; i <= num_joints; i++)
+	copy_mat4(&j[0].h_link, &j[0].hb_i);
+	j[0].q = 0;
+	j[num_joints].child = NULL;	//initialize the last node in the linked list to NULL
+	for (int i = 1; i <= num_joints; i++)
 		mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
 }
-
 /*
-calculate the forward kinematics of chain, pass by reference-pointer
+Do forward kinematics on a singly linked list of joints!
+Inputs:
+		j: the root of the chain
+Outputs:
+		updates him1_i and hb_i of every element in the list
+
+obviously singly linked list has same limitation as array. On
+an embedded system, dynamic memory and recursion are not allowed 
+(both of which would be quite nice here; i.e. we can implement this as a dfs
+type recursive run through the tree) so we'll have to operate on the tree
+in a rigid structure (i.e. hard-coding what would normally be recursive)
 */
-void forward_kinematics(joint * j, int num_joints)
+void forward_kinematics(joint* j, int num_joints)
 {
-	int i;
-	for (i = 1; i <= num_joints; i++)
+	//int i;
+	//for (i = 1; i <= num_joints; i++)
+	//{
+	//	float sth = sin_fast(j[i].q);
+	//	float cth = cos_fast(j[i].q);
+	//	mat4 h_theta = { { {cth, -sth, 0,  0 }, { sth,cth, 0, 0}, {0, 0, 1, 0 }, {0, 0, 0, 1} } };
+	//	mat4_mult_pbr(&h_theta, &j[i].h_link, &j[i].him1_i);
+	//}
+	//for (i = 1; i <= num_joints; i++)
+	//	mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);		//j[i].h0_i = mat4_mult(j[i - 1].h0_i, j[i].him1_i);
+
+
+	joint* chain_start = j;
+	while (j->child != NULL)
 	{
-		float sth = sin_fast(j[i].q);
-		float cth = cos_fast(j[i].q);
-
-		//update all variable entries (only rotational joints for this framework, although uncommenting the d line below will allow for FK for prismatic joints. 
-		j[i].him1_i.m[0][0] = cth;
-		j[i].him1_i.m[0][1] = -sth * j[i].dh.cos_alpha;
-		j[i].him1_i.m[0][2] = sth * j[i].dh.sin_alpha;
-		j[i].him1_i.m[0][3] = j[i].dh.a * cth;
-
-		j[i].him1_i.m[1][0] = sth;
-		j[i].him1_i.m[1][1] = cth * j[i].dh.cos_alpha;
-		j[i].him1_i.m[1][2] = -cth * j[i].dh.sin_alpha;
-		j[i].him1_i.m[1][3] = j[i].dh.a * sth;
+		j = j->child;		//assume the passed pointer is the base of the chain, so start with the first child
+		float sth = sin_fast(j->q);
+		float cth = cos_fast(j->q);
+		mat4 h_theta = { { {cth, -sth, 0,  0 }, { sth,cth, 0, 0}, {0, 0, 1, 0 }, {0, 0, 0, 1} } };
+		mat4_mult_pbr(&h_theta, &j->h_link, &j->him1_i);
 	}
-	//copy_mat4(&j[1].h0_i, &j[1].him1_i);
-	for (i = 1; i <= num_joints; i++)
-		mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);		//j[i].h0_i = mat4_mult(j[i - 1].h0_i, j[i].him1_i);
+	
+	joint* parent = chain_start;	//since we only track the child node in the joint, we'll track the parent and only go down the list
+	j = chain_start;
+	while (j->child != NULL)
+	{
+		j = j->child;	//j is now one ahead of parent
+		mat4_mult_pbr(&parent->hb_i, &j->him1_i, &j->hb_i);
+		parent = j;
+	}
 }
-
 
 /*
 	Calculates the robot jacobian matrix satisfying the relationship v = J*qdot, where qdot is a vector of generalized joint velocities,
