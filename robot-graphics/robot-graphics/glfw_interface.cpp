@@ -160,10 +160,16 @@ void init_cam(CamControlStruct * P, joint * j)
 	//P->CamRobot.DH_Table[2].d = 0;			P->CamRobot.DH_Table[2].a = 0;			P->CamRobot.DH_Table[2].alpha = -PI / 2; 
 	//P->CamRobot.DH_Table[3].d = 0;			P->CamRobot.DH_Table[3].a = 0;			P->CamRobot.DH_Table[3].alpha = 0;
 
-	P->CamRobot.j[1].dh.d = 0;		P->CamRobot.j[1].dh.a = 0;		P->CamRobot.j[1].dh.alpha = PI/2;
-	P->CamRobot.j[2].dh.d = 0;		P->CamRobot.j[2].dh.a = 0;		P->CamRobot.j[2].dh.alpha = -PI / 2;
-	P->CamRobot.j[3].dh.d = 0;		P->CamRobot.j[3].dh.a = 0;		P->CamRobot.j[3].dh.alpha = 0;
-
+	//P->CamRobot.j[1].dh.d = 0;		P->CamRobot.j[1].dh.a = 0;		P->CamRobot.j[1].dh.alpha = PI/2;
+	//P->CamRobot.j[2].dh.d = 0;		P->CamRobot.j[2].dh.a = 0;		P->CamRobot.j[2].dh.alpha = -PI / 2;
+	//P->CamRobot.j[3].dh.d = 0;		P->CamRobot.j[3].dh.a = 0;		P->CamRobot.j[3].dh.alpha = 0;
+	const dh_entry cambot_dh[] = 
+	{
+		{0, 0, 0},
+		{0, 0, PI/2},
+		{0, 0, -PI/2},
+		{0, 0, 0}
+	};
 
 	 P->CamRobot.j[1].q = -PI / 2;
 	 P->CamRobot.j[2].q = -PI / 2;
@@ -173,7 +179,7 @@ void init_cam(CamControlStruct * P, joint * j)
 	//init_forward_kinematics_KC(&(P->CamRobot));
 	 P->CamRobot.j[0].hb_i = mat4_I();
 	 P->CamRobot.j[0].him1_i = mat4_I();
-	init_forward_kinematics(P->CamRobot.j, P->CamRobot.num_frames-1);
+	init_forward_kinematics_dh(P->CamRobot.j, cambot_dh, P->CamRobot.num_frames-1);
 }
 
 

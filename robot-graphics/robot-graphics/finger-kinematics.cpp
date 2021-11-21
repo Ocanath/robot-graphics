@@ -114,9 +114,10 @@ const mat4 id_matrix = {
 //l1 = a1
 //l3 = a2
 
-const dh_entry generic_finger_dh[2] = {
-	{0.f, 38.6104f, 0.f, 0.f, 0.f},	//d, a, alpha, sin_alpha, cos_alpha
-	{0.f, 9.1241f, 0.f, 0.f, 0.f}	//d, a, alpha, sin_alpha, cos_alpha
+const dh_entry generic_finger_dh[3] = {
+	{0.f, 0.f, 0.f},
+	{0.f, 38.6104f, 0.f},	//d, a, alpha
+	{0.f, 9.1241f, 0.f}	//d, a, alpha
 };
 
 /*
@@ -125,10 +126,10 @@ Approximate Origin of index fingertip in frame 2 for whatever idk shrot finger o
 15.1816
 0
 */
-
-const dh_entry generic_thumb_dh[2] = {
-	{-14.7507f, 27.703f,	75.f*PI/180,	0.f, 0.f},	//d, a, alpha, sin_alpha, cos_alpha
-	{3.9348f,	69.23921f,	0.f,			0.f, 0.f}			//d, a, alpha, sin_alpha, cos_alpha
+const dh_entry generic_thumb_dh[3] = {
+	{0.f, 0.f, 0.f},
+	{-14.7507f, 27.703f,	75.f*PI/180},	//d, a, alpha
+	{3.9348f,	69.23921f,	0.f}			//d, a, alpha
 };
 
 /**/
@@ -165,7 +166,7 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 	{
 		int fidx = INDEX;
 		mat4 tf = Hy(PI / 2 + 0.051012f);	//ish
-		tf = mat4_mult(tf, Hz(-0.250689f));	//post first rotation rotation about z
+		tf = mat4_mult(tf, Hz(-0.250689f));	//
 		tf.m[0][3] = -9.49f;
 		tf.m[1][3] = -13.04f;
 		tf.m[2][3] = -62.95f;
@@ -174,8 +175,8 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 	}
 	{
 		int fidx = MIDDLE;
-		mat4 tf = Hy(PI / 2 + 0.086766f);	//ish
-		tf = mat4_mult(tf, Hz(-0.252478f));	//post first rotation rotation about z
+		mat4 tf = Hy(PI / 2 + 0.086766f/2);	//ish
+		tf = mat4_mult(tf, Hz(-0.252478f));	//
 		tf.m[0][3] = 9.65;
 		tf.m[1][3] = -15.31;
 		tf.m[2][3] = -67.85f;
@@ -185,7 +186,7 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 	{
 		int fidx = RING;
 		mat4 tf = Hy(PI / 2 + 0.051012f);	//ish
-		tf = mat4_mult(tf, Hz(-0.250689f));	//post first rotation rotation about z
+		tf = mat4_mult(tf, Hz(-0.250689f));	//
 		tf.m[0][3] = 29.95f;
 		tf.m[1][3] = -14.21f;
 		tf.m[2][3] = -67.29f;
@@ -194,8 +195,8 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 	}
 	{
 		int fidx = PINKY;
-		mat4 tf = Hy(PI / 2 + 0.111526539f);	//ish
-		tf = mat4_mult(tf, Hz(-0.2486f));	//post first rotation rotation about z
+		mat4 tf = Hy(PI / 2 + 0.111526539f/3);
+		tf = mat4_mult(tf, Hz(-0.2486f));	//
 		tf.m[0][3] = 49.52;
 		tf.m[1][3] = -11.f;
 		tf.m[2][3] = -63.03;
@@ -209,14 +210,11 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 		joint * j = kh->finger[ch].chain;
 		if(ch != 4)
 		{
-			j[1].dh = generic_finger_dh[0];
-			j[2].dh = generic_finger_dh[1];	//hard copy. same line count as for loop
+			init_forward_kinematics_dh(j, generic_finger_dh, 2);
 		}
 		else
 		{
-			j[1].dh = generic_thumb_dh[0];
-			j[2].dh = generic_thumb_dh[1];
-		}
-		init_forward_kinematics(j,2);
+			init_forward_kinematics_dh(j, generic_thumb_dh, 2);
+		}		
 	}
 }

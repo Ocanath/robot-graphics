@@ -2,6 +2,7 @@
 #define KINEMATICS_H
 
 #include "spatialAlgebra.h"
+#include "sin_fast.h"
 
 typedef struct dh_entry
 {
@@ -9,8 +10,8 @@ typedef struct dh_entry
 	float a;
 	float alpha;
 
-	float sin_alpha;	//pre-store sin and cos of alpha, to avoid re-computing it every loop
-	float cos_alpha;
+	//float sin_alpha;	//pre-store sin and cos of alpha, to avoid re-computing it every loop
+	//float cos_alpha;
 	//theta is stored separately
 }dh_entry;
 
@@ -22,10 +23,13 @@ typedef struct joint
 	vect6 Si;			//vector corresponding to the i'th column of the jacobian matrix. Si*q(i) = vi, where vi is the ith's joint's contribution to the total chain velocity in frame 0
 	mat4 hb_i;			//homogeneous transformation relating the BASE frame to the current frame (i). hb_0 = him1_0
 	mat4 him1_i;		//homogeneous transformation describing the rotation and translation from frame i-1 to the current frame (i). 
-	dh_entry dh;	//dh parameter describing the offset and angles from frame i-1 to the current frame (i)
+	//dh_entry dh;	//dh parameter describing the offset and angles from frame i-1 to the current frame (i)
 	
+	mat4 h_link;	//pre-computed, constant matrix. given that h_theta is the rotation matrix defined by q/theta, then him1_i = h_theta*h_link. 
+
 	mat6 I_hat;			//6 matrix describing the spatial inertia of each frame with respect to the origin.
 
+	struct joint * child;
 }joint;
 
 typedef struct kinematic_chain
@@ -40,7 +44,8 @@ typedef struct kinematic_chain
 //void init_chain(kinematic_chain * chain, const dh_entry * table, const float * q_init, int num_frames);
 //void chain_pre_allocate(kinematic_chain * chain, int num_frames);
 //void chain_de_allocate(kinematic_chain * chain);
-void init_forward_kinematics(joint* j, int num_joints);
+void init_forward_kinematics_urdf(joint* j, vect3* xyz, vect3* rpy, int num_joints);
+void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints);
 void forward_kinematics(joint* j, int num_joints);
 void calc_J_point(joint* j, int num_joints, vect3 point);
 void copy_mat4(mat4* dest, mat4* src);

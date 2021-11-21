@@ -84,6 +84,22 @@ typedef struct light_params_t
 	float quadratic;
 }light_params_t;
 
+/*Core function wrapping my linear spring vector controller*/
+float get_vect_err(float targ, float ref)
+{
+	float thr = fmod_2pi(ref + PI) - PI;
+	float vr1 = cos_fast(thr);
+	float vr2 = sin_fast(thr);
+
+	float th_targ = fmod_2pi(targ + PI) - PI;
+	float vt1 = cos_fast(th_targ);
+	float vt2 = sin_fast(th_targ);
+
+	float vd1 = vt1 - vr1;
+	float vd2 = vt2 - vr2;
+
+	return (vr1 * vd2 - vr2 * vd1);	//control error
+}
 
 void transform_mpos_to_kpos(float qin[6], kinematic_hand_t * hand)
 {
@@ -167,11 +183,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_mult(Hx(PI), mat4_I());
 	Player.CamRobot.hw_b = mat4_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = -2.18f;
-	Player.CamRobot.hw_b.m[1][3] = 0.73f;
-	Player.CamRobot.hw_b.m[2][3] = 2.08f;
-	Player.CamRobot.j[1].q = fmod(96.58 + PI, 2*PI)-PI;
-	Player.CamRobot.j[2].q = -1.63f;
+	Player.CamRobot.hw_b.m[0][3] = 3.661463f;
+	Player.CamRobot.hw_b.m[1][3] = 0.38022f;
+	Player.CamRobot.hw_b.m[2][3] = 2.3704f;
+	Player.CamRobot.j[1].q = fmod(13355.036133 + PI, 2*PI)-PI;
+	Player.CamRobot.j[2].q = -1.794593f;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -585,10 +601,23 @@ int main_render_thread(void)
 		for (int ch = 0; ch < NUM_CHANNELS; ch++)
 			qd[ch] = system_griplist_default[cfg_idx]->wp[ch].qd;
 
+
+
+
+
+		for (int ch = 0; ch < 6; ch++)
+			q[ch] = 0;	
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(q, psy_hand_bones);
 		finger_kinematics(psy_hand_bones);
-		
+
+		//printf("link transformed = \n");
+		//print_mat4(psy_hand_bones->finger[0].chain[1].him1_i);
+		//printf("\nlink dh-original= \n");
+		//print_mat4(psy_hand_bones->finger[0].chain[1].h_link);
+		//printf("\nfinger hb_0\n");
+		//print_mat4(psy_hand_bones->finger[0].chain[0].hb_i);
+
 		float tau[3] = { 0,0,0 };	//num joints + 1
 		vect3 f = { 0,0,0 };
 		vect3 thumb_force = { 0,0,0 };
@@ -598,21 +627,15 @@ int main_render_thread(void)
 
 		/*Shirk Implementation/Test*/
 		float k = .02f;
-		float tau4 = k * (qd[4] - q[4]);
-		float tau5 = k * (qd[5] - q[5]);
-		float sferr = 0.f;
-		float finger_error[4];
-		for (int i = 0; i < 4; i++)
-		{
-			float error = qd[i] - q[i];
-			finger_error[i] = error;
-			q[i] += k * error;
-
-			if (error < 0.f)
-				error = -error;	//take absolute value of error
-			sferr += error;
-		}
 		
+		//float tau4 = k * get_vect_err(DEG_TO_RAD * qd[4], DEG_TO_RAD * q[4]) * RAD_TO_DEG;
+		//float tau5 = k * get_vect_err(DEG_TO_RAD * qd[5], DEG_TO_RAD * q[5]) * RAD_TO_DEG;
+		float finger_error[6];
+		for (int i = 0; i < 6; i++)
+			finger_error[i] = get_vect_err(DEG_TO_RAD * qd[i], DEG_TO_RAD * q[i]) * RAD_TO_DEG;
+		float tau4 = k * finger_error[4];
+		float tau5 = k * finger_error[5];
+
 		#define NUM_THUMB_REFPOINTS 4
 		vect3 o_thumb_mid, o_thumb_low, o_thumb_side;
 		vect3 thumb_midref_2 = { -21.39, -9.25, -2.81 };
@@ -643,7 +666,7 @@ int main_render_thread(void)
 			if (tip_scalef < 0.f)
 				tip_scalef = 0.f;	//
 
-			abserr = qd[5] - q[5];
+			abserr = finger_error[5];
 			if (abserr < 0)
 				abserr = -abserr;
 			float knuckle_scalef = 1.f - (1.f / abserr);
@@ -670,7 +693,8 @@ int main_render_thread(void)
 				shirk += shirk_v;	//accumulate thumb rotator torque
 			}
 		}
-		
+		for(int i = 0; i < 4; i++)
+			q[i] += k * finger_error[i];
 		q[4] += tau4+shirk;
 		q[5] += tau5;
 		/*END SHIRK TEST*/
