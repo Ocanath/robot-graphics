@@ -4,15 +4,15 @@
 TOOD: Benchmark speed
 TODO: implement bottom method using float pointers instead of copying the top and bottom of each into a new location (for speed increase)
 */
-vect6 spatial_vect6_cross(vect6 a, vect6 b)
+vect6_t spatial_vect6_cross(vect6_t a, vect6_t b)
 {
-	//mat6 across = spatial_cross_operator(a);
-	//vect6 ret = mat6_vect6_mult(across, b);
+	//mat6_t across = spatial_cross_operator(a);
+	//vect6_t ret = mat6_vect6_mult(across, b);
 	//return ret;
-	vect3 top_a;
-	vect3 bot_a;
-	vect3 top_b;
-	vect3 bot_b;
+	vect3_t top_a;
+	vect3_t bot_a;
+	vect3_t top_b;
+	vect3_t bot_b;
 	int i;
 	for (i = 0; i < 3; i++)
 	{
@@ -21,14 +21,14 @@ vect6 spatial_vect6_cross(vect6 a, vect6 b)
 		top_b.v[i] = b.v[i];
 		bot_b.v[i] = b.v[i + 3];
 	}
-	vect3 top, res1, res2;
+	vect3_t top, res1, res2;
 	cross_pbr(&top_a, &top_b, &top);
 
 	cross_pbr(&bot_a, &top_b, &res1);
 	cross_pbr(&top_a, &bot_b, &res2);
-	vect3 bot = vect3_add(res1, res2);	
+	vect3_t bot = vect3_add(res1, res2);	
 
-	vect6 ret;
+	vect6_t ret;
 	for (i = 0; i < 3; i++)
 	{
 		ret.v[i] = top.v[i];
@@ -37,19 +37,19 @@ vect6 spatial_vect6_cross(vect6 a, vect6 b)
 	return ret;
 }
 
-mat6 spatial_cross_operator(vect6 v)
+mat6_t spatial_cross_operator(vect6_t v)
 {
-	vect3 a;
-	vect3 b;
+	vect3_t a;
+	vect3_t b;
 	int i;
 	for (i = 0; i < 3; i++)
 	{
 		a.v[i] = v.v[i];
 		b.v[i] = v.v[i + 3];
 	}
-	mat6 ret;
-	mat3 ax = skew(a);
-	mat3 bx = skew(b);
+	mat6_t ret;
+	mat3_t ax = skew(a);
+	mat3_t bx = skew(b);
 	int r, c;
 	for (r = 0; r < 3; r++)
 	{
@@ -64,21 +64,21 @@ mat6 spatial_cross_operator(vect6 v)
 	return ret;
 }
 
-mat6 h4_to_X(mat4 ha_b)
+mat6_t h4_to_X(mat4_t ha_b)
 {
-	mat3 E;
+	mat3_t E;
 	int r, c;
 	for (r = 0; r < 3; r++)
 	{
 		for (c = 0; c < 3; c++)
 			E.m[r][c] = ha_b.m[r][c];
 	}
-	vect3 ob;
+	vect3_t ob;
 	for (r = 0; r < 3; r++)
 		ob.v[r] = ha_b.m[r][3];
-	mat3 rx = skew(ob);
-	mat3 rx_E = mat3_mult(rx, E);
-	mat6 ret;
+	mat3_t rx = skew(ob);
+	mat3_t rx_E = mat3_mult(rx, E);
+	mat6_t ret;
 	for (r = 0; r < 3; r++)
 	{
 		for (c = 0; c < 3; c++)
@@ -95,28 +95,28 @@ mat6 h4_to_X(mat4 ha_b)
 	}
 	return ret;
 }
-vect6 c_change_spatial(mat4 ha_b, vect6 vb)
+vect6_t c_change_spatial(mat4_t ha_b, vect6_t vb)
 {
-	vect3 v, w;
+	vect3_t v, w;
 	int r,c;
 	for (r = 0; r < 3; r++)
 	{
 		w.v[r] = vb.v[r];
 		v.v[r] = vb.v[r + 3];
 	}
-	mat3 E;
+	mat3_t E;
 	for (r = 0; r < 3; r++)
 	{
 		for (c = 0; c < 3; c++)
 			E.m[r][c] = ha_b.m[r][c];
 	}
-	vect3 w_ret = mat3_vect3_mult(E, w);
-	vect3 ob;
+	vect3_t w_ret = mat3_vect3_mult(E, w);
+	vect3_t ob;
 	for (r = 0; r < 3; r++)
 		ob.v[r] = ha_b.m[r][3];
-	mat3 rx = skew(ob);
-	vect3 v_ret = vect3_add(mat3_vect3_mult(rx, mat3_vect3_mult(E, w)), mat3_vect3_mult(E,v));
-	vect6 ret;
+	mat3_t rx = skew(ob);
+	vect3_t v_ret = vect3_add(mat3_vect3_mult(rx, mat3_vect3_mult(E, w)), mat3_vect3_mult(E,v));
+	vect6_t ret;
 	for (r = 0; r < 3; r++)
 	{
 		ret.v[r] = w_ret.v[r];
@@ -125,9 +125,9 @@ vect6 c_change_spatial(mat4 ha_b, vect6 vb)
 	return ret;
 }
 
-mat3 mat3_T(mat3 in)
+mat3_t mat3_T(mat3_t in)
 {
-	mat3 ret;
+	mat3_t ret;
 	int r, c;
 	for (r = 0; r < 3; r++)
 	{
@@ -140,27 +140,27 @@ mat3 mat3_T(mat3 in)
 }
 
 
-mat3 Rx(float angle)
+mat3_t Rx(float angle)
 {
-	mat3 ret;
+	mat3_t ret;
 	ret.m[0][0] = 1;	ret.m[0][1] = 0;			ret.m[0][2] = 0;			
 	ret.m[1][0] = 0;	ret.m[1][1] = cos_fast(angle);	ret.m[1][2] = -sin_fast(angle);
 	ret.m[2][0] = 0;	ret.m[2][1] = sin_fast(angle);	ret.m[2][2] = cos_fast(angle);
 	return ret;
 }
 /*Returns rotation about coordinate. 0 = identity*/
-mat3 Ry(float angle)
+mat3_t Ry(float angle)
 {
-	mat3 ret;
+	mat3_t ret;
 	ret.m[0][0] = cos_fast(angle);	ret.m[0][1] = 0;	ret.m[0][2] = sin_fast(angle);
 	ret.m[1][0] = 0;			ret.m[1][1] = 1;	ret.m[1][2] = 0;			
 	ret.m[2][0] = -sin_fast(angle);	ret.m[2][1] = 0;	ret.m[2][2] = cos_fast(angle);
 	return ret;
 }
 /*Returns rotation about coordinate. 0 = identity*/
-mat3 Rz(float angle)
+mat3_t Rz(float angle)
 {
-	mat3 ret;
+	mat3_t ret;
 	ret.m[0][0] = cos_fast(angle);	ret.m[0][1] = -sin_fast(angle);		ret.m[0][2] = 0;
 	ret.m[1][0] = sin_fast(angle);	ret.m[1][1] = cos_fast(angle);		ret.m[1][2] = 0;
 	ret.m[2][0] = 0;			ret.m[2][1] = 0;				ret.m[2][2] = 1;	
@@ -168,10 +168,10 @@ mat3 Rz(float angle)
 	return ret;
 }
 
-/*returns the inverse of a homogeneous transform type mat4 matrix*/
-mat4 ht_inverse(mat4 hin)
+/*returns the inverse of a homogeneous transform type mat4_t matrix*/
+mat4_t ht_inverse(mat4_t hin)
 {
-	mat4 hout;
+	mat4_t hout;
 	int r; int c;
 	for (r = 0; r < 3; r++)
 	{
@@ -188,10 +188,10 @@ mat4 ht_inverse(mat4 hin)
 	return hout;
 }
 
-/*returns homogeneous transform mat4 matrix which is the rotation 'analge' around the x axis */
-mat4 Hx(float angle)
+/*returns homogeneous transform mat4_t matrix which is the rotation 'analge' around the x axis */
+mat4_t Hx(float angle)
 {
-	mat4 ret;
+	mat4_t ret;
 	ret.m[0][0] = 1;	ret.m[0][1] = 0;				ret.m[0][2] = 0;				ret.m[0][3] = 0;
 	ret.m[1][0] = 0;	ret.m[1][1] = cos_fast(angle);	ret.m[1][2] = -sin_fast(angle);	ret.m[1][3] = 0;
 	ret.m[2][0] = 0;	ret.m[2][1] = sin_fast(angle);	ret.m[2][2] = cos_fast(angle);	ret.m[2][3] = 0;
@@ -200,9 +200,9 @@ mat4 Hx(float angle)
 }
 
 /*Returns rotation about coordinate. 0 = identity*/
-mat4 Hy(float angle)
+mat4_t Hy(float angle)
 {
-	mat4 ret;
+	mat4_t ret;
 	ret.m[0][0] = cos_fast(angle);	ret.m[0][1] = 0;	ret.m[0][2] = sin_fast(angle);	ret.m[0][3] = 0;
 	ret.m[1][0] = 0;				ret.m[1][1] = 1;	ret.m[1][2] = 0;				ret.m[1][3] = 0;
 	ret.m[2][0] = -sin_fast(angle);	ret.m[2][1] = 0;	ret.m[2][2] = cos_fast(angle);	ret.m[2][3] = 0;
@@ -210,9 +210,9 @@ mat4 Hy(float angle)
 	return ret;	
 }
 /*Returns rotation about coordinate. 0 = identity*/
-mat4 Hz(float angle)
+mat4_t Hz(float angle)
 {
-	mat4 ret;
+	mat4_t ret;
 	ret.m[0][0] = cos_fast(angle);		ret.m[0][1] = -sin_fast(angle);		ret.m[0][2] = 0;	ret.m[0][3] = 0;
 	ret.m[1][0] = sin_fast(angle);		ret.m[1][1] = cos_fast(angle);		ret.m[1][2] = 0;	ret.m[1][3] = 0;
 	ret.m[2][0] = 0;					ret.m[2][1] = 0;					ret.m[2][2] = 1;	ret.m[2][3] = 0;
@@ -222,9 +222,9 @@ mat4 Hz(float angle)
 /*
 	Returns vector cross product between 3 vectors A and B.
 */
-vect3 cross(vect3 v_a, vect3 v_b)
+vect3_t cross(vect3_t v_a, vect3_t v_b)
 {
-	vect3 ret;
+	vect3_t ret;
 	ret.v[0] = -v_a.v[2] * v_b.v[1] + v_a.v[1] * v_b.v[2];
 	ret.v[1] = v_a.v[2] * v_b.v[0] - v_a.v[0] * v_b.v[2];
 	ret.v[2] = -v_a.v[1] * v_b.v[0] + v_a.v[0] * v_b.v[1];
@@ -233,16 +233,16 @@ vect3 cross(vect3 v_a, vect3 v_b)
 /*
 	Returns vector cross product between 3 vectors A and B. Faster pass by pointer version
 */
-void cross_pbr(vect3 * v_a, vect3 * v_b, vect3 * ret)
+void cross_pbr(vect3_t * v_a, vect3_t * v_b, vect3_t * ret)
 {
 	ret->v[0] = -v_a->v[2]*v_b->v[1] + v_a->v[1]*v_b->v[2];
 	ret->v[1] = v_a->v[2]*v_b->v[0] - v_a->v[0]*v_b->v[2];
 	ret->v[2] = -v_a->v[1]*v_b->v[0] + v_a->v[0]*v_b->v[1];
 }
 /*Returns skew symmetric matrix of 3 vector vin*/
-mat3 skew(vect3 vin)
+mat3_t skew(vect3_t vin)
 {
-	mat3 ret;
+	mat3_t ret;
 	float x = vin.v[0];	float y = vin.v[1];	float z = vin.v[2];
 	ret.m[0][0] = 0;	ret.m[0][1] = -z;	ret.m[0][2] = y;
 	ret.m[1][0] = z;	ret.m[1][1] = 0;	ret.m[1][2] = -x;
@@ -250,31 +250,31 @@ mat3 skew(vect3 vin)
 	return ret;
 }
 /*Multiples vector v_a by scalar scale*/
-vect6 vect6_scale(vect6 v_a, float scale)
+vect6_t vect6_scale(vect6_t v_a, float scale)
 {
-	vect6 ret; int i;
+	vect6_t ret; int i;
 	for (i = 0; i<6; i++)
 		ret.v[i] = v_a.v[i] * scale;
 	return ret;
 }
 /*Multiples vector v_a by scalar scale*/
-vect4 vect4_scale(vect4 v_a, float scale)
+vect4_t vect4_scale(vect4_t v_a, float scale)
 {
-	vect4 ret; int i;
+	vect4_t ret; int i;
 	for(i=0;i<4;i++)
 		ret.v[i] = v_a.v[i] * scale;
 	return ret;
 }
 /*Multiples vector v_a by scalar scale*/
-vect3 vect3_scale(vect3 v_a, float scale)
+vect3_t vect3_scale(vect3_t v_a, float scale)
 {
-	vect3 ret; int i;
+	vect3_t ret; int i;
 	for (i = 0; i<3; i++)
 		ret.v[i] = v_a.v[i] * scale;
 	return ret;
 }
 /*6 vector dot product*/
-float vect6_dot(vect6 v_a, vect6 v_b)
+float vect6_dot(vect6_t v_a, vect6_t v_b)
 {
 	float ret = 0;
 	int i;
@@ -283,7 +283,7 @@ float vect6_dot(vect6 v_a, vect6 v_b)
 	return ret;
 }
 /*4 vector dot product (note: for homogeneous transformation matrices, the 4th term is always 1)*/
-float vect4_dot(vect4 v_a, vect4 v_b)
+float vect4_dot(vect4_t v_a, vect4_t v_b)
 {
 	float ret = 0;
 	int i;
@@ -292,7 +292,7 @@ float vect4_dot(vect4 v_a, vect4 v_b)
 	return ret;
 }
 /*3 vector dot product*/
-float vect3_dot(vect3 v_a, vect3 v_b)
+float vect3_dot(vect3_t v_a, vect3_t v_b)
 {
 	float ret = 0;
 	int i;
@@ -301,46 +301,46 @@ float vect3_dot(vect3 v_a, vect3 v_b)
 	return ret;
 }
 
-vect6 vect6_add(vect6 v_a, vect6 v_b)
+vect6_t vect6_add(vect6_t v_a, vect6_t v_b)
 {
-	vect6 ret;
+	vect6_t ret;
 	int dim = 6; int i;
 	for (i = 0; i < dim; i++)
 		ret.v[i] = v_a.v[i] + v_b.v[i];
 	return ret;
 }
 
-vect4 vect4_add(vect4 v_a, vect4 v_b)
+vect4_t vect4_add(vect4_t v_a, vect4_t v_b)
 {
-	vect4 ret;
+	vect4_t ret;
 	int dim = 4; int i;
 	for (i = 0; i < dim; i++)
 		ret.v[i] = v_a.v[i] + v_b.v[i];
 	return ret;
 }
 
-vect6 zero_vect6()
+vect6_t zero_vect6()
 {
-	vect6 ret;
+	vect6_t ret;
 	int i;
 	for (i = 0; i < 6; i++)
 		ret.v[i] = 0;
 	return ret;
 }
 
-vect3 vect3_add(vect3 v_a, vect3 v_b)
+vect3_t vect3_add(vect3_t v_a, vect3_t v_b)
 {
-	vect3 ret;
+	vect3_t ret;
 	int dim = 3; int i;
 	for (i = 0; i < dim; i++)
 		ret.v[i] = v_a.v[i] + v_b.v[i];
 	return ret;
 }
-float vect3_magnitude(vect3 v)
+float vect3_magnitude(vect3_t v)
 {
 	return sqrt( v.v[0]*v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2]);
 }
-vect3 vect3_normalize(vect3 v)
+vect3_t vect3_normalize(vect3_t v)
 {
 	float scale = 1/(sqrt(v.v[0] * v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2]));
 	v.v[0] *= scale;
@@ -348,10 +348,10 @@ vect3 vect3_normalize(vect3 v)
 	v.v[2] *= scale;
 	return v;
 }
-vect6 mat6_vect6_mult(mat6 m, vect6 v)
+vect6_t mat6_vect6_mult(mat6_t m, vect6_t v)
 {
 	int rsize = 6; int vsize = 6;
-	vect6 ret;
+	vect6_t ret;
 	int r, i;
 	for (r = 0; r < rsize; r++)
 	{
@@ -365,10 +365,10 @@ vect6 mat6_vect6_mult(mat6 m, vect6 v)
 	return ret;
 }
 
-vect4 mat4_vect4_mult(mat4 m, vect4 v)
+vect4_t mat4_t_vect4_mult(mat4_t m, vect4_t v)
 {
 	int rsize = 4; int vsize = 4;
-	vect4 ret;
+	vect4_t ret;
 	int r, i;
 	for (r = 0; r < rsize; r++)
 	{
@@ -381,10 +381,10 @@ vect4 mat4_vect4_mult(mat4 m, vect4 v)
 	}
 	return ret;
 }
-vect3 mat4_vect3_mult(mat4 m, vect3 v)
+vect3_t mat4_t_vect3_mult(mat4_t m, vect3_t v)
 {
 	int rsize = 3; int vsize = 4;
-	vect3 ret;
+	vect3_t ret;
 	int r, i;
 	for (r = 0; r < rsize; r++)
 	{
@@ -402,10 +402,10 @@ vect3 mat4_vect3_mult(mat4 m, vect3 v)
 	return ret;
 }
 
-vect3 mat3_vect3_mult(mat3 m, vect3 v)
+vect3_t mat3_vect3_mult(mat3_t m, vect3_t v)
 {
 	int rsize = 3; int vsize = 3;
-	vect3 ret;
+	vect3_t ret;
 	int r, i;
 	for (r = 0; r < rsize; r++)
 	{
@@ -419,9 +419,9 @@ vect3 mat3_vect3_mult(mat3 m, vect3 v)
 	return ret;
 }
 
-mat6 mat6_mult(mat6 m1, mat6 m2)
+mat6_t mat6_mult(mat6_t m1, mat6_t m2)
 {
-	mat6 ret;
+	mat6_t ret;
 	int dim = 6;
 	int out_r; int out_c; int i;
 	for (out_r = 0; out_r < dim; out_r++)
@@ -439,11 +439,11 @@ mat6 mat6_mult(mat6 m1, mat6 m2)
 	return ret;
 }
 /*
-	Multiplies two mat4 matrices
+	Multiplies two mat4_t matrices
 */
-mat4 mat4_mult(mat4 m1, mat4 m2)
+mat4_t mat4_t_mult(mat4_t m1, mat4_t m2)
 {
-	mat4 ret;
+	mat4_t ret;
 	int dim = 4;
 	int out_r; int out_c; int i;
 	for (out_r = 0; out_r < dim; out_r++)
@@ -461,9 +461,9 @@ mat4 mat4_mult(mat4 m1, mat4 m2)
 	return ret;
 }
 /*
-	Multiplies two mat4 matrices, pass by pointer
+	Multiplies two mat4_t matrices, pass by pointer
 */
-void mat4_mult_pbr(mat4 * m1, mat4 * m2, mat4 * ret)
+void mat4_t_mult_pbr(mat4_t * m1, mat4_t * m2, mat4_t * ret)
 {
 	int dim = 4;
 	int out_r; int out_c; int i;
@@ -481,9 +481,9 @@ void mat4_mult_pbr(mat4 * m1, mat4 * m2, mat4 * ret)
 	}
 }
 
-mat3 mat3_mult(mat3 m1, mat3 m2)
+mat3_t mat3_mult(mat3_t m1, mat3_t m2)
 {
-	mat3 ret;
+	mat3_t ret;
 	int dim = 3;
 	int out_r; int out_c; int i;
 	for (out_r = 0; out_r < dim; out_r++)
@@ -501,9 +501,9 @@ mat3 mat3_mult(mat3 m1, mat3 m2)
 	return ret;
 }
 
-mat6 mat6_add(mat6 m1, mat6 m2)
+mat6_t mat6_add(mat6_t m1, mat6_t m2)
 {
-	mat6 ret;
+	mat6_t ret;
 	int dim = 6;
 	int r, c;
 	for (r = 0; r < dim; r++)
@@ -516,9 +516,9 @@ mat6 mat6_add(mat6 m1, mat6 m2)
 	return ret;
 }
 
-mat4 mat4_add(mat4 m1, mat4 m2)
+mat4_t mat4_t_add(mat4_t m1, mat4_t m2)
 {
-	mat4 ret;
+	mat4_t ret;
 	int dim = 4;
 	int r, c;
 	for (r = 0; r < dim; r++)
@@ -531,9 +531,9 @@ mat4 mat4_add(mat4 m1, mat4 m2)
 	return ret;
 }
 
-mat3 mat3_add(mat3 m1, mat3 m2)
+mat3_t mat3_add(mat3_t m1, mat3_t m2)
 {
-	mat3 ret;
+	mat3_t ret;
 	int dim = 3;
 	int r, c;
 	for (r = 0; r < dim; r++)
@@ -548,7 +548,7 @@ mat3 mat3_add(mat3 m1, mat3 m2)
 
 
 
-const mat4 mat4_Identity = {
+const mat4_t mat4_t_Identity = {
 	{
 		{ 1, 0, 0, 0 },
 		{ 0, 1, 0, 0 },
@@ -556,18 +556,18 @@ const mat4 mat4_Identity = {
 		{ 0, 0, 0, 1 }
 	}
 };
-const mat3 mat3_Identity = {
+const mat3_t mat3_Identity = {
 	{
 		{ 1, 0, 0 },
 		{ 0, 1, 0 },
 		{ 0, 0, 1 }
 	}
 };
-mat4 mat4_I()
+mat4_t mat4_t_I()
 {
-	return mat4_Identity;
+	return mat4_t_Identity;
 }
-mat3 mat3_I()
+mat3_t mat3_I()
 {
 	return mat3_Identity;
 }
@@ -589,18 +589,18 @@ void matrix_vect_multiply(float ** M1, int rsize, float * v, int vsize, float * 
 }
 
 
-vect3 vect4_to_vect3(vect4 in)
+vect3_t vect4_to_vect3(vect4_t in)
 {
-	vect3 ret;
+	vect3_t ret;
 	int i;
 	for (i = 0; i < 3; i++)
 		ret.v[i] = in.v[i];
 	return ret;
 }
 
-vect4 vect3_to_vect4(vect3 in)
+vect4_t vect3_to_vect4(vect3_t in)
 {
-	vect4 ret;
+	vect4_t ret;
 	int i;
 	for (i = 0; i < 3; i++)
 		ret.v[i] = in.v[i];

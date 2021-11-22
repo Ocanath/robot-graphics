@@ -12,101 +12,113 @@
 /*
 	Rotation matrices, skew symmetric matrices take this type
 */
-typedef struct mat3
+typedef float mat3[3][3];
+typedef struct mat3_t
 {
-	float m[3][3];
-}mat3;
+	mat3 m;
+}mat3_t;
+
 
 /*
-	homogeneous transformation matrices take this type	
+	Array wrapper for unambiguous pointer to 2d array
 */
-typedef struct mat4
+typedef float mat4[4][4];
+
+/*
+	homogeneous transformation matrices take this type. Allows working with arrays as a type directly (including returns) instead of pointers
+*/
+typedef struct mat4_t
 {
-	float m[4][4];
-}mat4;
+	mat4 m;
+}mat4_t;
+
 
 /*
 	spatial coordinate transformations and spatial inertia tensors take this type.
 	NOTE: future implementations shouldn not use this variable type, instead opting for optimizations that are mathematically equivalent
-	(such as storage of a spatial transformation as a 1 mat3, and a 3 vector)
+	(such as storage of a spatial transformation as a 1 mat3_t, and a 3 vector)
 */
-typedef struct mat6
+typedef float mat6[6][6];
+typedef struct mat6_t
 {
-	float m[6][6];
-}mat6;
+	mat6 m;
+}mat6_t;
 
 /*
 	Line, free vectors. 
 */
-typedef struct vect3
+typedef float vect3[3];
+typedef struct vect3_t
 {
-	float v[3];
-}vect3;
+	vect3 v;
+}vect3_t;
 
 /*
 homogeneous transformation matrix vectors (lol)
 */
-typedef struct vect4
+typedef float vect4[4];
+typedef struct vect4_t
 {
-	float v[4];
-}vect4;
+	vect4 v;
+}vect4_t;
 
 /*
 	spatial vectors
 */
-typedef struct vect6
+typedef float vect6[6];
+typedef struct vect6_t
 {
-	float v[6];
-}vect6;
+	vect6 v;
+}vect6_t;
 
 
-extern const mat4 mat4_Identity;
-extern const mat3 mat3_Identity;
+extern const mat4_t mat4_t_Identity;
+extern const mat3_t mat3_Identity;
 
 
-vect6 spatial_vect6_cross(vect6 a, vect6 b);
-mat6 spatial_cross_operator(vect6 v);
-vect3 cross(vect3 v_a, vect3 v_b);
-void cross_pbr(vect3* v_a, vect3* v_b, vect3* ret);
-mat3 skew(vect3 vin);
-vect6 vect6_scale(vect6 v_a, float scale);
-vect4 vect4_scale(vect4 v_a, float scale);
-vect3 vect3_scale(vect3 v_a, float scale);
-float vect6_dot(vect6 v_a, vect6 v_b);
-float vect4_dot(vect4 v_a, vect4 v_b);
-float vect3_dot(vect3 v_a, vect3 v_b);
-vect6 vect6_add(vect6 v_a, vect6 v_b);
-vect4 vect4_add(vect4 v_a, vect4 v_b);
-vect3 vect3_add(vect3 v_a, vect3 v_b);
-float vect3_magnitude(vect3 v);
-vect3 vect3_normalize(vect3 v);
-vect6 zero_vect6();
-vect6 mat6_vect6_mult(mat6 m, vect6 v);
-vect4 mat4_vect4_mult(mat4 m, vect4 v);
-vect3 mat4_vect3_mult(mat4 m, vect3 v);	//untested
-vect3 mat3_vect3_mult(mat3 m, vect3 v);
-mat6 mat6_mult(mat6 m1, mat6 m2);
-mat4 mat4_mult(mat4 m1, mat4 m2);
-void mat4_mult_pbr(mat4* m1, mat4* m2, mat4* ret);
-mat3 mat3_mult(mat3 m1, mat3 m2);
-mat6 mat6_add(mat6 m1, mat6 m2);
-mat4 mat4_add(mat4 m1, mat4 m2);
-mat3 mat3_add(mat3 m1, mat3 m2);
-mat4 mat4_I();
-mat3 mat3_I();
-mat3 Rx(float angle);
-mat3 Ry(float angle);
-mat3 Rz(float angle);
-mat4 ht_inverse(mat4 hin);
-mat4 Hx(float angle);
-mat4 Hy(float angle);
-mat4 Hz(float angle);
-mat3 mat3_T(mat3 in);
+vect6_t spatial_vect6_cross(vect6_t a, vect6_t b);
+mat6_t spatial_cross_operator(vect6_t v);
+vect3_t cross(vect3_t v_a, vect3_t v_b);
+void cross_pbr(vect3_t* v_a, vect3_t* v_b, vect3_t* ret);
+mat3_t skew(vect3_t vin);
+vect6_t vect6_scale(vect6_t v_a, float scale);
+vect4_t vect4_scale(vect4_t v_a, float scale);
+vect3_t vect3_scale(vect3_t v_a, float scale);
+float vect6_dot(vect6_t v_a, vect6_t v_b);
+float vect4_dot(vect4_t v_a, vect4_t v_b);
+float vect3_dot(vect3_t v_a, vect3_t v_b);
+vect6_t vect6_add(vect6_t v_a, vect6_t v_b);
+vect4_t vect4_add(vect4_t v_a, vect4_t v_b);
+vect3_t vect3_add(vect3_t v_a, vect3_t v_b);
+float vect3_magnitude(vect3_t v);
+vect3_t vect3_normalize(vect3_t v);
+vect6_t zero_vect6();
+vect6_t mat6_vect6_mult(mat6_t m, vect6_t v);
+vect4_t mat4_t_vect4_mult(mat4_t m, vect4_t v);
+vect3_t mat4_t_vect3_mult(mat4_t m, vect3_t v);	//untested
+vect3_t mat3_vect3_mult(mat3_t m, vect3_t v);
+mat6_t mat6_mult(mat6_t m1, mat6_t m2);
+mat4_t mat4_t_mult(mat4_t m1, mat4_t m2);
+void mat4_t_mult_pbr(mat4_t* m1, mat4_t* m2, mat4_t* ret);
+mat3_t mat3_mult(mat3_t m1, mat3_t m2);
+mat6_t mat6_add(mat6_t m1, mat6_t m2);
+mat4_t mat4_t_add(mat4_t m1, mat4_t m2);
+mat3_t mat3_add(mat3_t m1, mat3_t m2);
+mat4_t mat4_t_I();
+mat3_t mat3_I();
+mat3_t Rx(float angle);
+mat3_t Ry(float angle);
+mat3_t Rz(float angle);
+mat4_t ht_inverse(mat4_t hin);
+mat4_t Hx(float angle);
+mat4_t Hy(float angle);
+mat4_t Hz(float angle);
+mat3_t mat3_T(mat3_t in);
 void matrix_vect_multiply(float ** M1, int rsize, float * v, int vsize, float * out);
-mat6 h4_to_X(mat4 ha_b);
-vect6 c_change_spatial(mat4 ha_b, vect6 vb);
+mat6_t h4_to_X(mat4_t ha_b);
+vect6_t c_change_spatial(mat4_t ha_b, vect6_t vb);
 
-vect4 vect3_to_vect4(vect3 in);
-vect3 vect4_to_vect3(vect4 in);
+vect4_t vect3_to_vect4(vect3_t in);
+vect3_t vect4_to_vect3(vect4_t in);
 
 #endif

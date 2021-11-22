@@ -9,7 +9,7 @@ enum {REPEL, STOP, ATTRACT, NEUTRAL};	//concept for flag setting of conflict avo
 typedef struct kinematic_finger_t
 {
 	joint chain[3];
-	vect3 ef_pos_b;
+	vect3_t ef_pos_b;
 }kinematic_finger_t;
 
 typedef struct kinematic_hand_t
@@ -21,8 +21,8 @@ void finger_kinematics(kinematic_hand_t * kh);
 void init_finger_kinematics(kinematic_hand_t * kh);
 float get_4bar_driven_angle(float q1);
 
-//void htmatrix_vect3_mult(mat4_t * m, vect3_t * v, vect3_t * ret);
-void htmatrix_vect3_mult(mat4* m, vect3* v, vect3* ret);
+//void htmatrix_vect3_mult(mat4_t_t * m, vect3_t * v, vect3_t * ret);
+void htmatrix_vect3_mult(mat4_t* m, vect3_t* v, vect3_t* ret);
 
 /*
 Procedure:

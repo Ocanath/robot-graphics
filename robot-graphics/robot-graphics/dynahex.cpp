@@ -12,7 +12,7 @@ const dh_entry hexleg_dh[NUM_FRAMES_HEXLEG] = {
 
 void init_dh_kinematics(dynahex_t * h)
 {
-	mat4 hb_0_leg0 =
+	mat4_t hb_0_leg0 =
 	{
 		{
 			{1.f,	0,		0,		109.7858f},
@@ -25,16 +25,16 @@ void init_dh_kinematics(dynahex_t * h)
 	for (int leg = 0; leg < NUM_LEGS; leg++)
 	{
 		joint * j = h->leg[leg].chain;		
-		j[0].him1_i = mat4_mult(hb_0_leg0, Hz(PI));
-		j[0].him1_i = mat4_mult(j[0].him1_i, Hx(PI));
-		j[0].him1_i = mat4_mult(Hz(leg * angle_f), j[0].him1_i);
-		copy_mat4(&j[0].hb_i, &j[0].him1_i);
+		j[0].him1_i = mat4_t_mult(hb_0_leg0, Hz(PI));
+		j[0].him1_i = mat4_t_mult(j[0].him1_i, Hx(PI));
+		j[0].him1_i = mat4_t_mult(Hz(leg * angle_f), j[0].him1_i);
+		copy_mat4_t(&j[0].hb_i, &j[0].him1_i);
 
 		init_forward_kinematics_dh(j, hexleg_dh, NUM_JOINTS_HEXLEG);
 	}
 }
 
-static vect3 o_foottip_3 = { -15.31409f, -9.55025f, 0.f };
+static vect3_t o_foottip_3 = { -15.31409f, -9.55025f, 0.f };
 
 void forward_kinematics_dynahexleg(dynahex_t* h)
 {

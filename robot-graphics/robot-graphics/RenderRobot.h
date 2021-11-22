@@ -5,7 +5,7 @@
 
 typedef struct RenderRobot_t
 {
-	mat4 hw_b;
+	mat4_t hw_b;
 	vector<AssetModel>;
 }RenderRobot_t;
 

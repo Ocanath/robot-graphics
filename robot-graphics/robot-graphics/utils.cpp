@@ -9,7 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-void print_mat3(mat3 m)
+void print_mat3(mat3_t m)
 {
 	int r, c;
 	for (r = 0; r < 3; r++)
@@ -24,7 +24,7 @@ void print_mat3(mat3 m)
 	printf("\r\n");
 }
 
-void print_mat4(mat4 m)
+void print_mat4_t(mat4_t m)
 {
 	int r, c;
 	for (r = 0; r < 4; r++)
@@ -39,7 +39,7 @@ void print_mat4(mat4 m)
 	printf("\r\n");
 }
 
-void print_vect6(vect6 v)
+void print_vect6(vect6_t v)
 {
 	int i;
 	printf("{");
@@ -48,7 +48,7 @@ void print_vect6(vect6 v)
 	printf("%f }", v.v[5]);
 }
 
-void print_vect4(vect4 v)
+void print_vect4(vect4_t v)
 {
 	int i;
 	printf("{");
@@ -57,7 +57,7 @@ void print_vect4(vect4 v)
 	printf("%f }", v.v[3]);
 }
 
-void print_vect3(vect3 v)
+void print_vect3(vect3_t v)
 {
 	int i;
 	printf("{");

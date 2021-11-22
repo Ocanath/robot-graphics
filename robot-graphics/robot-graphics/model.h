@@ -32,7 +32,7 @@ public:
     vector<Mesh>    meshes;
     string directory;
     bool gammaCorrection;
-    mat4* hb_model; //hw_b 
+    mat4_t* hb_model; //hw_b 
 
     // constructor, expects a filepath to a 3D model.
     AssetModel(string const& path, bool gamma = false) : gammaCorrection(gamma)
@@ -42,13 +42,13 @@ public:
     }
 
     // draws the model, and thus all its meshes
-    void Draw(Shader& shader, mat4* hw_b)
+    void Draw(Shader& shader, mat4_t* hw_b)
     {
         if (hw_b != NULL && hb_model != NULL)
         {
-            mat4 hw_model;
-            mat4_mult_pbr(hw_b, hb_model, &hw_model);
-            glm::mat4 model = ht_matrix_to_mat4(hw_model);
+            mat4_t hw_model;
+            mat4_t_mult_pbr(hw_b, hb_model, &hw_model);
+            glm::mat4 model = ht_matrix_to_mat4_t(hw_model);
             shader.setMat4("model", model);
         }
         for (unsigned int i = 0; i < meshes.size(); i++)

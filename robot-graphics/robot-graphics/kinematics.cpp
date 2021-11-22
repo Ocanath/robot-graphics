@@ -3,51 +3,10 @@
 #include <stdlib.h>
 #include <math.h>
 
-///*
-//load a const q, dh table
-//*/
-//void init_chain(kinematic_chain * chain, const dh_entry * table, const float * q_init, int num_frames)
-//{
-//	chain->num_frames = num_frames;
-//	int i;
-//	for (i = 1; i <= chain->num_frames; i++)
-//	{
-//		chain->j[i].dh_params = table[i];
-//		chain->j[i].q = q_init[i];
-//		chain->j[i].dq = 0;
-//		chain->j[i].ddq = 0;
-//	}
-//	chain->hb_0 = mat4_I();
-//	chain->hw_b = mat4_I();
-//	init_forward_kinematics(chain);
-//	forward_kinematics(chain);
-//}
-
 /*
-	C++ PC ONLY function to pre-allocate memory for a kinematic chain.
-	THIS IS NOT TO BE USED ON AN EMBEDDED SYSTEM. probably won't compile anyway
-	to quote stackoverflow: 
-		
-		"The need of using malloc on such systems typically originates
-		from confused PC programmers who have picked up embedded programming
-		without studying it first."
+	Copies the contents of one mat4_t to the other. could use memcpy interchangably
 */
-//void chain_pre_allocate(kinematic_chain * chain, int num_frames)
-//{
-//	chain->num_frames = num_frames;
-//	chain->j = new joint[num_frames];
-//}
-//void chain_de_allocate(kinematic_chain * chain)
-//{
-//	delete chain->j;
-//}
-
-
-
-/*
-	Copies the contents of one mat4 to the other. could use memcpy interchangably
-*/
-void copy_mat4(mat4 * dest, mat4 * src)
+void copy_mat4_t(mat4_t * dest, mat4_t * src)
 {
 	for (int r = 0; r < 4; r++)
 	{
@@ -61,24 +20,24 @@ void copy_mat4(mat4 * dest, mat4 * src)
 /*
 *	Initialize links with urdf-style inputs (xyz and roll pitch yaw)
 */
-void init_forward_kinematics_urdf(joint* j, vect3 * xyz, vect3 * rpy, int num_joints)
+void init_forward_kinematics_urdf(joint* j, vect3_t * xyz, vect3_t * rpy, int num_joints)
 {
 	for(int i = 1; i <= num_joints; i++)
 	{
-		mat4 Hlink = Hz(rpy[i].v[2]);
-		Hlink = mat4_mult(Hlink, Hy(rpy[i].v[1]));
-		Hlink = mat4_mult(Hlink, Hx(rpy[i].v[0]));	//obtained Hrpy
+		mat4_t Hlink = Hz(rpy[i].v[2]);
+		Hlink = mat4_t_mult(Hlink, Hy(rpy[i].v[1]));
+		Hlink = mat4_t_mult(Hlink, Hx(rpy[i].v[0]));	//obtained Hrpy
 		for(int r = 0; r < 3; r++)
 			Hlink.m[r][3] = xyz[i].v[r];
-		copy_mat4(&j[i].h_link, &Hlink);	//load result into joint matrix
-		copy_mat4(&j[i].him1_i, &j[i].h_link);	//initial q=0 loading for him1_i
+		copy_mat4_t(&j[i].h_link, &Hlink);	//load result into joint matrix
+		copy_mat4_t(&j[i].him1_i, &j[i].h_link);	//initial q=0 loading for him1_i
 		j[i - 1].child = &j[i];	//load child reference in case we want to traverse this as a singly linked list
 	}	
-	copy_mat4(&j[0].h_link, &j[0].hb_i);
+	copy_mat4_t(&j[0].h_link, &j[0].hb_i);
 	j[0].q = 0;
 	j[num_joints].child = NULL;
 	for (int i = 1; i <= num_joints; i++)
-		mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
+		mat4_t_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
 }
 
 /*
@@ -105,14 +64,14 @@ void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints)
 				{0,		0,				0,				1}
 			}
 		};
-		copy_mat4(&j[i].him1_i, &j[i].h_link);	//htheta of 0 is the identity
+		copy_mat4_t(&j[i].him1_i, &j[i].h_link);	//htheta of 0 is the identity
 		j[i - 1].child = &j[i];
 	}
-	copy_mat4(&j[0].h_link, &j[0].hb_i);
+	copy_mat4_t(&j[0].h_link, &j[0].hb_i);
 	j[0].q = 0;
 	j[num_joints].child = NULL;	//initialize the last node in the linked list to NULL
 	for (int i = 1; i <= num_joints; i++)
-		mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
+		mat4_t_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
 }
 /*
 Do forward kinematics on a singly linked list of joints!
@@ -127,36 +86,38 @@ an embedded system, dynamic memory and recursion are not allowed
 type recursive run through the tree) so we'll have to operate on the tree
 in a rigid structure (i.e. hard-coding what would normally be recursive)
 */
-void forward_kinematics(joint* j, int num_joints)
+void forward_kinematics(joint* chain, int num_joints)
 {
-	//int i;
-	//for (i = 1; i <= num_joints; i++)
-	//{
-	//	float sth = sin_fast(j[i].q);
-	//	float cth = cos_fast(j[i].q);
-	//	mat4 h_theta = { { {cth, -sth, 0,  0 }, { sth,cth, 0, 0}, {0, 0, 1, 0 }, {0, 0, 0, 1} } };
-	//	mat4_mult_pbr(&h_theta, &j[i].h_link, &j[i].him1_i);
-	//}
-	//for (i = 1; i <= num_joints; i++)
-	//	mat4_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);		//j[i].h0_i = mat4_mult(j[i - 1].h0_i, j[i].him1_i);
-
-
-	joint* chain_start = j;
-	while (j->child != NULL)
+	joint* j = chain;
+	while(j->child != NULL)
 	{
-		j = j->child;		//assume the passed pointer is the base of the chain, so start with the first child
+		j = j->child;
 		float sth = sin_fast(j->q);
 		float cth = cos_fast(j->q);
-		mat4 h_theta = { { {cth, -sth, 0,  0 }, { sth,cth, 0, 0}, {0, 0, 1, 0 }, {0, 0, 0, 1} } };
-		mat4_mult_pbr(&h_theta, &j->h_link, &j->him1_i);
+
+		mat4_t* r = &j->h_link;
+		mat4_t * him1_i = &j->him1_i;	//specify lookup ptr first for faster loading
+
+		him1_i->m[0][0] = cth * r->m[0][0] - r->m[1][0] * sth;
+		him1_i->m[0][1] = cth * r->m[0][1] - r->m[1][1] * sth;
+		him1_i->m[0][2] = cth * r->m[0][2] - r->m[1][2] * sth;
+		him1_i->m[0][3] = cth * r->m[0][3] - r->m[1][3] * sth;
+		him1_i->m[1][0] = cth * r->m[1][0] + r->m[0][0] * sth;
+		him1_i->m[1][1] = cth * r->m[1][1] + r->m[0][1] * sth;
+		him1_i->m[1][2] = cth * r->m[1][2] + r->m[0][2] * sth;
+		him1_i->m[1][3] = cth * r->m[1][3] + r->m[0][3] * sth;
+		him1_i->m[2][0] = r->m[2][0];
+		him1_i->m[2][1] = r->m[2][1];
+		him1_i->m[2][2] = r->m[2][2];
+		him1_i->m[2][3] = r->m[2][3];
 	}
 	
-	joint* parent = chain_start;	//since we only track the child node in the joint, we'll track the parent and only go down the list
-	j = chain_start;
+	joint* parent = chain;
+	j = chain;
 	while (j->child != NULL)
 	{
-		j = j->child;	//j is now one ahead of parent
-		mat4_mult_pbr(&parent->hb_i, &j->him1_i, &j->hb_i);
+		j = j->child;
+		mat4_t_mult_pbr(&parent->hb_i, &j->him1_i, &j->hb_i);
 		parent = j;
 	}
 }
@@ -198,18 +159,18 @@ NOTE:
 	Where [tau] is a vector of torques (size n/number of joints), J^T is the transpose of the jacobian matrix defined above, and
 	f is the same generalized force/torque 6 vector expressed in the 0 frame.
 */
-void calc_J_point(joint * j, int num_joints, vect3 point)
+void calc_J_point(joint * j, int num_joints, vect3_t point)
 {
 	int i, v_idx;
-	vect3 z;
-	vect3 d;
+	vect3_t z;
+	vect3_t d;
 	for (i = 1; i <= num_joints; i++)
 	{
 		for (v_idx = 0; v_idx < 3; v_idx++)
 			z.v[v_idx] = j[i - 1].hb_i.m[v_idx][2];					//extract the unit vector corresponding to the axis of rotation of frame i-1 (i.e., the axis of rotation of q)
 		for (v_idx = 0; v_idx < 3; v_idx++)
 			d.v[v_idx] = point.v[v_idx] - j[i - 1].hb_i.m[v_idx][3];	//extract the difference between the target point in the base frame and the origin of frame i-1
-		vect3 res;
+		vect3_t res;
 		cross_pbr(&z, &d, &res);
 
 		j[i].Si.v[0] = z.v[0];		//Si = [w, v]^T; 
@@ -223,9 +184,9 @@ void calc_J_point(joint * j, int num_joints, vect3 point)
 }
 
 
-vect6 calc_w_v(kinematic_chain * chain, vect3 * w, vect3 * v)
+vect6_t calc_w_v(kinematic_chain * chain, vect3_t * w, vect3_t * v)
 {
-	vect6 ret;
+	vect6_t ret;
 	int i;
 	for (i = 0; i < 6; i++)
 		ret.v[i] = 0;			//initialize the sum
@@ -240,21 +201,21 @@ vect6 calc_w_v(kinematic_chain * chain, vect3 * w, vect3 * v)
 	return ret;
 }
 
-//void calc_tau(kinematic_chain * chain, vect6 f, float * tau)
+//void calc_tau(kinematic_chain * chain, vect6_t f, float * tau)
 //{
 //	int i;
 //	for (i = 1; i < chain->num_frames; i++)
 //		tau[i] = vect6_dot(chain->j[i].Si, f);
 //}
 
-void calc_tau(joint * j, int num_joints, vect6 f, float * tau)
+void calc_tau(joint * j, int num_joints, vect6_t f, float * tau)
 {
 	int i;
 	for (i = 1; i <= num_joints; i++)
 		tau[i] = vect6_dot(j[i].Si, f);
 }
 
-void calc_tau3(joint * j, int num_joints, vect3 * f, float* tau)
+void calc_tau3(joint * j, int num_joints, vect3_t * f, float* tau)
 {
 	for (int i = 1; i <= num_joints; i++)
 	{
@@ -265,8 +226,8 @@ void calc_tau3(joint * j, int num_joints, vect3 * f, float* tau)
 	}
 }
 
-/*pass by reference htmatrix (special subset of mat4) and 3 vector)*/
-void htmatrix_vect3_mult(mat4* m, vect3* v, vect3* ret)
+/*pass by reference htmatrix (special subset of mat4_t) and 3 vector)*/
+void htmatrix_vect3_mult(mat4_t* m, vect3_t* v, vect3_t* ret)
 {
 	int rsize = 3; int vsize = 4;
 	int r, i;
@@ -287,9 +248,9 @@ void htmatrix_vect3_mult(mat4* m, vect3* v, vect3* ret)
 /*
 helper function for extracting the origin of a ht matrix
 */
-vect3 h_origin(mat4 h)
+vect3_t h_origin(mat4_t h)
 {
-	vect3 ret;
+	vect3_t ret;
 	int i;
 	for (i = 0; i < 3; i++)
 		ret.v[i] = h.m[i][3];
@@ -299,9 +260,9 @@ vect3 h_origin(mat4 h)
 helper function for extracting the origin of a ht matrix 
 in the form of a 4 vector
 */
-vect4 h_origin_vect4(mat4 h)
+vect4_t h_origin_vect4(mat4_t h)
 {
-	vect4 ret;
+	vect4_t ret;
 	int i;
 	for (i = 0; i < 3; i++)
 		ret.v[i] = h.m[i][3];
@@ -313,9 +274,9 @@ vect4 h_origin_vect4(mat4 h)
 * TODO TEST THIS FUNCTION
 * Transforms a NORMALIZED quaternion to a rotation matrix
 */
-mat4 quat_to_mat4(vect4 quat, vect3 origin)
+mat4_t quat_to_mat4_t(vect4_t quat, vect3_t origin)
 {
-	mat4 m;
+	mat4_t m;
 	float q1 = quat.v[0];
 	float q2 = quat.v[1];
 	float q3 = quat.v[2];

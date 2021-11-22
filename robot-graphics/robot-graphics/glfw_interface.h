@@ -34,7 +34,7 @@ typedef struct CamControlStruct
 	double xyV;
 	double jumpV;
 	double telV;
-	vect3 cur_V;
+	vect3_t cur_V;
 	kinematic_chain CamRobot;
 	
 }CamControlStruct;
@@ -57,7 +57,7 @@ typedef struct VBOModelStruct
 	int isize;
 
 
-	mat4 HW_Model;
+	mat4_t HW_Model;
 	glm::mat4 ModelMatrix;
 	glm::mat4 MVP;
 	
@@ -70,9 +70,9 @@ void init_cam(CamControlStruct * P, joint * j);
 
 
 
-glm::mat4 ht_matrix_to_mat4(mat4 H);
+glm::mat4 ht_matrix_to_mat4_t(mat4_t H);
 //glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double fps);
-glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double fps, vect3 otarg_w);
+glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double fps, vect3_t otarg_w);
 
 double RPF(double rv, double fps);
 double TPF(double tv, double fps);

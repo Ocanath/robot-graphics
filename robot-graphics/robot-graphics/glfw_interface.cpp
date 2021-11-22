@@ -16,7 +16,7 @@ void initVBO_OBJ(VBOModelStruct * M, GLuint programID, const char * path)
 void renderVBO_OBJ(VBOModelStruct * M, GLuint Texture, GLuint TextureID, glm::mat4 View, glm::mat4 Projection)
 {
 	
-	M->ModelMatrix = ht_matrix_to_mat4(M->HW_Model);
+	M->ModelMatrix = ht_matrix_to_mat4_t(M->HW_Model);
 	M->MVP = Projection * View * M->ModelMatrix;
 
 	RenderVBO_OBJ(&M->MVP, &M->ModelMatrix, M->MatrixID, M->ModelMatrixID, Texture,
@@ -25,7 +25,7 @@ void renderVBO_OBJ(VBOModelStruct * M, GLuint Texture, GLuint TextureID, glm::ma
 
 
 
-//glm::mat4 ModelMatrix1 = ht_matrix_to_mat4(HW_MouseHead);
+//glm::mat4 ModelMatrix1 = ht_matrix_to_mat4_t(HW_MouseHead);
 //glm::mat4 MVP1 = Projection * View * ModelMatrix1;
 void RenderVBO_OBJ(glm::mat4 * MVP1, glm::mat4 * ModelMatrix1, GLuint MatrixID, GLuint ModelMatrixID, GLuint Texture,
 	GLuint TextureID, GLuint * vertexbuffer, GLuint * uvbuffer, GLuint * normalbuffer, GLuint * elementbuffer, int size)
@@ -177,13 +177,13 @@ void init_cam(CamControlStruct * P, joint * j)
 	
 	//init fk
 	//init_forward_kinematics_KC(&(P->CamRobot));
-	 P->CamRobot.j[0].hb_i = mat4_I();
-	 P->CamRobot.j[0].him1_i = mat4_I();
+	 P->CamRobot.j[0].hb_i = mat4_t_I();
+	 P->CamRobot.j[0].him1_i = mat4_t_I();
 	init_forward_kinematics_dh(P->CamRobot.j, cambot_dh, P->CamRobot.num_frames-1);
 }
 
 
-glm::mat4 ht_matrix_to_mat4(mat4 H)
+glm::mat4 ht_matrix_to_mat4_t(mat4_t H)
 {
 	double HC_W_T[16];
 	int r, c;
@@ -215,7 +215,7 @@ double TPF(double tv, double fps)
 	return tv / fps;
 }
 
-glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double fps, vect3 otarg_w)
+glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double fps, vect3_t otarg_w)
 {
 	double xpos, ypos;
 	int xsize, ysize;
@@ -229,7 +229,7 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 	// Compute new orientation
 	P->horizontalAngle += .003 * double(1024 / 2 - xpos);
 	P->verticalAngle += .003 * double(768 / 2 - ypos);
-	vect4 move_v;
+	vect4_t move_v;
 	move_v.v[0] = 0; move_v.v[1] = 0; move_v.v[2] = 0; move_v.v[3] = 1;
 	char act = 0;
 	//Forward
@@ -271,7 +271,7 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 	// Display player parameters
 	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
 	{
-		vect3 pos = h_origin(P->CamRobot.hw_b);
+		vect3_t pos = h_origin(P->CamRobot.hw_b);
 		printf("coord = (%f, %f, %f) q = (%f, %f, %f)\r\n", pos.v[0], pos.v[1], pos.v[2], P->CamRobot.j[1].q, P->CamRobot.j[2].q, P->CamRobot.j[3].q);
 	}
 
@@ -316,21 +316,21 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 
 	forward_kinematics(P->CamRobot.j, P->CamRobot.num_frames-1);
 
-	mat4 HW_C3;
-	mat4 HW_C1;
-	mat4 HW_0;
-	HW_0 = mat4_mult(P->CamRobot.hw_b, P->CamRobot.hb_0);		//HT_Multiply(P->CamRobot.HW_B, P->CamRobot.HB_0, &HW_0);
-	HW_C1 = mat4_mult(HW_0, P->CamRobot.j[1].hb_i);	//HT_Multiply(HW_0, P->CamRobot.HT0_idx[1], &HW_C1);
-	HW_C3 = mat4_mult(HW_0, P->CamRobot.j[3].hb_i); //HT_Multiply(HW_0, P->CamRobot.HT0_idx[3], &HW_C3);	//HW_B*HB_0*H0_3
+	mat4_t HW_C3;
+	mat4_t HW_C1;
+	mat4_t HW_0;
+	HW_0 = mat4_t_mult(P->CamRobot.hw_b, P->CamRobot.hb_0);		//HT_Multiply(P->CamRobot.HW_B, P->CamRobot.HB_0, &HW_0);
+	HW_C1 = mat4_t_mult(HW_0, P->CamRobot.j[1].hb_i);	//HT_Multiply(HW_0, P->CamRobot.HT0_idx[1], &HW_C1);
+	HW_C3 = mat4_t_mult(HW_0, P->CamRobot.j[3].hb_i); //HT_Multiply(HW_0, P->CamRobot.HT0_idx[3], &HW_C3);	//HW_B*HB_0*H0_3
 	//^ in this case, 0=b
 	if (P->look_at_flag)
 	{
-		vect3 v_targ = vect3_add(h_origin(P->CamRobot.hw_b), vect3_scale(otarg_w, -1));
-		vect3 z = vect3_normalize(v_targ);
-		vect3 up = { { 0, 0, 1 } };
-		vect3 x = cross(up, z);
+		vect3_t v_targ = vect3_add(h_origin(P->CamRobot.hw_b), vect3_scale(otarg_w, -1));
+		vect3_t z = vect3_normalize(v_targ);
+		vect3_t up = { { 0, 0, 1 } };
+		vect3_t x = cross(up, z);
 		x = vect3_normalize(x);
-		vect3 y = cross(z, x);
+		vect3_t y = cross(z, x);
 		y = vect3_normalize(y);
 
 		for (int r = 0; r < 3; r++)
@@ -340,17 +340,17 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 			HW_C3.m[r][2] = z.v[r];
 		}
 		float za = move_v.v[0];	float xa = move_v.v[2];	float ya = move_v.v[1];
-		vect4 move_cf = { { xa, ya, za, 1 } };
-		vect3 move_v_W = vect4_to_vect3(mat4_vect4_mult(HW_C3, move_cf));
-		vect3 cv = vect3_add(vect3_scale(h_origin(P->CamRobot.hw_b), -1), move_v_W);
+		vect4_t move_cf = { { xa, ya, za, 1 } };
+		vect3_t move_v_W = vect4_to_vect3(mat4_t_vect4_mult(HW_C3, move_cf));
+		vect3_t cv = vect3_add(vect3_scale(h_origin(P->CamRobot.hw_b), -1), move_v_W);
 		for(int r = 0; r < 3; r++)
 			P->CamRobot.hw_b.m[r][3] += cv.v[r];
 	}
 	else
 	{
-		vect4 move_v_W;
+		vect4_t move_v_W;
 		//HT_Point_Multiply(HW_C1, move_v, &move_v_W);
-		move_v_W = mat4_vect4_mult(HW_C1, move_v);
+		move_v_W = mat4_t_vect4_mult(HW_C1, move_v);
 		P->cur_V.v[0] = move_v_W.v[0] - P->CamRobot.hw_b.m[0][3];	//P->cur_V.u += move_v_W.v[0] - P->CamRobot.HW_B.H[0][3];
 		P->cur_V.v[1] = move_v_W.v[1] - P->CamRobot.hw_b.m[1][3];	//P->cur_V.v += move_v_W.v[1] - P->CamRobot.HW_B.H[1][3];
 		P->cur_V.v[2] = move_v_W.v[2] - P->CamRobot.hw_b.m[2][3];	//P->cur_V.w += move_v_W.v[2] - P->CamRobot.HW_B.H[2][3];
@@ -361,6 +361,6 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 	}
 
 
-	mat4 HC3_W = ht_inverse(HW_C3);
-	return ht_matrix_to_mat4(HC3_W);
+	mat4_t HC3_W = ht_inverse(HW_C3);
+	return ht_matrix_to_mat4_t(HC3_W);
 }

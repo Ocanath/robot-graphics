@@ -12,14 +12,14 @@
 typedef struct dynahexleg_t
 {
 	joint chain[NUM_FRAMES_HEXLEG];
-	vect3 ef_0;
-	vect3 ef_b;
-	vect3 ef_knee;	//some example anchor points associated with each leg
+	vect3_t ef_0;
+	vect3_t ef_b;
+	vect3_t ef_knee;	//some example anchor points associated with each leg
 }dynahexleg_t;
 
 typedef struct dynahex_t
 {
-	//mat4 hw_b;
+	//mat4_t hw_b;
 	dynahexleg_t leg[NUM_LEGS];	
 }dynahex_t;
 
