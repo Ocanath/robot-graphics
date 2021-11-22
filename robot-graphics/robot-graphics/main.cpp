@@ -314,13 +314,12 @@ int main_render_thread(void)
 	for (int l = 0; l < NUM_LEGS; l++)
 	{
 		joint* j = dynahex_bones->leg[l].chain;
-		j[1].q = 0.f;
-		j[2].q = 0.f;
-		j[3].q = 1.f;
+		j[1].q = PI/4;
+		j[2].q = -PI/4;
+		j[3].q = PI/4;
 	}
 	forward_kinematics_dynahexleg(dynahex_bones);
 
-	
 	psy_hand_bones = new kinematic_hand_t;
 	init_finger_kinematics(psy_hand_bones);
 	float q[6] = { 15,15,15,15, 0,-90 };

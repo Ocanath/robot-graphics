@@ -76,7 +76,9 @@ void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints)
 /*
 Do forward kinematics on a singly linked list of joints!
 Inputs:
-		j: the root of the chain
+		f1_joint: the first joint of the chain. I.e. the joint that relates frame 0 to frame 1
+		hb_0: the matrix which relates a rigid base/reference frame to frame 0. Used for initial condition, and 
+				for robots with multiple chains.
 Outputs:
 		updates him1_i and hb_i of every element in the list
 
@@ -86,14 +88,16 @@ an embedded system, dynamic memory and recursion are not allowed
 type recursive run through the tree) so we'll have to operate on the tree
 in a rigid structure (i.e. hard-coding what would normally be recursive)
 */
-void forward_kinematics(joint* chain, int num_joints)
+void forward_kinematics(mat4_t * hb_0, joint* f1_joint)
 {
-	joint* j = chain;
-	while(j->child != NULL)
+	if (f1_joint == NULL)
+		return;
+
+	joint * j = f1_joint;
+	while(j != NULL)
 	{
-		j = j->child;
-		float sth = sin_fast(j->q);
-		float cth = cos_fast(j->q);
+		float sth = (float)sin((double)j->q);
+		float cth = (float)cos((double)j->q);
 
 		mat4_t* r = &j->h_link;
 		mat4_t * him1_i = &j->him1_i;	//specify lookup ptr first for faster loading
@@ -110,10 +114,13 @@ void forward_kinematics(joint* chain, int num_joints)
 		him1_i->m[2][1] = r->m[2][1];
 		him1_i->m[2][2] = r->m[2][2];
 		him1_i->m[2][3] = r->m[2][3];
+		
+		j = j->child;
 	}
 	
-	joint* parent = chain;
-	j = chain;
+	joint * parent = f1_joint;
+	j = f1_joint;
+	mat4_t_mult_pbr(hb_0, &j->him1_i, &j->hb_i);	//load hb_1.		hb_0 * h0_1 = hb_1
 	while (j->child != NULL)
 	{
 		j = j->child;

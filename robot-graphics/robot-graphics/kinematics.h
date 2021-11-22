@@ -46,7 +46,7 @@ typedef struct kinematic_chain
 //void chain_de_allocate(kinematic_chain * chain);
 void init_forward_kinematics_urdf(joint* j, vect3_t* xyz, vect3_t* rpy, int num_joints);
 void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints);
-void forward_kinematics(joint* j, int num_joints);
+void forward_kinematics(mat4_t* hb_0, joint* f1_joint);
 void calc_J_point(joint* j, int num_joints, vect3_t point);
 void copy_mat4_t(mat4_t* dest, mat4_t* src);
 vect6_t calc_w_v(kinematic_chain * chain, vect3_t * w, vect3_t * v);

@@ -314,7 +314,7 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 	}
 
 
-	forward_kinematics(P->CamRobot.j, P->CamRobot.num_frames-1);
+	forward_kinematics(&P->CamRobot.j->hb_i, P->CamRobot.j->child);
 
 	mat4_t HW_C3;
 	mat4_t HW_C1;

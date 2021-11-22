@@ -41,7 +41,7 @@ void forward_kinematics_dynahexleg(dynahex_t* h)
 	for (int leg = 0; leg < NUM_LEGS; leg++)
 	{
 		joint* j = h->leg[leg].chain;
-		forward_kinematics(j, NUM_JOINTS_HEXLEG);
+		forward_kinematics(&j->hb_i, j->child);
 		
 		htmatrix_vect3_mult(&j[3].hb_i, &o_foottip_3, &h->leg[leg].ef_b);
 

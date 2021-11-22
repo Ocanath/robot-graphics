@@ -5,6 +5,7 @@
  *      Author: Ocanath
  */
 #include "sin_fast.h"
+#include <math.h>
 
 float abs_f(float v)
 {
@@ -16,9 +17,49 @@ float abs_f(float v)
 
 float sin_fast(float theta)
 {
-	theta = fmod_2pi(theta+PI)-PI;
+	//theta = fmod_2pi(theta+PI)-PI;
+	//uint8_t is_neg = 0;
+	//if(theta > HALF_PI && theta <= PI)	// if positive and in quadrant II, put in quadrant I (same)
+	//{
+	//	theta = PI - theta;
+	//}
+	//else if (theta >= PI && theta < THREE_BY_TWO_PI)  // if positive and in quadrant III (possible for cosine)
+	//{
+	//	is_neg = 1;
+	//	theta = theta - PI;
+	//}
+
+	//else if (theta > THREE_BY_TWO_PI && theta < TWO_PI)  // if positive and in quadrant IV (edge case of cosine, rare but possible)
+	//{
+	//	theta = theta - TWO_PI;
+	//}
+	//else if (theta < -HALF_PI && theta >= -PI ) // if negative and in quadrant III,
+	//{
+	//	is_neg = 1;
+	//	theta = PI + theta;
+	//}
+
+	//float theta_2 = theta*theta;
+	//float theta_3 = theta_2*theta;
+	//float theta_5 = theta_3*theta_2;
+	//float res = theta-theta_3*ONE_BY_THREE_FACTORIAL + theta_5 * ONE_BY_FIVE_FACTORIAL;
+	//if(is_neg == 1)
+	//	return -res;
+	//else
+	//	return res;
+	return (float)sin((double)theta);
+}
+
+static const float sc1 = 117.f / 4096.f;
+static const float sc2 = -834.f / 4096.f;
+static const float sc3 = 85.f / 4096.f;
+static const float sc4 = 4078.f / 4096.f;
+static const float sc5 = 1.f / 4096.f;
+float sin_fast_2(float theta)
+{
+	theta = fmod_2pi(theta + PI) - PI;	//get theta into the range of -pi to pi. this line wraps any arbitrary theta to -pi to pi
 	uint8_t is_neg = 0;
-	if(theta > HALF_PI && theta <= PI)	// if positive and in quadrant II, put in quadrant I (same)
+	if (theta > HALF_PI && theta <= PI)	// if positive and in quadrant II, put in quadrant I (same)
 	{
 		theta = PI - theta;
 	}
@@ -32,28 +73,37 @@ float sin_fast(float theta)
 	{
 		theta = theta - TWO_PI;
 	}
-	else if (theta < -HALF_PI && theta >= -PI ) // if negative and in quadrant III,
+	else if (theta < -HALF_PI && theta >= -PI) // if negative and in quadrant III,
 	{
 		is_neg = 1;
 		theta = PI + theta;
 	}
+	else if (theta < 0 && theta >= -HALF_PI) // necessary addition for 4th order asymmetry
+	{
+		is_neg = 1;
+		theta = -theta;
+	}
 
-	float theta_2 = theta*theta;
-	float theta_3 = theta_2*theta;
-	float theta_5 = theta_3*theta_2;
-	float res = theta-theta_3*ONE_BY_THREE_FACTORIAL + theta_5 * ONE_BY_FIVE_FACTORIAL;
-	if(is_neg == 1)
+	float theta2 = theta * theta;
+	float theta3 = theta2 * theta;
+	float theta4 = theta3 * theta;
+	float res = sc1 * theta4 + sc2 * theta3 + sc3 * theta2 + sc4 * theta + sc5;
+
+	if (is_neg == 1)
 		return -res;
 	else
 		return res;
 }
-
 
 float cos_fast(float theta)
 {
 	return sin_fast(theta + HALF_PI);
 }
 
+float cos_fast_2(float theta)
+{
+	return sin_fast_2(theta + HALF_PI);
+}
 
 /* https://math.stackexchange.com/questions/1098487/atan2-faster-approximation. */
 float atan2_approx(float sinVal, float cosVal)
