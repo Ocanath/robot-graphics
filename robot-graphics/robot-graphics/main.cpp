@@ -136,6 +136,19 @@ const struct key_lookup_entry key_lookup[NUM_GRIPKEYS] = {
 	{GLFW_KEY_I, UTILITY_GRASP_CFG_IDX},
 };
 
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+ */
+int8_t get_checksum(uint8_t* arr, int size)
+{
+
+	int8_t checksum = 0;
+	for (int i = 0; i < size; i++)
+		checksum += (int8_t)arr[i];
+	return -checksum;
+}
+
 dynahex_t * dynahex_bones = NULL;
 kinematic_hand_t* psy_hand_bones = NULL;
 int main_render_thread(void);
@@ -183,11 +196,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = 3.661463f;
-	Player.CamRobot.hw_b.m[1][3] = 0.38022f;
-	Player.CamRobot.hw_b.m[2][3] = 2.3704f;
-	Player.CamRobot.j[1].q = fmod(13355.036133 + PI, 2*PI)-PI;
-	Player.CamRobot.j[2].q = -1.794593f;
+	Player.CamRobot.hw_b.m[0][3] = 0.468677;
+	Player.CamRobot.hw_b.m[1][3] = -5.0031;
+	Player.CamRobot.hw_b.m[2][3] = 1.369;
+	Player.CamRobot.j[1].q = fmod(419.85f + PI, 2*PI)-PI;
+	Player.CamRobot.j[2].q = -2.055f;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -315,10 +328,11 @@ int main_render_thread(void)
 	{
 		joint* j = dynahex_bones->leg[l].chain;
 		j[1].q = PI/4;
-		j[2].q = -PI/4;
+		j[2].q = PI/4;
 		j[3].q = PI/4;
 	}
 	forward_kinematics_dynahexleg(dynahex_bones);
+	print_mat4_t(dynahex_bones->leg[0].chain[3].hb_i);
 
 	psy_hand_bones = new kinematic_hand_t;
 	init_finger_kinematics(psy_hand_bones);
@@ -849,6 +863,12 @@ int main_render_thread(void)
 		mat4_t_mult_pbr(&H_scf, &hw_b, &dynahex_hw_b);
 		dynahex_hw_b.m[1][3] = -6.f;
 		dynahex_hw_b.m[2][3] = 1.f;
+
+		mat4_t zeros = { { {0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0} } };
+		for (int leg = 1; leg < 6; leg++)
+			dynahex_bones->leg[leg].chain[0].hb_i = zeros;
+
+		dynahex_bones->leg[0].chain[1].q = .2 * sin(time);
 
 		model = ht_matrix_to_mat4_t(dynahex_hw_b);
 		lightingShader.setMat4("model", model);
