@@ -25,7 +25,7 @@ void init_dh_kinematics(dynahex_t * h)
 	for (int leg = 0; leg < NUM_LEGS; leg++)
 	{
 		joint * j = h->leg[leg].chain;		
-		j[0].him1_i = mat4_t_mult(Hz(leg * angle_f), hb_0_leg0);
+		j[0].him1_i = mat4_t_mult(Hz((float)leg * angle_f), hb_0_leg0);
 		copy_mat4_t(&j[0].hb_i, &j[0].him1_i);
 
 		init_forward_kinematics_dh(j, hexleg_dh, NUM_JOINTS_HEXLEG);

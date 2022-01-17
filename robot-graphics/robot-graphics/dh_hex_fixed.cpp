@@ -15,9 +15,9 @@ static const mat4_32b_t hb_0 = {
 static const mat4_32b_t links_def[NUM_LEGS + 1] = {
 	{
 		{    //link 1
-			{ONE_ROT, 0, 0, -3486515},
+			{ONE_ROT, 0, 0, (int32_t)(-53.2* KINEMATICS_TRANSLATION_ORDER) },
 			{0, 0, -ONE_ROT, 0},
-			{0, ONE_ROT, 0, 4303094},
+			{0, ONE_ROT, 0, (int32_t)(65.66* KINEMATICS_TRANSLATION_ORDER) },
 			{0, 0, 0, ONE_ROT}
 		}
 	},
@@ -59,6 +59,10 @@ void setup_dynamic_hex(dynamic_hex_t* robot)
 		j->n_r = KINEMATICS_SIN_ORDER;
 		j->n_t = KINEMATICS_TRANSLATION_ORDER;
 		j->n_si = KINEMATICS_TRANSLATION_ORDER;
+		
+		j->q = 0;
+		j->sin_q = sin_lookup(j->q, KINEMATICS_SIN_ORDER);
+		j->cos_q = cos_lookup(j->q, KINEMATICS_SIN_ORDER);
 
 		//load the 'variable' matrices with identity, and the link frames from the initializer list
 		m_mcpy(&j->hb_i, (void*)gl_identity_matrix_32b, sizeof(mat4_32b));

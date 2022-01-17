@@ -1,6 +1,7 @@
 #include <glad/glad.h>	//needs to be first include in file always
 
-#include "kinematics.h"
+
+#include "utils.h"
 #include <stdio.h>
 #include <GLFW\glfw3.h>
 
@@ -37,6 +38,24 @@ void print_mat4_t(mat4_t m)
 		printf("}\r\n");
 	}
 	printf("\r\n");
+}
+
+void print_mat4_32b(mat4_32b_t m)
+{
+	for (int r = 0; r < 4; r++)
+	{
+
+		for (int c = 0; c < 4; c++)
+		{
+			float v;
+			if (c == 3 && r < 3)
+				v = ((float)m.m[r][c]) / ((float)(1 << 16));
+			else
+				v = ((float)m.m[r][c]) / ((float)(1 << 21));
+			printf("%f ", v);
+		}
+		printf("\n");
+	}
 }
 
 void print_vect6(vect6_t v)

@@ -53,7 +53,7 @@ void forward_kinematics_64(mat4_32b_t* hb_0, joint32_t* f1_joint)
 		int64_t r13 = (int64_t)r->m[1][3];
 		
 		int n = j->n_r;
-		him1_i->m[0][0] = (int32_t)((cth * r00 - r10 * sth) >> n);
+		him1_i->m[0][0] = (int32_t)((cth * r00 - r10 * sth) >> n);	//shift out one rotation order. This leaves 1 rotation order, and 1 translation order in the result matrix
 		him1_i->m[0][1] = (int32_t)((cth * r01 - r11 * sth) >> n);
 		him1_i->m[0][2] = (int32_t)((cth * r02 - r12 * sth) >> n);
 		him1_i->m[0][3] = (int32_t)((cth * r03 - r13 * sth) >> n);
@@ -64,8 +64,8 @@ void forward_kinematics_64(mat4_32b_t* hb_0, joint32_t* f1_joint)
 		him1_i->m[2][0] = r->m[2][0];
 		him1_i->m[2][1] = r->m[2][1];
 		him1_i->m[2][2] = r->m[2][2];
-		him1_i->m[2][3] = r->m[2][3];
-
+		him1_i->m[2][3] = r->m[2][3];	//bottom row is not loaded
+	
 		j = j->child;
 	}
 

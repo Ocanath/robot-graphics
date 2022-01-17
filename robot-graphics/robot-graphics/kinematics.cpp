@@ -236,18 +236,14 @@ void calc_tau3(joint * j, int num_joints, vect3_t * f, float* tau)
 /*pass by reference htmatrix (special subset of mat4_t) and 3 vector)*/
 void htmatrix_vect3_mult(mat4_t* m, vect3_t* v, vect3_t* ret)
 {
-	int rsize = 3; int vsize = 4;
-	int r, i;
-	for (r = 0; r < rsize; r++)
+	for (int r = 0; r < 3; r++)
 	{
 		float tmp = 0;
-		for (i = 0; i < vsize; i++)
+		for (int i = 0; i < 3; i++)
 		{
-			if (i < 3)
-				tmp = tmp + m->m[r][i] * v->v[i];
-			if (i == 3)
-				tmp = tmp + m->m[r][i];
+			tmp += m->m[r][i] * v->v[i];
 		}
+		tmp += m->m[r][3];
 		ret->v[r] = tmp;
 	}
 }

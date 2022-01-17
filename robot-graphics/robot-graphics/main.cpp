@@ -22,6 +22,10 @@
 #include <thread>
 #include "physics_thread.h"
 
+#include "kinematics_fixed.h"
+#include "dh_hex_fixed.h"
+#include "m_mcpy.h"
+
 #define NUM_LIGHTS 5
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -153,12 +157,102 @@ dynahex_t * dynahex_bones = NULL;
 kinematic_hand_t* psy_hand_bones = NULL;
 int main_render_thread(void);
 
+void print_jacobian(joint * j, vect3_t anchor)
+{
+	calc_J_point(j, NUM_JOINTS_HEXLEG, anchor);
+	printf("Si = \r\n");
+	for (int c = 0; c < 3; c++)
+	{
+		for (int i = 1; i <= 3; i++)
+			printf("%f, ", j[i].Si.v[c + 3]);
+		printf("\r\n");
+	}
+}
+
 int main(void)
 {
-	std::thread t2(physics_thread);
-	t2.join();
-	std::thread t1(main_render_thread);
-	t1.join();
+
+
+	dynahex_bones = new dynahex_t;
+	init_dh_kinematics(dynahex_bones);
+	
+	float qtarg[3] = { 80.f,-30.f,-15.f };
+	vect3_t targ;
+	{
+		joint* j = dynahex_bones->leg[0].chain;
+		for (int i = 0; i < 3; i++)
+			j[i + 1].q = qtarg[i] * DEG_TO_RAD;
+		forward_kinematics_dynahexleg(dynahex_bones);
+		targ = h_origin(j[3].hb_i);
+	}
+	joint* j = dynahex_bones->leg[0].chain;
+	
+
+	j[1].q = 
+	
+	j[1].q = 0;
+	j[2].q = -100 * DEG_TO_RAD;
+	j[3].q = -100 * DEG_TO_RAD;
+	float tau[4];
+	float tau_prev[4];
+	int cycles = 0;
+	int solved = 0;
+	while (solved == 0)
+	{
+		forward_kinematics_dynahexleg(dynahex_bones);
+		vect3_t anchor = h_origin(j[3].hb_i);
+		calc_J_point(j, NUM_JOINTS_HEXLEG, anchor);
+		//print_jacobian(j, anchor);
+
+		vect3_t f;
+		for (int i = 0; i < 3; i++)
+			f.v[i] = (targ.v[i] - anchor.v[i]) / 100.f;
+		for (int i = 1; i <= 3; i++)
+		{
+			for (int r = 0; r < 3; r++)
+			{
+				j[i].Si.v[r + 3] /= 100.f;
+			}
+		}
+		
+		calc_tau3(j, 3, &f, tau);
+		for (int i = 1; i <= 3; i++)
+		{
+			j[i].q += tau[i] / 7.f;
+			//float estep = .000001f;
+			//if (tau[i] > estep)
+			//	j[i].q += estep;
+			//if (tau[i] < -.000001f)
+			//	j[i].q -= estep;
+		}
+		//printf("q: [%f,%f,%f]\r\n", (float)j[1].q*RAD_TO_DEG, (float)j[2].q * RAD_TO_DEG, (float)j[3].q * RAD_TO_DEG);
+
+		solved = 1;
+		for (int i = 1; i <= 3; i++)
+		{
+			if (tau[i] != tau_prev[i])
+			{
+				solved = 0;
+			}
+			tau_prev[i] = tau[i];
+			if (solved == 0)
+				break;
+		}
+		cycles++;
+	}
+	vect3_t err;
+	vect3_t o3 = h_origin(j[3].hb_i);
+	for (int i = 0; i < 3; i++)
+		err.v[i] = targ.v[i] - o3.v[i];
+	float mag = vect3_magnitude(err);
+	printf("final error: [%f,%f,%f]\r\n", err.v[0], err.v[1], err.v[2]);
+	printf("err magnitude: %f\r\n", mag);
+	printf("Q: [%f,%f,%f]\r\n", (float)j[1].q * RAD_TO_DEG, (float)j[2].q * RAD_TO_DEG, (float)j[3].q * RAD_TO_DEG);
+	printf("Loop iterations required: %d\r\n", cycles);
+	//std::thread t2(physics_thread);
+	//t2.join();
+	//std::thread t1(main_render_thread);
+	//t1.join();
 }
 
 
@@ -315,7 +409,28 @@ int main_render_thread(void)
 
 	dynahex_bones = new dynahex_t;
 	init_dh_kinematics(dynahex_bones);
+	for (int leg = 0; leg < 6; leg++)
+	{
+		for(int i = 1; i <= 3; i++)
+			dynahex_bones->leg[leg].chain[i].q = 0.f;
+	}
 	forward_kinematics_dynahexleg(dynahex_bones);
+	for (int leg = 0; leg < 6; leg++)
+	{
+		joint* j = dynahex_bones->leg[leg].chain;
+		vect3_t o3 = h_origin(dynahex_bones->leg[leg].chain[3].hb_i);
+		calc_J_point(j, NUM_JOINTS_HEXLEG, o3);
+	}
+
+	joint* j = dynahex_bones->leg[0].chain;
+	vect3_t targ = { {160.021423,-328.039185,-167.191788} };
+	vect3_t anchor = h_origin(j[3].hb_i);
+	vect3_t f;
+	for (int i = 0; i < 3; i++)
+		f.v[i] = (targ.v[i] - anchor.v[i])/1000.f;	//div by 1000 to express in meters, not mm
+	float tau[4];
+	calc_tau3(j, 3, &f, tau);
+
 	vector<AssetModel> dynahex_modellist;
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F0-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F1-stripped.STL"));
@@ -877,6 +992,8 @@ int main_render_thread(void)
 		for (int l = 0; l < 6; l++)
 		{
 			joint* j = dynahex_bones->leg[l].chain;
+			vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
+			calc_J_point(j, NUM_JOINTS_HEXLEG, o3);
 			for (int i = 0; i < 4; i++)
 			{
 				//dynahex_modellist[i].hb_model = &j[i].hb_i;

@@ -69,6 +69,24 @@
     <ClCompile Include="physics_thread.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
+    <ClCompile Include="dh_hex_fixed.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="kinematics_fixed.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="m_mcpy.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="sin_lookup_table.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="trig_fixed.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="vect_fixed.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -127,6 +145,21 @@
     </ClInclude>
     <ClInclude Include="physics_thread.h">
       <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="dh_hex_fixed.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="kinematics_fixed.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="m_mcpy.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="trig_fixed.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="vect_fixed.h">
+      <Filter>Source Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
