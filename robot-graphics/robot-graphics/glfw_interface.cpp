@@ -313,7 +313,7 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 		P->CamRobot.j[2].q = -PI / 2 + (float)P->verticalAngle;
 	}
 
-
+	load_q(P->CamRobot.j->child);
 	forward_kinematics(&P->CamRobot.j->hb_i, P->CamRobot.j->child);
 
 	mat4_t HW_C3;

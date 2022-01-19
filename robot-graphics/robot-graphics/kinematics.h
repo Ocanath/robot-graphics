@@ -20,6 +20,10 @@ typedef struct joint
 	float q;			//joint position
 	float dq;			//joint velocity
 	float ddq;			//joint acceleration
+	float cos_q;
+	float sin_q;
+	float tau_static;	//helper variable which contains the result of J^T*f, for some arbitrary force f
+
 	vect6_t Si;			//vector corresponding to the i'th column of the jacobian matrix. Si*q(i) = vi, where vi is the ith's joint's contribution to the total chain velocity in frame 0
 	mat4_t hb_i;			//homogeneous transformation relating the BASE frame to the current frame (i). hb_0 = him1_0
 	mat4_t him1_i;		//homogeneous transformation describing the rotation and translation from frame i-1 to the current frame (i). 
@@ -47,7 +51,8 @@ typedef struct kinematic_chain
 void init_forward_kinematics_urdf(joint* j, vect3_t* xyz, vect3_t* rpy, int num_joints);
 void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints);
 void forward_kinematics(mat4_t* hb_0, joint* f1_joint);
-void calc_J_point(joint* j, int num_joints, vect3_t point);
+void load_q(joint* chain_start);
+void calc_J_point(mat4_t* hb_0, joint* chain_start, vect3_t* point_b);
 void copy_mat4_t(mat4_t* dest, mat4_t* src);
 vect6_t calc_w_v(kinematic_chain * chain, vect3_t * w, vect3_t * v);
 void htmatrix_vect3_mult(mat4_t* m, vect3_t* v, vect3_t* ret);
@@ -56,5 +61,6 @@ vect4_t h_origin_vect4(mat4_t h);
 mat4_t quat_to_mat4_t(vect4_t quat, vect3_t origin);
 void calc_tau(joint* j, int num_joints, vect6_t f, float* tau);
 void calc_tau3(joint* j, int num_joints, vect3_t* f, float* tau);	//faster alt to calc_tau
+void calc_taulist(joint* chain_start, vect3_t* f);
 
 #endif

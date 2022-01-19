@@ -273,33 +273,6 @@ vect3_t vect3_scale(vect3_t v_a, float scale)
 		ret.v[i] = v_a.v[i] * scale;
 	return ret;
 }
-/*6 vector dot product*/
-float vect6_dot(vect6_t v_a, vect6_t v_b)
-{
-	float ret = 0;
-	int i;
-	for (i = 0; i < 6; i++)
-		ret += v_a.v[i] * v_b.v[i];
-	return ret;
-}
-/*4 vector dot product (note: for homogeneous transformation matrices, the 4th term is always 1)*/
-float vect4_dot(vect4_t v_a, vect4_t v_b)
-{
-	float ret = 0;
-	int i;
-	for (i = 0; i < 4; i++)
-		ret += v_a.v[i] * v_b.v[i];
-	return ret;
-}
-/*3 vector dot product*/
-float vect3_dot(vect3_t v_a, vect3_t v_b)
-{
-	float ret = 0;
-	int i;
-	for (i = 0; i < 3; i++)
-		ret += v_a.v[i] * v_b.v[i];
-	return ret;
-}
 
 vect6_t vect6_add(vect6_t v_a, vect6_t v_b)
 {
@@ -336,18 +309,51 @@ vect3_t vect3_add(vect3_t v_a, vect3_t v_b)
 		ret.v[i] = v_a.v[i] + v_b.v[i];
 	return ret;
 }
+
+
+/*Dot product. floating point*/
+float vect_dot(float* v1, float* v2, int n)
+{
+	float res = 0.f;
+	for (int i = 0; i < n; i++)
+	{
+		res += v1[i] * v2[i];
+	}
+	return res;
+}
+
+/**/
+float vect_mag(float* v, int n)
+{
+	float v_dot_v= 0.f;
+	for (int i = 0; i < n; i++)
+		v_dot_v += v[i] * v[i];
+	return (float)sqrt((double)v_dot_v);
+}
+
+/**/
+void vect_normalize(float* v, int n)
+{
+	float mag = vect_mag(v,n);
+	for (int i = 0; i < n; i++)
+	{
+		v[i] = v[i] / mag;
+	}
+}
+
 float vect3_magnitude(vect3_t v)
 {
-	return sqrt( v.v[0]*v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2]);
+	return sqrt(v.v[0] * v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2]);
 }
 vect3_t vect3_normalize(vect3_t v)
 {
-	float scale = 1/(sqrt(v.v[0] * v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2]));
+	float scale = 1 / (sqrt(v.v[0] * v.v[0] + v.v[1] * v.v[1] + v.v[2] * v.v[2]));
 	v.v[0] *= scale;
 	v.v[1] *= scale;
 	v.v[2] *= scale;
 	return v;
 }
+
 vect6_t mat6_vect6_mult(mat6_t m, vect6_t v)
 {
 	int rsize = 6; int vsize = 6;

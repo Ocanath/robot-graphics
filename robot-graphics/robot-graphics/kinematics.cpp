@@ -73,6 +73,21 @@ void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints)
 	for (int i = 1; i <= num_joints; i++)
 		mat4_t_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
 }
+
+/*pre-loads all sin_q and cos_q for the chain*/
+void load_q(joint* chain_start)
+{
+	joint* j = chain_start;
+	while (j != NULL)
+	{
+		double q = (double)j->q;
+		j->sin_q = (float)sin(q);
+		j->cos_q = (float)cos(q);
+		
+		j = j->child;
+	}
+}
+
 /*
 Do forward kinematics on a singly linked list of joints!
 Inputs:
@@ -96,9 +111,11 @@ void forward_kinematics(mat4_t * hb_0, joint* f1_joint)
 	joint * j = f1_joint;
 	while(j != NULL)
 	{
-		float sth = (float)sin((double)j->q);
-		float cth = (float)cos((double)j->q);
-
+		//float sth = (float)sin((double)j->q);
+		//float cth = (float)cos((double)j->q);
+		float sth = j->sin_q;
+		float cth = j->cos_q;
+		
 		mat4_t* r = &j->h_link;
 		mat4_t * him1_i = &j->him1_i;	//specify lookup ptr first for faster loading
 
@@ -126,6 +143,46 @@ void forward_kinematics(mat4_t * hb_0, joint* f1_joint)
 		j = j->child;
 		mat4_t_mult_pbr(&parent->hb_i, &j->him1_i, &j->hb_i);
 		parent = j;
+	}
+}
+
+/*
+	Traverse linked list and load torques into a list of equal size.
+
+	Dangerous; could overrun if the linked list is not set up properly
+*/
+void calc_taulist(joint* chain_start, vect3_t* f)
+{
+	joint* j = chain_start;
+	while (j != NULL)
+	{
+		j->tau_static = vect_dot(&(j->Si.v[3]), f->v, 3);	//remove Si radix to restore original 'f' radix
+		j = j->child;
+	}
+}
+
+
+/*
+* Arguments:
+*
+* Si: the jacobian vector corresponding to the i'th joint
+* p_b: the reference point, represented in the chain base frame
+* hb_i1: the homogeneous transformation matrix
+*
+*/
+void calc_rotational_jacobian_entry_f(vect6_t* Si, vect3_t* p_b, mat4_t* hb_im1)
+{
+	vect3_t z, d, res;
+	for (int r = 0; r < 3; r++)
+	{
+		z.v[r] = hb_im1->m[r][2];
+		d.v[r] = p_b->v[r] - hb_im1->m[r][3];
+	}
+	cross_pbr(&z, &d, &res);
+	for (int r = 0; r < 3; r++)
+	{
+		Si->v[r] = z.v[r];
+		Si->v[r + 3] = res.v[r];
 	}
 }
 
@@ -166,27 +223,22 @@ NOTE:
 	Where [tau] is a vector of torques (size n/number of joints), J^T is the transpose of the jacobian matrix defined above, and
 	f is the same generalized force/torque 6 vector expressed in the 0 frame.
 */
-void calc_J_point(joint * j, int num_joints, vect3_t point)
+void calc_J_point(mat4_t* hb_0, joint * chain_start, vect3_t * point_b)
 {
-	int i, v_idx;
-	vect3_t z;
-	vect3_t d;
-	for (i = 1; i <= num_joints; i++)
+	/*
+	First, obtain the base case. This is contribution of the velocity from joint 1, and
+	is found using the vector formed by the origin of joint 1 and the point, and the
+	axis of rotation of joint 1 in the base frame.
+*/
+	joint* j = chain_start;	//i.e. Joint 1. joint 0 is NOT VALID, which is why hb_0 is passed as an argument and why we need to do a base case
+	calc_rotational_jacobian_entry_f(&j->Si, point_b, hb_0);	//get jacobian entry for joint 1 from hb_0 and the reference point in base frame
+
+	joint* parent = j;
+	while (j->child != NULL)
 	{
-		for (v_idx = 0; v_idx < 3; v_idx++)
-			z.v[v_idx] = j[i - 1].hb_i.m[v_idx][2];					//extract the unit vector corresponding to the axis of rotation of frame i-1 (i.e., the axis of rotation of q)
-		for (v_idx = 0; v_idx < 3; v_idx++)
-			d.v[v_idx] = point.v[v_idx] - j[i - 1].hb_i.m[v_idx][3];	//extract the difference between the target point in the base frame and the origin of frame i-1
-		vect3_t res;
-		cross_pbr(&z, &d, &res);
-
-		j[i].Si.v[0] = z.v[0];		//Si = [w, v]^T; 
-		j[i].Si.v[1] = z.v[1];		//z_im1*q = w
-		j[i].Si.v[2] = z.v[2];
-
-		j[i].Si.v[3] = res.v[0];	//(z_im1 x (p - o_im1))*q = v
-		j[i].Si.v[4] = res.v[1];
-		j[i].Si.v[5] = res.v[2];
+		j = j->child;
+		calc_rotational_jacobian_entry_f(&j->Si, point_b, &parent->hb_i);
+		parent = j;
 	}
 }
 
@@ -208,18 +260,11 @@ vect6_t calc_w_v(kinematic_chain * chain, vect3_t * w, vect3_t * v)
 	return ret;
 }
 
-//void calc_tau(kinematic_chain * chain, vect6_t f, float * tau)
-//{
-//	int i;
-//	for (i = 1; i < chain->num_frames; i++)
-//		tau[i] = vect6_dot(chain->j[i].Si, f);
-//}
-
 void calc_tau(joint * j, int num_joints, vect6_t f, float * tau)
 {
 	int i;
 	for (i = 1; i <= num_joints; i++)
-		tau[i] = vect6_dot(j[i].Si, f);
+		tau[i] = vect_dot(j[i].Si.v, f.v, 6);
 }
 
 void calc_tau3(joint * j, int num_joints, vect3_t * f, float* tau)

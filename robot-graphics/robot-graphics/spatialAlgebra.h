@@ -84,14 +84,16 @@ mat3_t skew(vect3_t vin);
 vect6_t vect6_scale(vect6_t v_a, float scale);
 vect4_t vect4_scale(vect4_t v_a, float scale);
 vect3_t vect3_scale(vect3_t v_a, float scale);
-float vect6_dot(vect6_t v_a, vect6_t v_b);
-float vect4_dot(vect4_t v_a, vect4_t v_b);
-float vect3_dot(vect3_t v_a, vect3_t v_b);
+
 vect6_t vect6_add(vect6_t v_a, vect6_t v_b);
 vect4_t vect4_add(vect4_t v_a, vect4_t v_b);
 vect3_t vect3_add(vect3_t v_a, vect3_t v_b);
-float vect3_magnitude(vect3_t v);
+
+float vect_dot(float* v1, float* v2, int n);
+float vect_mag(float* v, int n);
+void vect_normalize(float* v, int n);
 vect3_t vect3_normalize(vect3_t v);
+
 vect6_t zero_vect6();
 vect6_t mat6_vect6_mult(mat6_t m, vect6_t v);
 vect4_t mat4_t_vect4_mult(mat4_t m, vect4_t v);

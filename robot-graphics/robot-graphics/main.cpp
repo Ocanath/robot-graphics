@@ -157,102 +157,79 @@ dynahex_t * dynahex_bones = NULL;
 kinematic_hand_t* psy_hand_bones = NULL;
 int main_render_thread(void);
 
-void print_jacobian(joint * j, vect3_t anchor)
+int gd_ik_single(mat4_t* hb_0, joint* start, joint* end, vect3_t* anchor_end, vect3_t* targ_b, vect3_t* anchor_b, float epsilon_divisor)	//num anchors?
 {
-	calc_J_point(j, NUM_JOINTS_HEXLEG, anchor);
-	printf("Si = \r\n");
-	for (int c = 0; c < 3; c++)
+	if (hb_0 == NULL || start == NULL || end == NULL || anchor_end == NULL || targ_b == NULL || anchor_b == NULL)
+		return 0;	//blah
+
+	joint* j;
+	int solved = 0;
+	int cycles = 0;
+	while (solved == 0)
 	{
-		for (int i = 1; i <= 3; i++)
-			printf("%f, ", j[i].Si.v[c + 3]);
-		printf("\r\n");
+		//do forward kinematics
+		forward_kinematics(hb_0, start);
+		htmatrix_vect3_mult(&end->hb_i, anchor_end, anchor_b);	//shift rotation out because only rotational components are added for a ht-multiply
+		calc_J_point(hb_0, start, anchor_b);
+
+		//printf("targ: [%d,%d,%d], ref: [%d,%d,%d]\r\n", o_targ_b->v[0], o_targ_b->v[1], o_targ_b->v[2], o_anchor_b->v[0], o_anchor_b->v[1], o_anchor_b->v[2]);
+		//print_vect_mm("targ: ", o_targ_b, 16, "");
+		//print_vect_mm("ref: ", o_anchor_b, 16, "\r\n");
+
+		//get vector pointing from the anchor point on the robot to the target. call it 'f'. Unscaled.
+		vect3_t f;
+		for (int i = 0; i < 3; i++) //this can have much lower resolution than tau.  high res tau is important
+			f.v[i] = (targ_b->v[i] - anchor_b->v[i])/16.f;	//step down from 16 to 12 bit reso for force vector
+		calc_taulist(start, &f);	//removing an n_si (from f) yields tau in radix 16
+		
+		//apply a scaled torque vector to the chain structure via. sin and cosine vectors
+		vect3_t z = { 0.f, 0.f, 1.f };
+		solved = 1;
+		j = start;
+		while (j != NULL)
+		{
+			vect3_t vq = { j->cos_q, j->sin_q, 0 };	//create sin-cos structure
+
+			vect3_t tangent;
+			cross_pbr(&z, &vq, &tangent);		//obtain the tangent vector in the xy plane. it is normalized
+
+			vect3_t vq_new;	//will contain the result of ~q+epsilon for our gradient descent
+
+			//Scale the tangent vector and add it to the original vq vector
+			for (int r = 0; r < 3; r++)
+			{
+				float tmp = (tangent.v[r] * j->tau_static)/epsilon_divisor;
+				vq_new.v[r] = tmp + vq.v[r];
+
+				if (abs_f(tmp) > 0.0000001f)
+					solved = 0;
+			}
+
+			vect_normalize(vq_new.v, 3);
+
+			j->cos_q = vq_new.v[0];
+			j->sin_q = vq_new.v[1];
+
+			j = j->child;
+		}
+		cycles++;
 	}
+
+	j = start;
+	while (j != NULL)
+	{
+		j->q = atan2(j->sin_q, j->cos_q);
+		j = j->child;
+	}
+	return cycles;
 }
 
 int main(void)
 {
-
-
-	dynahex_bones = new dynahex_t;
-	init_dh_kinematics(dynahex_bones);
-	
-	float qtarg[3] = { 80.f,-30.f,-15.f };
-	vect3_t targ;
-	{
-		joint* j = dynahex_bones->leg[0].chain;
-		for (int i = 0; i < 3; i++)
-			j[i + 1].q = qtarg[i] * DEG_TO_RAD;
-		forward_kinematics_dynahexleg(dynahex_bones);
-		targ = h_origin(j[3].hb_i);
-	}
-	joint* j = dynahex_bones->leg[0].chain;
-	
-
-	j[1].q = 
-	
-	j[1].q = 0;
-	j[2].q = -100 * DEG_TO_RAD;
-	j[3].q = -100 * DEG_TO_RAD;
-	float tau[4];
-	float tau_prev[4];
-	int cycles = 0;
-	int solved = 0;
-	while (solved == 0)
-	{
-		forward_kinematics_dynahexleg(dynahex_bones);
-		vect3_t anchor = h_origin(j[3].hb_i);
-		calc_J_point(j, NUM_JOINTS_HEXLEG, anchor);
-		//print_jacobian(j, anchor);
-
-		vect3_t f;
-		for (int i = 0; i < 3; i++)
-			f.v[i] = (targ.v[i] - anchor.v[i]) / 100.f;
-		for (int i = 1; i <= 3; i++)
-		{
-			for (int r = 0; r < 3; r++)
-			{
-				j[i].Si.v[r + 3] /= 100.f;
-			}
-		}
-		
-		calc_tau3(j, 3, &f, tau);
-		for (int i = 1; i <= 3; i++)
-		{
-			j[i].q += tau[i] / 7.f;
-			//float estep = .000001f;
-			//if (tau[i] > estep)
-			//	j[i].q += estep;
-			//if (tau[i] < -.000001f)
-			//	j[i].q -= estep;
-		}
-		//printf("q: [%f,%f,%f]\r\n", (float)j[1].q*RAD_TO_DEG, (float)j[2].q * RAD_TO_DEG, (float)j[3].q * RAD_TO_DEG);
-
-		solved = 1;
-		for (int i = 1; i <= 3; i++)
-		{
-			if (tau[i] != tau_prev[i])
-			{
-				solved = 0;
-			}
-			tau_prev[i] = tau[i];
-			if (solved == 0)
-				break;
-		}
-		cycles++;
-	}
-	vect3_t err;
-	vect3_t o3 = h_origin(j[3].hb_i);
-	for (int i = 0; i < 3; i++)
-		err.v[i] = targ.v[i] - o3.v[i];
-	float mag = vect3_magnitude(err);
-	printf("final error: [%f,%f,%f]\r\n", err.v[0], err.v[1], err.v[2]);
-	printf("err magnitude: %f\r\n", mag);
-	printf("Q: [%f,%f,%f]\r\n", (float)j[1].q * RAD_TO_DEG, (float)j[2].q * RAD_TO_DEG, (float)j[3].q * RAD_TO_DEG);
-	printf("Loop iterations required: %d\r\n", cycles);
-	//std::thread t2(physics_thread);
-	//t2.join();
-	//std::thread t1(main_render_thread);
-	//t1.join();
+	std::thread t2(physics_thread);
+	t2.join();
+	std::thread t1(main_render_thread);
+	t1.join();
 }
 
 
@@ -409,28 +386,6 @@ int main_render_thread(void)
 
 	dynahex_bones = new dynahex_t;
 	init_dh_kinematics(dynahex_bones);
-	for (int leg = 0; leg < 6; leg++)
-	{
-		for(int i = 1; i <= 3; i++)
-			dynahex_bones->leg[leg].chain[i].q = 0.f;
-	}
-	forward_kinematics_dynahexleg(dynahex_bones);
-	for (int leg = 0; leg < 6; leg++)
-	{
-		joint* j = dynahex_bones->leg[leg].chain;
-		vect3_t o3 = h_origin(dynahex_bones->leg[leg].chain[3].hb_i);
-		calc_J_point(j, NUM_JOINTS_HEXLEG, o3);
-	}
-
-	joint* j = dynahex_bones->leg[0].chain;
-	vect3_t targ = { {160.021423,-328.039185,-167.191788} };
-	vect3_t anchor = h_origin(j[3].hb_i);
-	vect3_t f;
-	for (int i = 0; i < 3; i++)
-		f.v[i] = (targ.v[i] - anchor.v[i])/1000.f;	//div by 1000 to express in meters, not mm
-	float tau[4];
-	calc_tau3(j, 3, &f, tau);
-
 	vector<AssetModel> dynahex_modellist;
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F0-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F1-stripped.STL"));
@@ -442,9 +397,9 @@ int main_render_thread(void)
 	for (int l = 0; l < NUM_LEGS; l++)
 	{
 		joint* j = dynahex_bones->leg[l].chain;
-		j[1].q = PI/4;
-		j[2].q = PI/4;
-		j[3].q = PI/4;
+		j[1].q = PI / 4.f;
+		j[2].q = PI / 4.f;
+		j[3].q = PI / 4.f;
 	}
 	forward_kinematics_dynahexleg(dynahex_bones);
 	print_mat4_t(dynahex_bones->leg[0].chain[3].hb_i);
@@ -979,11 +934,33 @@ int main_render_thread(void)
 		dynahex_hw_b.m[1][3] = -6.f;
 		dynahex_hw_b.m[2][3] = 1.f;
 
+		/*Kill render of all legs 1-5, leaving only leg 0*/
 		mat4_t zeros = { { {0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0} } };
 		for (int leg = 1; leg < 6; leg++)
 			dynahex_bones->leg[leg].chain[0].hb_i = zeros;
 
-		dynahex_bones->leg[0].chain[1].q = .2 * sin(time);
+		{//do stuff to hexleg here
+			for (int leg = 0; leg < 1; leg++)
+			{
+
+				vect3_t o_motion_b = { 300.f,0.f,-270.f };
+				vect3_t targ_b;
+				targ_b.v[0] = 0;
+				targ_b.v[1] = 30*sin(time);
+				targ_b.v[2] = 30*cos(time);
+				for (int i = 0; i < 3; i++)
+					targ_b.v[i] += o_motion_b.v[i];
+
+
+				/*do gd IK. result is loaded into q*/
+				mat4_t* hb_0 = &dynahex_bones->leg[leg].chain[0].him1_i;
+				joint* start = &dynahex_bones->leg[leg].chain[1];
+				joint* end = &dynahex_bones->leg[leg].chain[3];
+				vect3_t zero = { {0,0,0} };
+				vect3_t anchor_b;
+				gd_ik_single(hb_0, start, end, &zero, &targ_b, &anchor_b, 20000.f);
+			}
+		}
 
 		model = ht_matrix_to_mat4_t(dynahex_hw_b);
 		lightingShader.setMat4("model", model);
@@ -993,7 +970,7 @@ int main_render_thread(void)
 		{
 			joint* j = dynahex_bones->leg[l].chain;
 			vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
-			calc_J_point(j, NUM_JOINTS_HEXLEG, o3);
+			calc_J_point(&j->him1_i, j->child, &o3);
 			for (int i = 0; i < 4; i++)
 			{
 				//dynahex_modellist[i].hb_model = &j[i].hb_i;
