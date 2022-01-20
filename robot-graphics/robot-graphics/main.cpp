@@ -880,12 +880,11 @@ int main_render_thread(void)
 			/*Generate base for first half of the legs*/
 			vect3_t foot_xy_1;
 			float h = 40; float w = 100;
-			float period = 1.f;
-			float p1 = get_p1_uniform_speed(h, w);
-			foot_path(time, h, w, p1, period, &foot_xy_1);
+			float period = 2.f;
+			foot_path(time, h, w, period, &foot_xy_1);
 			/*Generate base for second half of the legs*/
 			vect3_t foot_xy_2;
-			foot_path(time+period/2.f, h, w, p1, period, &foot_xy_2);
+			foot_path(time+period/2.f, h, w, period, &foot_xy_2);
 
 			/*Rotate and translate*/
 			float forward_direction_angle = 0.f;	//y axis!
@@ -897,6 +896,9 @@ int main_render_thread(void)
 			htmatrix_vect3_mult(&xrot, &foot_xy_2, &tmp);
 			htmatrix_vect3_mult(&zrot, &tmp, &foot_xy_2);	//done 2
 			//Note: can cut down on 2 rotations (the x rotations) by just doing xz generation for foot_path instead of xy
+
+			//float fw_motion = (w*2.f / period)*scf*time;
+			//dynahex_hw_b.m[1][3] = fw_motion - 6.f;
 
 			for (int leg = 0; leg < 6; leg++)
 			{
