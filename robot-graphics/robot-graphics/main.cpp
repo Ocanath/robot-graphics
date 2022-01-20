@@ -872,25 +872,43 @@ int main_render_thread(void)
 
 		/*Kill render of all legs 1-5, leaving only leg 0*/
 		mat4_t zeros = { { {0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0} } };
-		for (int leg = 1; leg < 6; leg++)
+		for (int leg = 1; leg < 6; leg+=2)
 			dynahex_bones->leg[leg].chain[0].hb_i = zeros;
 
 		{//do stuff to hexleg here
-			for (int leg = 0; leg < 1; leg++)
+
+			/*Generate base for first half of the legs*/
+			vect3_t foot_xy_1;
+			float h = 40; float w = 100;
+			float period = 1.f;
+			float p1 = get_p1_uniform_speed(h, w);
+			foot_path(time, h, w, p1, period, &foot_xy_1);
+			/*Generate base for second half of the legs*/
+			vect3_t foot_xy_2;
+			foot_path(time+period/2.f, h, w, p1, period, &foot_xy_2);
+
+			/*Rotate and translate*/
+			float forward_direction_angle = 0.f;	//y axis!
+			mat4_t xrot = Hx(HALF_PI);
+			mat4_t zrot = Hz(forward_direction_angle - HALF_PI);
+			vect3_t tmp;
+			htmatrix_vect3_mult(&xrot, &foot_xy_1, &tmp);
+			htmatrix_vect3_mult(&zrot, &tmp, &foot_xy_1);	//done
+
+			for (int leg = 0; leg < 6; leg+=2)
 			{
-				mat4_t xrot = Hx(HALF_PI);
-				mat4_t zrot = Hz(-HALF_PI);
-				vect3_t o_motion_b = { 300.f,0.f,-270.f };
-
-
 				
+				mat4_t lrot = Hz((TWO_PI / 6.f) * (float)leg);
+				vect3_t o_motion_b = { 270.f,0.f,-270.f };
+				htmatrix_vect3_mult(&lrot, &o_motion_b, &tmp);
+				o_motion_b = tmp;
+				 				
 				vect3_t targ_b;
 				//targ_b.v[0] = 0;
 				//targ_b.v[1] = 30*sin(time);
 				//targ_b.v[2] = 30*cos(time);
 				for (int i = 0; i < 3; i++)
-					targ_b.v[i] = o_motion_b.v[i];
-
+					targ_b.v[i] = foot_xy_1.v[i] + o_motion_b.v[i];
 
 				/*do gd IK. result is loaded into q*/
 				mat4_t* hb_0 = &dynahex_bones->leg[leg].chain[0].him1_i;

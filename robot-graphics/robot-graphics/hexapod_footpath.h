@@ -4,5 +4,7 @@
 #include "spatialAlgebra.h"
 
 float parabola_length(float w, float h);
+float get_p1_uniform_speed(float h, float w);
+void foot_path(float time, float h, float w, float p1, float period, vect3_t* v);
 
 #endif // !HEXAPOD_FOOTPATH_H
