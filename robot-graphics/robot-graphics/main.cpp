@@ -870,10 +870,10 @@ int main_render_thread(void)
 		dynahex_hw_b.m[1][3] = -6.f;
 		dynahex_hw_b.m[2][3] = 1.f;
 
-		/*Kill render of all legs 1-5, leaving only leg 0*/
-		mat4_t zeros = { { {0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0} } };
-		for (int leg = 1; leg < 6; leg+=2)
-			dynahex_bones->leg[leg].chain[0].hb_i = zeros;
+		///*Kill render of all legs 1-5, leaving only leg 0*/
+		//mat4_t zeros = { { {0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0} } };
+		//for (int leg = 1; leg < 6; leg++)
+		//	dynahex_bones->leg[leg].chain[0].hb_i = zeros;
 
 		{//do stuff to hexleg here
 
@@ -893,9 +893,12 @@ int main_render_thread(void)
 			mat4_t zrot = Hz(forward_direction_angle - HALF_PI);
 			vect3_t tmp;
 			htmatrix_vect3_mult(&xrot, &foot_xy_1, &tmp);
-			htmatrix_vect3_mult(&zrot, &tmp, &foot_xy_1);	//done
+			htmatrix_vect3_mult(&zrot, &tmp, &foot_xy_1);	//done 1
+			htmatrix_vect3_mult(&xrot, &foot_xy_2, &tmp);
+			htmatrix_vect3_mult(&zrot, &tmp, &foot_xy_2);	//done 2
+			//Note: can cut down on 2 rotations (the x rotations) by just doing xz generation for foot_path instead of xy
 
-			for (int leg = 0; leg < 6; leg+=2)
+			for (int leg = 0; leg < 6; leg++)
 			{
 				
 				mat4_t lrot = Hz((TWO_PI / 6.f) * (float)leg);
@@ -904,11 +907,17 @@ int main_render_thread(void)
 				o_motion_b = tmp;
 				 				
 				vect3_t targ_b;
-				//targ_b.v[0] = 0;
-				//targ_b.v[1] = 30*sin(time);
-				//targ_b.v[2] = 30*cos(time);
 				for (int i = 0; i < 3; i++)
-					targ_b.v[i] = foot_xy_1.v[i] + o_motion_b.v[i];
+				{
+					if (leg % 2 == 0)
+					{
+						targ_b.v[i] = foot_xy_1.v[i] + o_motion_b.v[i];
+					}
+					else
+					{
+						targ_b.v[i] = foot_xy_2.v[i] + o_motion_b.v[i];
+					}
+				}
 
 				/*do gd IK. result is loaded into q*/
 				mat4_t* hb_0 = &dynahex_bones->leg[leg].chain[0].him1_i;
