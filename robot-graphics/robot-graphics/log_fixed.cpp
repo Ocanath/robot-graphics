@@ -10,14 +10,16 @@ and to keep types consistent
 
 #define INV_LOG2_E_Q1DOT31  UINT64_C(0x58b90bfc) // Inverse log base 2 of e
 
-/**/
 int32_t log2fix(uint32_t x, size_t precision)
 {
+    // This implementation is based on Clay. S. Turner's fast binary logarithm
+    // algorithm[1].
+
     int32_t b = 1U << (precision - 1);
     int32_t y = 0;
 
     if (precision < 1 || precision > 31) {
-        //errno = EINVAL;   //ERROR
+        //errno = EINVAL;
         return INT32_MAX; // indicates an error
     }
 
@@ -36,10 +38,11 @@ int32_t log2fix(uint32_t x, size_t precision)
     }
 
     uint64_t z = x;
+
     for (size_t i = 0; i < precision; i++) 
     {
         z = z * z >> precision;
-        if (z >= (2ULL << (uint64_t)precision)) 
+        if (z >= 2LLU << precision) 
         {
             z >>= 1;
             y += b;
@@ -52,9 +55,9 @@ int32_t log2fix(uint32_t x, size_t precision)
 
 int32_t logfix(uint32_t x, size_t precision)
 {
-    int64_t t;
+    uint64_t t;
 
     t = log2fix(x, precision) * INV_LOG2_E_Q1DOT31;
 
-    return (int32_t)(t / (1LL << 31LL));
+    return (int32_t)(t >> 31);
 }

@@ -157,6 +157,7 @@
     <ClCompile Include="finger-kinematics.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="glfw_interface.cpp" />
+    <ClCompile Include="hexapod_footpath.cpp" />
     <ClCompile Include="kinematics.cpp" />
     <ClCompile Include="kinematics_fixed.cpp" />
     <ClCompile Include="log_fixed.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="finger-kinematics.h" />
     <ClInclude Include="glfw_interface.h" />
     <ClInclude Include="Grips.h" />
+    <ClInclude Include="hexapod_footpath.h" />
     <ClInclude Include="kinematics.h" />
     <ClInclude Include="kinematics_fixed.h" />
     <ClInclude Include="log_fixed.h" />

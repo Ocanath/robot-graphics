@@ -26,6 +26,8 @@
 #include "dh_hex_fixed.h"
 #include "m_mcpy.h"
 
+#include "hexapod_footpath.h"
+
 #define NUM_LIGHTS 5
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -876,14 +878,18 @@ int main_render_thread(void)
 		{//do stuff to hexleg here
 			for (int leg = 0; leg < 1; leg++)
 			{
-
+				mat4_t xrot = Hx(HALF_PI);
+				mat4_t zrot = Hz(-HALF_PI);
 				vect3_t o_motion_b = { 300.f,0.f,-270.f };
+
+
+				
 				vect3_t targ_b;
-				targ_b.v[0] = 0;
-				targ_b.v[1] = 30*sin(time);
-				targ_b.v[2] = 30*cos(time);
+				//targ_b.v[0] = 0;
+				//targ_b.v[1] = 30*sin(time);
+				//targ_b.v[2] = 30*cos(time);
 				for (int i = 0; i < 3; i++)
-					targ_b.v[i] += o_motion_b.v[i];
+					targ_b.v[i] = o_motion_b.v[i];
 
 
 				/*do gd IK. result is loaded into q*/

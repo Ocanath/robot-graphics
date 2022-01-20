@@ -90,6 +90,9 @@
     <ClCompile Include="log_fixed.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
+    <ClCompile Include="hexapod_footpath.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -165,6 +168,9 @@
       <Filter>Source Files\app-robotics</Filter>
     </ClInclude>
     <ClInclude Include="log_fixed.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="hexapod_footpath.h">
       <Filter>Source Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>
