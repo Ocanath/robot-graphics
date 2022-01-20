@@ -1,7 +1,7 @@
 #include "dh_hex_fixed.h"
 #include "m_mcpy.h"
 
-joint32_t chain[NUM_DOFS_PER_LEG * NUM_LEGS];	//the memory used to describe the robot. the robot struct contains pointers to this memory
+//joint32_t chain[NUM_DOFS_PER_LEG * NUM_LEGS];	//the memory used to describe the robot. the robot struct contains pointers to this memory
 
 static const mat4_32b_t hb_0 = {
 	{    //hb_0
@@ -41,7 +41,7 @@ static const mat4_32b_t links_def[NUM_LEGS + 1] = {
 	}
 };
 
-void setup_dynamic_hex(dynamic_hex_t* robot)
+void setup_dynamic_hex(dynamic_hex_t* robot, joint32_t chain[NUM_DOFS_PER_LEG * NUM_LEGS] )
 {
 	/*Set up the chain singly linked list. This formats the chain
 	 * in ascending order, with each triple corresponding

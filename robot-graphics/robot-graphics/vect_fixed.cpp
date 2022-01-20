@@ -187,6 +187,7 @@ int64_t sqrt_i64(int64_t v)
 }
 
 
+
 int64_t vect32_mag64(vect3_32b_t* vin, int vin_radix)
 {
 	int64_t varr[3];	//64bit representation of vin
@@ -224,7 +225,7 @@ void normalize_vect64(vect3_32b_t* vin, int vin_radix)
 	int64_t mag = sqrt_i64(v_dot_v << vin_radix);	//left shift by the radix because sqrt(V*2^32) = 2^16*sqrt(v). Pre-left shifting preserves the radix of the input without loss of resolution
 
 	//scale the input vector
-	int64_t one = ((int64_t)1 << vin_radix);	//t y p e s
+	int64_t one = (1ULL << vin_radix);	//ULL for unsigned long long, i.e. guarantee of 64bits precision. 
 	for(int i = 0; i < 3; i++)
 		vin->v[i] = (int32_t)((varr[i] * one) / mag);	//apply 1/sq. Multiply by radix to preserve sign, and premultiply by one to prevent truncation of lower bits. mag is same radix as vin
 }

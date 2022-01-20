@@ -21,7 +21,6 @@ typedef struct dynamic_hex_t
 
 extern dynamic_hex_t gl_hex;
 
-void setup_dynamic_hex(dynamic_hex_t* robot);
-
+void setup_dynamic_hex(dynamic_hex_t* robot, joint32_t chain[NUM_DOFS_PER_LEG * NUM_LEGS]);
 
 #endif /* INC_HEXAPOD_PARAMS_H_ */

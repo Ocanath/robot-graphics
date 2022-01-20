@@ -47,3 +47,13 @@ void forward_kinematics_dynahexleg(dynahex_t* h)
 		//calc_J_point(j, NUM_JOINTS_HEXLEG, h->leg[leg].ef_b);
 	}
 }
+
+
+
+
+
+
+
+
+
+

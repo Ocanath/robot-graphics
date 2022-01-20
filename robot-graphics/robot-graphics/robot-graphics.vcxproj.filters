@@ -87,6 +87,9 @@
     <ClCompile Include="vect_fixed.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
+    <ClCompile Include="log_fixed.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -159,6 +162,9 @@
       <Filter>Source Files\app-robotics</Filter>
     </ClInclude>
     <ClInclude Include="vect_fixed.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="log_fixed.h">
       <Filter>Source Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>

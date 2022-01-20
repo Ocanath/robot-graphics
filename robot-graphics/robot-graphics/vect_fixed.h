@@ -1,6 +1,8 @@
 #ifndef VECT_FIXED_H
 #define VECT_FIXED_H
+
 #include "trig_fixed.h"
+#include "log_fixed.h"
 
 typedef int32_t mat4_32b[4][4];
 typedef struct mat4_32b_t

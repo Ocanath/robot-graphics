@@ -359,3 +359,72 @@ mat4_t quat_to_mat4_t(vect4_t quat, vect3_t origin)
 	m.m[3][3] = 1.0f;
 	return m;
 }
+
+
+
+int gd_ik_single(mat4_t* hb_0, joint* start, joint* end, vect3_t* anchor_end, vect3_t* targ_b, vect3_t* anchor_b, float epsilon_divisor)	//num anchors?
+{
+	if (hb_0 == NULL || start == NULL || end == NULL || anchor_end == NULL || targ_b == NULL || anchor_b == NULL)
+		return 0;	//blah
+
+	joint* j;
+	int solved = 0;
+	int cycles = 0;
+	while (solved == 0)
+	{
+		//do forward kinematics
+		forward_kinematics(hb_0, start);
+		htmatrix_vect3_mult(&end->hb_i, anchor_end, anchor_b);	//shift rotation out because only rotational components are added for a ht-multiply
+		calc_J_point(hb_0, start, anchor_b);
+
+		//printf("targ: [%d,%d,%d], ref: [%d,%d,%d]\r\n", o_targ_b->v[0], o_targ_b->v[1], o_targ_b->v[2], o_anchor_b->v[0], o_anchor_b->v[1], o_anchor_b->v[2]);
+		//print_vect_mm("targ: ", o_targ_b, 16, "");
+		//print_vect_mm("ref: ", o_anchor_b, 16, "\r\n");
+
+		//get vector pointing from the anchor point on the robot to the target. call it 'f'. Unscaled.
+		vect3_t f;
+		for (int i = 0; i < 3; i++) //this can have much lower resolution than tau.  high res tau is important
+			f.v[i] = (targ_b->v[i] - anchor_b->v[i]) / 16.f;	//step down from 16 to 12 bit reso for force vector
+		calc_taulist(start, &f);	//removing an n_si (from f) yields tau in radix 16
+
+		//apply a scaled torque vector to the chain structure via. sin and cosine vectors
+		vect3_t z = { 0.f, 0.f, 1.f };
+		solved = 1;
+		j = start;
+		while (j != NULL)
+		{
+			vect3_t vq = { j->cos_q, j->sin_q, 0 };	//create sin-cos structure
+
+			vect3_t tangent;
+			cross_pbr(&z, &vq, &tangent);		//obtain the tangent vector in the xy plane. it is normalized
+
+			vect3_t vq_new;	//will contain the result of ~q+epsilon for our gradient descent
+
+			//Scale the tangent vector and add it to the original vq vector
+			for (int r = 0; r < 3; r++)
+			{
+				float tmp = (tangent.v[r] * j->tau_static) / epsilon_divisor;
+				vq_new.v[r] = tmp + vq.v[r];
+
+				if (abs_f(tmp) > 0.0000001f)
+					solved = 0;
+			}
+
+			vect_normalize(vq_new.v, 3);
+
+			j->cos_q = vq_new.v[0];
+			j->sin_q = vq_new.v[1];
+
+			j = j->child;
+		}
+		cycles++;
+	}
+
+	j = start;
+	while (j != NULL)
+	{
+		j->q = atan2(j->sin_q, j->cos_q);
+		j = j->child;
+	}
+	return cycles;
+}

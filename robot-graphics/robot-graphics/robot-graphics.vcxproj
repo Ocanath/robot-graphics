@@ -159,6 +159,7 @@
     <ClCompile Include="glfw_interface.cpp" />
     <ClCompile Include="kinematics.cpp" />
     <ClCompile Include="kinematics_fixed.cpp" />
+    <ClCompile Include="log_fixed.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="m_mcpy.cpp" />
     <ClCompile Include="objloader.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="Grips.h" />
     <ClInclude Include="kinematics.h" />
     <ClInclude Include="kinematics_fixed.h" />
+    <ClInclude Include="log_fixed.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="m_mcpy.h" />

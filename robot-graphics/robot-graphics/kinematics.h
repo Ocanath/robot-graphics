@@ -62,5 +62,6 @@ mat4_t quat_to_mat4_t(vect4_t quat, vect3_t origin);
 void calc_tau(joint* j, int num_joints, vect6_t f, float* tau);
 void calc_tau3(joint* j, int num_joints, vect3_t* f, float* tau);	//faster alt to calc_tau
 void calc_taulist(joint* chain_start, vect3_t* f);
+int gd_ik_single(mat4_t* hb_0, joint* start, joint* end, vect3_t* anchor_end, vect3_t* targ_b, vect3_t* anchor_b, float epsilon_divisor);	//num anchors?
 
 #endif
