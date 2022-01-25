@@ -881,10 +881,19 @@ int main_render_thread(void)
 			vect3_t foot_xy_1;
 			float h = 40; float w = 100;
 			float period = 2.f;
+			//foot_path(time, h, w, period, &foot_xy_1);
+			float one_16 = (float)(1 << 16);
+			vect3_32b_t foot_xy_1_32b;
 			foot_path(time, h, w, period, &foot_xy_1);
+			foot_path_fixed((uint32_t)(time * 1000.f), (int32_t)(h * one_16), (int32_t)(w * one_16), (int32_t)(period * 4096.f), &foot_xy_1_32b);
+			
 			/*Generate base for second half of the legs*/
 			vect3_t foot_xy_2;
+			vect3_32b_t foot_xy_2_32b;
 			foot_path(time+period/2.f, h, w, period, &foot_xy_2);
+			//foot_path_fixed((uint32_t)((time + period/2) * 1000.f), (int32_t)(h* one_16), (int32_t)(w* one_16), (int32_t)(period * 4096.f), &foot_xy_2_32b);
+			//for (int i = 0; i < 3; i++)
+			//	foot_xy_2.v[i] = (float)foot_xy_2_32b.v[i] / one_16;
 
 			/*Rotate and translate*/
 			float forward_direction_angle = 0.f;	//y axis!
