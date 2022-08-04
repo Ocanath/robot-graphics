@@ -1,0 +1,359 @@
+<robot name="ability_hand">
+
+	<!-- Establish base frame geometries -->
+	<link name="base" >
+		<visual name="body_base_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/FB_base_meters.STL"/>
+			</geometry>
+		</visual>	
+		<visual name="leg1_gbx_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/FB_gbx_leg1_meters.STL"/>
+			</geometry>
+		</visual>			
+		<visual name="leg2_gbx_mesh">
+			<origin rpy = "0 0 1.04719755" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/FB_gbx_leg1_meters.STL"/>
+			</geometry>
+		</visual>			
+		<visual name="leg2_gbx_mesh">
+			<origin rpy = "0 0 2.0943951" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/FB_gbx_leg1_meters.STL"/>
+			</geometry>
+		</visual>			
+		<visual name="leg4_gbx_mesh">
+			<origin rpy = "0 0 3.14159265359" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/FB_gbx_leg1_meters.STL"/>
+			</geometry>
+		</visual>			
+		<visual name="leg5_gbx_mesh">
+			<origin rpy = "0 0 -1.04719755" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/FB_gbx_leg1_meters.STL"/>
+			</geometry>
+		</visual>			
+		<visual name="leg6_gbx_mesh">
+			<origin rpy = "0 0 -2.0943951" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/FB_gbx_leg1_meters.STL"/>
+			</geometry>
+		</visual>					
+	</link>
+
+
+
+	<!--
+		Establish the frames and geometries for leg1!!!!
+	-->
+	<link name="leg1_link1" >
+		<visual name="leg1_link1_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J1_link1_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg1_link2" >
+		<visual name="leg1_link2_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J2_link2_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg1_link3" >
+		<visual name="leg1_link3_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J3_link3_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<joint name="leg1_q1" type="revolute">
+		<parent link="base"/>
+		<child link="leg1_link1"/>
+		<origin rpy = " 0.0 -0.0 1.4824826666439834 " xyz = "  9.68560403467281e-3 109.357754632563e-3 -46.52e-3 "/>
+		<limit lower = "-1.0471975512" upper = "1.0471975512" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg1_q2" type="revolute">
+		<parent link="leg1_link1"/>
+		<child link="leg1_link2"/>
+		<origin rpy = " 1.5707963267948966 -6.099371034007507e-17 -3.141592653589793 " xyz = "  53.19977678085327e-3 -9.341271351859646e-3 -32.1600000000312e-3 "/>
+		<limit lower = "0" upper = "3.21140582" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg1_q3" type="revolute">
+		<parent link="leg1_link2"/>
+		<child link="leg1_link3"/>
+		<origin rpy = " 3.141592653589793 9.240179859386194e-17 3.141592653589793 " xyz = "  -17.75562321538834e-3 98.8847208563049e-3 33.359575692035264e-3 "/>
+		<limit lower = "0" upper = "3.17649924" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	
+	
+	
+	
+	<!--
+		Establish the frames and geometries for leg2!!!!
+	-->
+	<link name="leg2_link1" >
+		<visual name="leg2_link1_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J1_link1_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg2_link2" >
+		<visual name="leg2_link2_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J2_link2_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg2_link3" >
+		<visual name="leg2_link3_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J3_link3_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<joint name="leg2_q1" type="revolute">
+		<parent link="base"/>
+		<child link="leg2_link1"/>
+		 <origin rpy = " 0.0 -0.0 2.529680217840581 " xyz = "  -89.86379159528853e-3 63.06685646130522e-3 -46.52e-3 "/>
+		<limit lower = "-1.0471975512" upper = "1.0471975512" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg2_q2" type="revolute">
+		<parent link="leg2_link1"/>
+		<child link="leg2_link2"/>
+		<origin rpy = " 1.5707963267948966 -6.099371034007507e-17 -3.141592653589793 " xyz = "  53.19977678085327e-3 -9.341271351859646e-3 -32.1600000000312e-3 "/>
+		<limit lower = "0" upper = "3.21140582" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg2_q3" type="revolute">
+		<parent link="leg2_link2"/>
+		<child link="leg2_link3"/>
+		<origin rpy = " 3.141592653589793 9.240179859386194e-17 3.141592653589793 " xyz = "  -17.75562321538834e-3 98.8847208563049e-3 33.359575692035264e-3 "/>
+		<limit lower = "0" upper = "3.17649924" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+
+	
+	
+	
+	<!--
+		Establish the frames and geometries for leg3!!!!
+	-->
+	<link name="leg3_link1" >
+		<visual name="leg3_link1_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J1_link1_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg3_link2" >
+		<visual name="leg3_link2_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J2_link2_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg3_link3" >
+		<visual name="leg3_link3_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J3_link3_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<joint name="leg3_q1" type="revolute">
+		<parent link="base"/>
+		<child link="leg3_link1"/>
+		<origin rpy = " 0.0 -0.0 -2.7063075381424078 " xyz = "  -99.54939562996135e-3 -46.290898171257766e-3 -46.52e-3 "/>
+		<limit lower = "-1.0471975512" upper = "1.0471975512" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg3_q2" type="revolute">
+		<parent link="leg3_link1"/>
+		<child link="leg3_link2"/>
+		<origin rpy = " 1.5707963267948966 -6.099371034007507e-17 -3.141592653589793 " xyz = "  53.19977678085327e-3 -9.341271351859646e-3 -32.1600000000312e-3 "/>
+		<limit lower = "0" upper = "3.21140582" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg3_q3" type="revolute">
+		<parent link="leg3_link2"/>
+		<child link="leg3_link3"/>
+		<origin rpy = " 3.141592653589793 9.240179859386194e-17 3.141592653589793 " xyz = "  -17.75562321538834e-3 98.8847208563049e-3 33.359575692035264e-3 "/>
+		<limit lower = "0" upper = "3.17649924" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	
+
+
+	<!--
+		Establish the frames and geometries for leg4!!!!
+	-->
+	<link name="leg4_link1" >
+		<visual name="leg4_link1_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J1_link1_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg4_link2" >
+		<visual name="leg4_link2_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J2_link2_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg4_link3" >
+		<visual name="leg4_link3_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J3_link3_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<joint name="leg4_q1" type="revolute">
+		<parent link="base"/>
+		<child link="leg4_link1"/>
+		<origin rpy = " 0.0 -0.0 -1.65910998694581 " xyz = "  -9.685604034672824e-3 -109.357754632563e-3 -46.52e-3 "/>
+		<limit lower = "-1.0471975512" upper = "1.0471975512" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg4_q2" type="revolute">
+		<parent link="leg4_link1"/>
+		<child link="leg4_link2"/>
+		<origin rpy = " 1.5707963267948966 -6.099371034007507e-17 -3.141592653589793 " xyz = "  53.19977678085327e-3 -9.341271351859646e-3 -32.1600000000312e-3 "/>
+		<limit lower = "0" upper = "3.21140582" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg4_q3" type="revolute">
+		<parent link="leg4_link2"/>
+		<child link="leg4_link3"/>
+		<origin rpy = " 3.141592653589793 9.240179859386194e-17 3.141592653589793 " xyz = "  -17.75562321538834e-3 98.8847208563049e-3 33.359575692035264e-3 "/>
+		<limit lower = "0" upper = "3.17649924" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+
+
+
+
+
+	<!--
+		Establish the frames and geometries for leg5 !!!!
+	-->
+	<link name="leg5_link1" >
+		<visual name="leg5_link1_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J1_link1_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg5_link2" >
+		<visual name="leg5_link2_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J2_link2_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg5_link3" >
+		<visual name="leg5_link3_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J3_link3_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<joint name="leg5_q1" type="revolute">
+		<parent link="base"/>
+		<child link="leg5_link1"/>
+		<origin rpy = " 0.0 -0.0 0.4352851154473858 " xyz = "  99.54939562996134e-3 46.2908981712578e-3 -46.52e-3 "/>
+		<limit lower = "-1.0471975512" upper = "1.0471975512" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg5_q2" type="revolute">
+		<parent link="leg5_link1"/>
+		<child link="leg5_link2"/>
+		<origin rpy = " 1.5707963267948966 -6.099371034007507e-17 -3.141592653589793 " xyz = "  53.19977678085327e-3 -9.341271351859646e-3 -32.1600000000312e-3 "/>
+		<limit lower = "0" upper = "3.21140582" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg5_q3" type="revolute">
+		<parent link="leg5_link2"/>
+		<child link="leg5_link3"/>
+		<origin rpy = " 3.141592653589793 9.240179859386194e-17 3.141592653589793 " xyz = "  -17.75562321538834e-3 98.8847208563049e-3 33.359575692035264e-3 "/>
+		<limit lower = "0" upper = "3.17649924" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+
+
+	<!--
+		Establish the frames and geometries for leg6 !!!!
+	-->
+	<link name="leg6_link1" >
+		<visual name="leg6_link1_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J1_link1_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg6_link2" >
+		<visual name="leg6_link2_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J2_link2_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<link name="leg6_link3" >
+		<visual name="leg6_link3_mesh">
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+			<geometry>
+				<mesh filename="render/J3_link3_meters.STL"/>
+			</geometry>
+		</visual>	
+	</link>
+	<joint name="leg6_q1" type="revolute">
+		<parent link="base"/>
+		<child link="leg6_link1"/>
+		<origin rpy = " 0.0 -0.0 -0.6119124357492118 " xyz = "  89.86379159528855e-3 -63.066856461305186e-3 -46.52e-3 "/>
+		<limit lower = "-1.0471975512" upper = "1.0471975512" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg6_q2" type="revolute">
+		<parent link="leg6_link1"/>
+		<child link="leg6_link2"/>
+		<origin rpy = " 1.5707963267948966 -6.099371034007507e-17 -3.141592653589793 " xyz = "  53.19977678085327e-3 -9.341271351859646e-3 -32.1600000000312e-3 "/>
+		<limit lower = "0" upper = "3.21140582" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+	<joint name="leg6_q3" type="revolute">
+		<parent link="leg6_link2"/>
+		<child link="leg6_link3"/>
+		<origin rpy = " 3.141592653589793 9.240179859386194e-17 3.141592653589793 " xyz = "  -17.75562321538834e-3 98.8847208563049e-3 33.359575692035264e-3 "/>
+		<limit lower = "0" upper = "3.17649924" effort = "4096" velocity = "3.4125"/>
+		<axis xyz="0 0 1"/>
+	</joint>
+
+
+</robot>
