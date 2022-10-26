@@ -99,7 +99,7 @@ float get_4bar_driven_angle(float q1)
     // calculate the linkage intermediate angle!
     float q2pq1 = atan2_approx(p2.v[1]-l1*sq1, p2.v[0]-l1*cq1);
     float q2 = q2pq1-q1;
-    return q2;
+	return fmod_2pi(q2 + PI) - PI;;
 }
 
 const mat4_t id_matrix = {
