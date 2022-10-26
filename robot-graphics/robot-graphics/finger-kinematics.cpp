@@ -5,12 +5,12 @@
 #include "kinematics.h"
 
 
-static const float l0 = 9.5f;
+//static const float l0 = 9.47966f;
+static const vect3_t p3 = { 9.47966f,-0.62133f,0 };
 static const float l1 = 38.6104f;
 static const float l2 = 36.875f;
 static const float l3 = 9.1241f;
-//static const vect3_t p0 = {0,0,0};
-static const vect3_t p3 = {l0,0,0};
+
 
 enum { INDEX, MIDDLE, RING, PINKY, THUMB };
 
@@ -169,9 +169,9 @@ void finger_kinematics(kinematic_hand_t * kh)
 void init_finger_kinematics(kinematic_hand_t * kh)
 {
 	{
-		int fidx = INDEX;
-		mat4_t tf = Hy(PI / 2 + 0.051012f);	//ish
-		tf = mat4_t_mult(tf, Hz(-0.250689f));	//
+	 int fidx = INDEX;
+		mat4_t tf = Hy(PI / 2 + 0.051012f);	//ish;
+	tf = mat4_t_mult(tf, Hz(-0.250689f));	//
 		tf.m[0][3] = -9.49f;
 		tf.m[1][3] = -13.04f;
 		tf.m[2][3] = -62.95f;

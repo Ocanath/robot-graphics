@@ -230,6 +230,9 @@ vect3_t cross(vect3_t v_a, vect3_t v_b)
 	ret.v[2] = -v_a.v[1] * v_b.v[0] + v_a.v[0] * v_b.v[1];
 	return ret;
 }
+
+
+
 /*
 	Returns vector cross product between 3 vectors A and B. Faster pass by pointer version
 */

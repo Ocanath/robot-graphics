@@ -203,11 +203,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = 1.159425f;
-	Player.CamRobot.hw_b.m[1][3] = -2.235785f;
-	Player.CamRobot.hw_b.m[2][3] = 1.895452f;
-	Player.CamRobot.j[1].q = fmod(1.073685f + PI, 2*PI)-PI;
-	Player.CamRobot.j[2].q = -1.67700;
+	Player.CamRobot.hw_b.m[0][3] = 0.269938;
+	Player.CamRobot.hw_b.m[1][3] = 1.326470;
+	Player.CamRobot.hw_b.m[2][3] = 1.968748;
+	Player.CamRobot.j[1].q = fmod(9995.243164f + PI, 2*PI)-PI;
+	Player.CamRobot.j[2].q = -1.767593f;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -315,9 +315,9 @@ int main_render_thread(void)
 	psy_thumb_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-F1.STL"));
 	psy_thumb_modellist.push_back(AssetModel("misc_models/psyonic-hand/thumb-F2.STL"));
 	vector<AssetModel> psy_finger_modellist;	//vector of finger stl's
-	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/idx-F0.STL"));
-	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/finger-F1.STL"));
-	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/finger-F2.STL"));
+	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/split-finger-F0.STL"));
+	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/split-finger-F1.STL"));
+	psy_finger_modellist.push_back(AssetModel("misc_models/psyonic-hand/split-finger-F2.STL"));
 	AssetModel psy_palm("misc_models/psyonic-hand/PALM_BASE_FRAME.STL");
 	AssetModel psy_crosslink("misc_models/psyonic-hand/crosslink.STL");
 
@@ -494,7 +494,7 @@ int main_render_thread(void)
 		//vect3_t player_pos;
 		//for(int r = 0; r < 3; r++)
 		//	player_pos.v[r] = Player.CamRobot.hw_b.m[r][3];
-		//point_light_positions[4] = glm::vec3(player_pos.v[0], player_pos.v[1], player_pos.v[2] + 4.f);
+		//point_light_positions[4] = glm::vec3(player_pos.v[0], player_pos.v[1], er_pos.v[2] + 4.f);
 
 
 		lightingShader.setMat4("projection", CameraProjection);
@@ -859,7 +859,7 @@ int main_render_thread(void)
 					psy_thumb_modellist[i].Draw(lightingShader, NULL);
 				}
 			}
-			for(int fidx = 0; fidx < 4; fidx++)
+			for(int fidx = 0; fidx < 1; fidx++)
 			{//FINGER RENDER
 
 				/*Establish hw_0 frame*/
@@ -876,17 +876,45 @@ int main_render_thread(void)
 					}
 				};
 
-				mat4_t h0_crosslink = mat4_t_Identity;
-				h0_crosslink.m[0][3] = 9.47966f;
-				h0_crosslink.m[1][3] = -0.62133f;
-				h0_crosslink.m[2][3] = -0.04458f;
-				mat4_t hw_crosslink = mat4_t_mult(hw_0, h0_crosslink);
-				hw_crosslink = mat4_t_mult(hw_crosslink, scale_matrix);
-				model = ht_matrix_to_mat4_t(hw_crosslink);
-				lightingShader.setMat4("model", model);
-				psy_crosslink.Draw(lightingShader, NULL);
+				{
+					mat4_t h0_crosslink = mat4_t_Identity;
+					vect3_t crosslink_origin = { {9.47966f, -0.62133f, -0.04458f} };
 
-				model = ht_matrix_to_mat4_t(hw_0);
+					vect3_t o2, v_crx, v_cry, v_crz;
+					mat4_t h0_2 = mat4_t_mult(psy_hand_bones->finger[fidx].chain[1].him1_i, psy_hand_bones->finger[fidx].chain[2].him1_i);
+					h_origin_pbr(&h0_2, &o2);
+
+					//get direction vector pointing from crosslink location to the origin of frame 2 (where the crosslink x intersects)
+					for (int i = 0; i < 3; i++)
+						v_crx.v[i] = o2.v[i] - crosslink_origin.v[i];
+					v_crx.v[2] = 0;
+					v_crx = vect3_normalize(v_crx);
+					v_crz = { {0,0,-1} };
+					v_cry = cross(v_crz, v_crx);
+					v_cry = vect3_normalize(v_cry);
+					float dp = vect_dot(v_crx.v, v_crz.v, 3);
+					if (abs_f(dp) > 0.00001f)
+					{
+						v_crz = cross(v_crx, v_cry);
+						v_crz = vect3_normalize(v_crz);
+					}
+					for (int r = 0; r < 3; r++)
+					{
+						h0_crosslink.m[r][0] = v_crx.v[r];
+						h0_crosslink.m[r][1] = v_cry.v[r];
+						h0_crosslink.m[r][2] = v_crz.v[r];
+						h0_crosslink.m[r][3] = crosslink_origin.v[r];
+					}
+
+					mat4_t hw_crosslink = mat4_t_mult(hw_0, h0_crosslink);
+					hw_crosslink = mat4_t_mult(hw_crosslink, scale_matrix);
+					model = ht_matrix_to_mat4_t(hw_crosslink);
+					lightingShader.setMat4("model", model);
+					psy_crosslink.Draw(lightingShader, NULL);
+				}
+
+				mat4_t f0_mesh = mat4_t_mult(hw_0, scale_matrix);
+				model = ht_matrix_to_mat4_t(f0_mesh);
 				lightingShader.setMat4("model", model);
 				psy_finger_modellist[0].Draw(lightingShader, NULL);
 
