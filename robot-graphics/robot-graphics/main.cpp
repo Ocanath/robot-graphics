@@ -470,6 +470,21 @@ int main_render_thread(void)
 				light[4].position += glm::vec3(0, 0, -displacement_per_sec);
 		}
 
+		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		{
+			if (glfwGetKey(window, GLFW_KEY_LEFT_BRACKET) == GLFW_PRESS)
+			{
+				Player.xyV *= 0.95f;
+				if (Player.xyV <= 1e-9f)
+					Player.xyV = 1e-9f;
+				printf("xyV = %f\r\n", Player.xyV);
+			}
+			else if (glfwGetKey(window, GLFW_KEY_RIGHT_BRACKET) == GLFW_PRESS)
+			{
+				Player.xyV *= 1.05f;
+				printf("xyV = %f\r\n", Player.xyV);
+			}
+		}
 		if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
 			float v = .01f * (time - ambient_press_time);
@@ -668,13 +683,13 @@ int main_render_thread(void)
 				for (int link = 1; link <= 2; link++)
 				{
 					printf("index h_link_%d:\r\n", link);
-					print_mat4_t(psy_hand_bones->finger[link].chain->him1_i);
+					print_mat4_t(psy_hand_bones->finger[0].chain[link].h_link);
 					printf("\r\n\r\n");
 				}
 				for (int link = 1; link <= 2; link++)
 				{
 					vect3_t xyz, rpy;
-					get_xyz_rpy(&psy_hand_bones->finger[0].chain[link].him1_i, &xyz, &rpy);
+					get_xyz_rpy(&psy_hand_bones->finger[0].chain[link].h_link, &xyz, &rpy);
 					printf("link %d xyz = ", link);
 					print_vect3(xyz);
 					printf("rpy = ");
@@ -683,6 +698,9 @@ int main_render_thread(void)
 				}
 			}
 		}
+		
+
+
 		//printf("link transformed = \n");
 		//print_mat4_t(psy_hand_bones->finger[0].chain[1].him1_i);
 		//printf("\nlink dh-original= \n");

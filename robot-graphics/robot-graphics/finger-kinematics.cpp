@@ -6,7 +6,7 @@
 
 
 //static const float l0 = 9.47966f;
-static const vect3_t p3 = { 9.47966f,-0.62133f,0 };
+static const vect3_t p3 = { 9.47966f, -0.62133f, 0 };
 static const float l1 = 38.6104f;
 static const float l2 = 36.875f;
 static const float l3 = 9.1241f;
@@ -83,6 +83,8 @@ uint8_t get_intersection_circles(vect3_t o0, float r0, vect3_t o1, float r1, vec
 /**/
 float get_4bar_driven_angle(float q1)
 {
+	q1 = q1 + 0.084474f;	//factor in offset imposed by our choice of frame geometry
+
     float cq1 = cos_fast(q1);
     float sq1 = sin_fast(q1);
     vect3_t p1 = 
@@ -114,22 +116,25 @@ const mat4_t id_matrix = {
 //l1 = a1
 //l3 = a2
 
-const dh_entry generic_finger_dh[3] = {
-	{0.f, 0.f, 0.f},
-	{0.f, 38.6104f, 0.f},	//d, a, alpha
-	{0.f, 9.1241f, 0.f}	//d, a, alpha
+vect3_t finger_xyzlist[] = {
+	{{0,0,0}},
+	{{ 38.472723f, 3.257695f, 0.000000f }},
+	{{9.1241f, 0, 0}}
 };
-
-/*
-Approximate Origin of index fingertip in frame 2 for whatever idk shrot finger or somrthign
-26.6442
-15.1816
-0
-*/
-const dh_entry generic_thumb_dh[3] = {
-	{0.f, 0.f, 0.f},
-	{-14.7507f, 27.703f,	75.f*PI/180},	//d, a, alpha
-	{3.9348f,	69.23921f,	0.f}			//d, a, alpha
+vect3_t finger_rpylist[] = {
+	{{0,0,0}},
+	{{0, 0, 0.084474f}},
+	{{0,0,0}}
+};
+vect3_t thumb_xyzlist[] = {
+	{{0,0,0}},
+	{{27.8283501f, 0.f - 14.7507000f}},
+	{{65.18669f, 23.34021f, -3.93483f}}
+};
+vect3_t thumb_rpylist[] = {
+	{{0,0,0}},
+	{{4.450589592585541, 0, 0}},
+	{{3.141592f, 0.f, 0.343830f}}
 };
 
 /**/
@@ -169,9 +174,9 @@ void finger_kinematics(kinematic_hand_t * kh)
 void init_finger_kinematics(kinematic_hand_t * kh)
 {
 	{
-	 int fidx = INDEX;
+		int fidx = INDEX;
 		mat4_t tf = Hy(PI / 2 + 0.051012f);	//ish;
-	tf = mat4_t_mult(tf, Hz(-0.250689f));	//
+		tf = mat4_t_mult(tf, Hz(-0.250689f));	//
 		tf.m[0][3] = -9.49f;
 		tf.m[1][3] = -13.04f;
 		tf.m[2][3] = -62.95f;
@@ -215,11 +220,13 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 		joint * j = kh->finger[ch].chain;
 		if(ch != 4)
 		{
-			init_forward_kinematics_dh(j, generic_finger_dh, 2);
+			//init_forward_kinematics_dh(j, generic_finger_dh, 2);
+			init_forward_kinematics_urdf(j, finger_xyzlist, finger_rpylist, 2);
 		}
 		else
 		{
-			init_forward_kinematics_dh(j, generic_thumb_dh, 2);
+			//init_forward_kinematics_dh(j, generic_thumb_dh, 2);
+			init_forward_kinematics_urdf(j, thumb_xyzlist, thumb_rpylist, 2);
 		}		
 	}
 }
