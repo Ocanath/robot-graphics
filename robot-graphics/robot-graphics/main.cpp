@@ -115,9 +115,8 @@ void transform_mpos_to_kpos(float qin[6], kinematic_hand_t * hand)
 		float fangle = qin[finger] * PI / 180.f;
 		hand->finger[finger].chain[1].q = fangle;
 	}
-	hand->finger[4].chain[1].q = ((180 + 10.82) + qin[THR]) * PI / 180.f;
-	//hand->finger[4].chain[2].q = (-19.7f - qin[THF]) * PI / 180.f;
-	hand->finger[4].chain[2].q = (-19.7f - qin[THF]) * PI / 180.f;
+	hand->finger[4].chain[1].q = qin[THR] * PI / 180.f;
+	hand->finger[4].chain[2].q = qin[THF] * PI / 180.f;
 }
 
 #define NUM_GRIPKEYS 12
@@ -660,7 +659,8 @@ int main_render_thread(void)
 			q[5] = 0.f;
 		if (q[5] < -110.f)
 			q[5] = -110.f;
-
+		q[4] = 0;
+		q[5] = 0;
 
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(q, psy_hand_bones);
@@ -859,6 +859,16 @@ int main_render_thread(void)
 		//hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
 		hw_b.m[0][3] = 0;
 		hw_b.m[2][3] = 1.f;
+
+		/*create a model meters to mm scale matrix*/
+		mat4_t scale_matrix = {
+			{
+				{1000.f,0,0,0},
+				{0,1000.f,0,0},
+				{0,0,1000.f,0},
+				{0,0,0,1.f},
+			}
+		};
 		{
 			{//THUMB RENDER
 				//mat4_t hb_0 = mat4_t_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
@@ -867,33 +877,24 @@ int main_render_thread(void)
 
 				model = ht_matrix_to_mat4_t(hw_0);
 				lightingShader.setMat4("model", model);
-				psy_thumb_modellist[0].Draw(lightingShader, NULL);
+				//psy_thumb_modellist[0].Draw(lightingShader, NULL);
 				//psy_palm.Draw(lightingShader, NULL);	//render the palm too
 				for (int i = 1; i <= 2; i++)
 				{
 					mat4_t hw_i = mat4_t_mult(hw_b, psy_hand_bones->finger[4].chain[i].hb_i);
+					hw_i = mat4_t_mult(hw_i, scale_matrix);
 					model = ht_matrix_to_mat4_t(hw_i);
 					lightingShader.setMat4("model", model);
 					psy_thumb_modellist[i].Draw(lightingShader, NULL);
 				}
 			}
-			for(int fidx = 0; fidx < 1; fidx++)
+			for(int fidx = 0; fidx <= 3; fidx++)
 			{//FINGER RENDER
 
 				/*Establish hw_0 frame*/
 				mat4_t hb_0 = psy_hand_bones->finger[fidx].chain[0].him1_i;	//store it here
 				mat4_t hw_0 = mat4_t_mult(hw_b, hb_0);
 				
-				/*create a model meters to mm scale matrix*/
-				mat4_t scale_matrix = {
-					{
-						{1000.f,0,0,0},
-						{0,1000.f,0,0},
-						{0,0,1000.f,0},
-						{0,0,0,1.f},
-					}
-				};
-
 				{
 					mat4_t h0_crosslink = mat4_t_Identity;
 					vect3_t crosslink_origin = { {9.47966f, -0.62133f, -0.04458f} };

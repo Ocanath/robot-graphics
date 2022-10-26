@@ -49,6 +49,7 @@ typedef struct kinematic_chain
 //void chain_pre_allocate(kinematic_chain * chain, int num_frames);
 //void chain_de_allocate(kinematic_chain * chain);
 void init_forward_kinematics_urdf(joint* j, vect3_t* xyz, vect3_t* rpy, int num_joints);
+mat4_t get_rpy_xyz_htmatrix(vect3_t* xyz, vect3_t* rpy);
 void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints);
 void forward_kinematics(mat4_t* hb_0, joint* f1_joint);
 void load_q(joint* chain_start);
@@ -65,5 +66,6 @@ void calc_tau(joint* j, int num_joints, vect6_t f, float* tau);
 void calc_tau3(joint* j, int num_joints, vect3_t* f, float* tau);	//faster alt to calc_tau
 void calc_taulist(joint* chain_start, vect3_t* f);
 int gd_ik_single(mat4_t* hb_0, joint* start, joint* end, vect3_t* anchor_end, vect3_t* targ_b, vect3_t* anchor_b, float epsilon_divisor);	//num anchors?
+
 
 #endif

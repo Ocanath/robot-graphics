@@ -117,24 +117,25 @@ const mat4_t id_matrix = {
 //l3 = a2
 
 vect3_t finger_xyzlist[] = {
-	{{0,0,0}},
+	{{0.00949e3, -0.01304e3, -0.06295e3}},
 	{{ 38.472723f, 3.257695f, 0.000000f }},
 	{{9.1241f, 0, 0}}
 };
 vect3_t finger_rpylist[] = {
-	{{0,0,0}},
+	{{-1.1595426535897932, 1.284473, -1.0510016535897932}},
 	{{0, 0, 0.084474f}},
 	{{0,0,0}}
 };
 vect3_t thumb_xyzlist[] = {
 	{{0,0,0}},
-	{{27.8283501f, 0.f - 14.7507000f}},
-	{{65.18669f, 23.34021f, -3.93483f}}
+	{{ 27.8283501f, 0, -14.7507f}},
+	{{65.18669, 23.34021, -3.93483f}}
 };
 vect3_t thumb_rpylist[] = {
-	{{0,0,0}},
+	{{0, 0, 3.330437}},
 	{{4.450589592585541, 0, 0}},
 	{{3.141592f, 0.f, 0.343830f}}
+
 };
 
 /**/
@@ -213,8 +214,8 @@ void init_finger_kinematics(kinematic_hand_t * kh)
 		copy_mat4_t(&kh->finger[fidx].chain[0].him1_i, &tf);	//him1_0 = hb_0
 		copy_mat4_t(&kh->finger[fidx].chain[0].hb_i, &tf);
 	}
-	kh->finger[THUMB].chain[0].him1_i = mat4_t_I();
-	kh->finger[THUMB].chain[0].hb_i = mat4_t_I();
+	kh->finger[THUMB].chain[0].him1_i = get_rpy_xyz_htmatrix(&thumb_xyzlist[0],&thumb_rpylist[0]);
+	kh->finger[THUMB].chain[0].hb_i = kh->finger[THUMB].chain[0].him1_i;
 	for(int ch = 0; ch < 5; ch++)
 	{
 		joint * j = kh->finger[ch].chain;

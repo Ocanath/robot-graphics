@@ -37,6 +37,16 @@ void get_xyz_rpy(mat4_t* M, vect3_t* xyz, vect3_t * rpy)
 	h_origin_pbr(M, xyz);
 }
 
+mat4_t get_rpy_xyz_htmatrix(vect3_t* xyz, vect3_t* rpy)
+{
+	mat4_t Hlink = Hz(rpy->v[2]);
+	Hlink = mat4_t_mult(Hlink, Hy(rpy->v[1]));
+	Hlink = mat4_t_mult(Hlink, Hx(rpy->v[0]));	//obtained Hrpy
+	for (int r = 0; r < 3; r++)
+		Hlink.m[r][3] = xyz->v[r];
+	return Hlink;
+}
+
 /*
 *	Initialize links with urdf-style inputs (xyz and roll pitch yaw)
 */
@@ -44,11 +54,7 @@ void init_forward_kinematics_urdf(joint* j, vect3_t * xyz, vect3_t * rpy, int nu
 {
 	for(int i = 1; i <= num_joints; i++)
 	{
-		mat4_t Hlink = Hz(rpy[i].v[2]);
-		Hlink = mat4_t_mult(Hlink, Hy(rpy[i].v[1]));
-		Hlink = mat4_t_mult(Hlink, Hx(rpy[i].v[0]));	//obtained Hrpy
-		for(int r = 0; r < 3; r++)
-			Hlink.m[r][3] = xyz[i].v[r];
+		mat4_t Hlink = get_rpy_xyz_htmatrix(&xyz[i], &rpy[i]);
 		copy_mat4_t(&j[i].h_link, &Hlink);	//load result into joint matrix
 		copy_mat4_t(&j[i].him1_i, &j[i].h_link);	//initial q=0 loading for him1_i
 		j[i - 1].child = &j[i];	//load child reference in case we want to traverse this as a singly linked list
