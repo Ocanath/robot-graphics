@@ -57,6 +57,8 @@ void copy_mat4_t(mat4_t* dest, mat4_t* src);
 vect6_t calc_w_v(kinematic_chain * chain, vect3_t * w, vect3_t * v);
 void htmatrix_vect3_mult(mat4_t* m, vect3_t* v, vect3_t* ret);
 vect3_t h_origin(mat4_t h);
+void h_origin_pbr(mat4_t* h, vect3_t* xyz);
+void get_xyz_rpy(mat4_t* M, vect3_t* xyz, vect3_t* rpy);
 vect4_t h_origin_vect4(mat4_t h);
 mat4_t quat_to_mat4_t(vect4_t quat, vect3_t origin);
 void calc_tau(joint* j, int num_joints, vect6_t f, float* tau);

@@ -142,6 +142,7 @@ void finger_kinematics(kinematic_hand_t * kh)
 		{	
 			float q1 = j[1].q;	//DEG_TO_RAD*(hand->mp[ch].q+4.84f);
 			float q2 = get_4bar_driven_angle(q1);
+
 			j[2].q = q2;
 			load_q(j->child);
 			forward_kinematics(&j->hb_i, j->child);			
@@ -161,6 +162,8 @@ void finger_kinematics(kinematic_hand_t * kh)
 		}
 	}
 }
+
+
 
 /**/
 void init_finger_kinematics(kinematic_hand_t * kh)

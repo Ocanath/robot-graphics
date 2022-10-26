@@ -18,6 +18,26 @@ void copy_mat4_t(mat4_t * dest, mat4_t * src)
 }
 
 /*
+* Tell me the xyz and rpy from an input homogeneous transoformation matrix. 
+* INPUT: M. Pass by reference (pbr)
+* OUTPUTS: 
+*	xyz (pbr)
+*	rpy (pbr)
+* 
+* Uses math.h atan2. Is slow and accurate
+* 
+*/
+void get_xyz_rpy(mat4_t* M, vect3_t* xyz, vect3_t * rpy)
+{
+	if (M == NULL || xyz == NULL || rpy == NULL)
+		return;
+	double yaw = atan2(M->m[1][0], M->m[0][0]);
+	double pitch = atan2(-M->m[2][0], sqrt((double)(M->m[2][1] * M->m[2][1] + M->m[2][2] * M->m[2][2])));
+	double roll = atan2(M->m[2][1], M->m[2][2]);
+	h_origin_pbr(M, xyz);
+}
+
+/*
 *	Initialize links with urdf-style inputs (xyz and roll pitch yaw)
 */
 void init_forward_kinematics_urdf(joint* j, vect3_t * xyz, vect3_t * rpy, int num_joints)
@@ -304,6 +324,17 @@ vect3_t h_origin(mat4_t h)
 		ret.v[i] = h.m[i][3];
 	return ret;
 }
+
+/*
+helper function for extracting the origin of a ht matrix
+*/
+void h_origin_pbr(mat4_t * h, vect3_t * xyz)
+{
+	int i;
+	for (i = 0; i < 3; i++)
+		xyz->v[i] = h->m[i][3];
+}
+
 /*
 helper function for extracting the origin of a ht matrix 
 in the form of a 4 vector
