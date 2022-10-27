@@ -88,15 +88,16 @@ void main()
         // result += CalcPointLight(pointLights[i], norm, FragPos, viewDir);    
     // phase 3: spot light
     //result += CalcSpotLight(spotLight, norm, FragPos, viewDir);    
-	
-    vec3 reflectDir = -reflect(dirLight.direction, norm);
-	float specc = max(dot(viewDir, reflectDir),0.0);
-	specc = specc*specc;
-	vec4 color = vec4(.1,.1,.1,.1) + 0.7*specc *vec4(.1,.1,.1,.1);
-	specc = pow(specc,8.0)*0.4;
-	color+=specc*vec4(.1,.1,.1,.1);
-	FragColor = min(color,vec4(1.0));
-
+	for(int i = 0; i < NR_POINT_LIGHTS; i++)
+	{
+		vec3 reflectDir = -reflect(normalize(pointLights[i].position), norm);
+		float specc = max(dot(viewDir, reflectDir),0.0);
+		specc = specc*specc;
+		vec4 color = vec4(.1,.1,.1,.1) + 0.7*specc *vec4(.1,.1,.1,.1);
+		specc = pow(specc,8.0)*0.4;
+		color+=specc*vec4(.1,.1,.1,.1);
+		FragColor = min(color,vec4(1.0));
+	}
     //FragColor = vec4(result, 1.0);
 }
 

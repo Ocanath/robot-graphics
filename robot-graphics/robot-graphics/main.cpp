@@ -215,6 +215,7 @@ int main_render_thread(void)
 
 	Shader lightingShader("6.multiple_lights.vs", "6.multiple_lights.fs");
 	Shader lightCubeShader("6.light_cube.vs", "6.light_cube.fs");
+	Shader glassShader("glass.vs", "glass.fs");
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 // ------------------------------------------------------------------
@@ -301,6 +302,9 @@ int main_render_thread(void)
 	lightingShader.use();
 	lightingShader.setInt("material.diffuse", 0);
 	lightingShader.setInt("material.specular", 1);
+	glassShader.use();
+	glassShader.setInt("material.diffuse", 0);
+	glassShader.setInt("material.specular", 1);
 
 	// tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
 	stbi_set_flip_vertically_on_load(true);
@@ -392,12 +396,15 @@ int main_render_thread(void)
 		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glassShader.use();
 		lightingShader.use();
 		vect3_t cam_origin = h_origin(Player.CamRobot.hw_b);
 		glm::vec3 camera_position = glm::vec3(cam_origin.v[0], cam_origin.v[1], cam_origin.v[2]);
 		lightingShader.setVec3("viewPos", camera_position);
 		lightingShader.setFloat("material.shininess", shininess);
-		
+		glassShader.setVec3("viewPos", camera_position);
+		glassShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+
 		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
 		lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
@@ -408,6 +415,7 @@ int main_render_thread(void)
 			char buf[32] = { 0 };
 			sprintf_s(buf, "pointLights[%d].position", i);
 			lightingShader.setVec3(buf, light[i].position);
+			glassShader.setVec3(buf, light[i].position);
 
 			sprintf_s(buf, "pointLights[%d].ambient", i);
 			lightingShader.setVec3(buf, light[i].ambient);
@@ -509,7 +517,8 @@ int main_render_thread(void)
 		//for(int r = 0; r < 3; r++)
 		//	player_pos.v[r] = Player.CamRobot.hw_b.m[r][3];
 		//point_light_positions[4] = glm::vec3(player_pos.v[0], player_pos.v[1], er_pos.v[2] + 4.f);
-
+		glassShader.setMat4("projection", CameraProjection);
+		glassShader.setMat4("view", View);
 
 		lightingShader.setMat4("projection", CameraProjection);
 		lightingShader.setMat4("view", View);
@@ -519,6 +528,7 @@ int main_render_thread(void)
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
 		lightingShader.setMat4("model", model);
+		glassShader.setMat4("model", model);
 
 		// bind diffuse map
 		glActiveTexture(GL_TEXTURE0);
@@ -884,8 +894,9 @@ int main_render_thread(void)
 					mat4_t hw_i = mat4_t_mult(hw_b, psy_hand_bones->finger[4].chain[i].hb_i);
 					hw_i = mat4_t_mult(hw_i, scale_matrix);
 					model = ht_matrix_to_mat4_t(hw_i);
-					lightingShader.setMat4("model", model);
-					psy_thumb_modellist[i].Draw(lightingShader, NULL);
+					//lightingShader.setMat4("model", model);
+					glassShader.setMat4("model", model);
+					psy_thumb_modellist[i].Draw(glassShader, NULL);
 				}
 			}
 			for(int fidx = 0; fidx <= 3; fidx++)
