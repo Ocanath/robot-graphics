@@ -58,6 +58,11 @@
 				<mesh filename="render/J1_link1_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg1_link2" >
 		<visual name="leg1_link2_mesh">
@@ -66,6 +71,11 @@
 				<mesh filename="render/J2_link2_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg1_link3" >
 		<visual name="leg1_link3_mesh">
@@ -74,6 +84,11 @@
 				<mesh filename="render/J3_link3_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<joint name="leg1_q1" type="revolute">
 		<parent link="base"/>
@@ -110,6 +125,11 @@
 				<mesh filename="render/J1_link1_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg2_link2" >
 		<visual name="leg2_link2_mesh">
@@ -118,6 +138,11 @@
 				<mesh filename="render/J2_link2_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg2_link3" >
 		<visual name="leg2_link3_mesh">
@@ -126,6 +151,11 @@
 				<mesh filename="render/J3_link3_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<joint name="leg2_q1" type="revolute">
 		<parent link="base"/>
@@ -162,6 +192,11 @@
 				<mesh filename="render/J1_link1_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg3_link2" >
 		<visual name="leg3_link2_mesh">
@@ -170,6 +205,11 @@
 				<mesh filename="render/J2_link2_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg3_link3" >
 		<visual name="leg3_link3_mesh">
@@ -178,6 +218,11 @@
 				<mesh filename="render/J3_link3_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<joint name="leg3_q1" type="revolute">
 		<parent link="base"/>
@@ -213,6 +258,11 @@
 				<mesh filename="render/J1_link1_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg4_link2" >
 		<visual name="leg4_link2_mesh">
@@ -221,6 +271,11 @@
 				<mesh filename="render/J2_link2_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg4_link3" >
 		<visual name="leg4_link3_mesh">
@@ -229,6 +284,11 @@
 				<mesh filename="render/J3_link3_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<joint name="leg4_q1" type="revolute">
 		<parent link="base"/>
@@ -266,6 +326,11 @@
 				<mesh filename="render/J1_link1_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg5_link2" >
 		<visual name="leg5_link2_mesh">
@@ -274,6 +339,11 @@
 				<mesh filename="render/J2_link2_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg5_link3" >
 		<visual name="leg5_link3_mesh">
@@ -282,6 +352,11 @@
 				<mesh filename="render/J3_link3_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<joint name="leg5_q1" type="revolute">
 		<parent link="base"/>
@@ -316,6 +391,11 @@
 				<mesh filename="render/J1_link1_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg6_link2" >
 		<visual name="leg6_link2_mesh">
@@ -324,6 +404,11 @@
 				<mesh filename="render/J2_link2_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<link name="leg6_link3" >
 		<visual name="leg6_link3_mesh">
@@ -332,6 +417,11 @@
 				<mesh filename="render/J3_link3_meters.STL"/>
 			</geometry>
 		</visual>	
+		<inertial>
+			<mass value = "0.1"/>
+			<inertia ixx="0.16931e-6" ixy = "-0.076214e-6" ixz = "-0.16959148e-6" iyy = "0.77769934e-6" iyz = "0.0156622e-6" izz = "0.7249122e-6" />
+			<origin rpy = "0 0 0" xyz = "0 0 0"/>
+		</inertial>
 	</link>
 	<joint name="leg6_q1" type="revolute">
 		<parent link="base"/>
