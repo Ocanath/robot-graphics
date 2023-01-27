@@ -27,8 +27,22 @@
 #include "m_mcpy.h"
 
 #include "hexapod_footpath.h"
+#include "WinUdpBkstServer.h"
+#include "WinUdpClient.h"
 
 #define NUM_LIGHTS 5
+
+/*
+Generic hex checksum calculation.
+TODO: use this in the psyonic API
+*/
+uint32_t get_checksum32(uint32_t* arr, int size)
+{
+	int32_t checksum = 0;
+	for (int i = 0; i < size; i++)
+		checksum += (int32_t)arr[i];
+	return -checksum;
+}
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
@@ -202,11 +216,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = 0.269938;
-	Player.CamRobot.hw_b.m[1][3] = 1.326470;
-	Player.CamRobot.hw_b.m[2][3] = 1.968748;
-	Player.CamRobot.j[1].q = fmod(9995.243164f + PI, 2*PI)-PI;
-	Player.CamRobot.j[2].q = -1.767593f;
+	Player.CamRobot.hw_b.m[0][3] = 3.495361;
+	Player.CamRobot.hw_b.m[1][3] = -3.121598;
+	Player.CamRobot.hw_b.m[2][3] = 4.880762;
+	Player.CamRobot.j[1].q = fmod(508.213196 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-2.250000 + PI, 2 * PI) - PI;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -381,11 +395,24 @@ int main_render_thread(void)
 
 	uint8_t debug_msg_queued = 0;
 
+
+
+	WinUdpBkstServer udp_server(50134);
+	if (udp_server.set_nonblocking() != NO_ERROR)
+		printf("socket at port %d set to non-blocking ok\r\n", udp_server.port);
+
+	uint8_t udp_rx_buf[BUFLEN];	//large udp recive buffer
+	WinUdpClient robot_client(3145);
+	robot_client.set_nonblocking();
+	robot_client.si_other.sin_addr.S_un.S_addr = robot_client.get_bkst_ip();
+	uint64_t udpsend_ts = 0;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
 		double fps = 1.0 / (time - prev_time);
 		prev_time = time;
+		uint64_t tick = GetTickCount64();
 
 		// render
 		// ------
@@ -638,29 +665,18 @@ int main_render_thread(void)
 
 
 
-
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		int rc = udp_server.read();
+		if (rc != WSAEWOULDBLOCK && udp_server.recv_len == sizeof(u32_fmt_t)*7)
 		{
-			double xpos, ypos;
-			glfwGetCursorPos(window, &xpos, &ypos);
-			for (int ch = 0; ch < 4; ch++)
+			u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
+			//if (pfmt[6].u32 == get_checksum32((uint32_t*)pfmt, 6))
 			{
-				q[ch] = .005 * double(-768 / 4 + ypos) * RAD_TO_DEG;
+				for (int ch = 0; ch < 6; ch++)
+				{
+					q[ch] = pfmt[ch].f32;
+				}
 			}
 		}
-		for (int i = 0; i < 5; i++)
-		{
-			if (q[i] < 0.f)
-				q[i] = 0.f;
-			if (q[i] > 90.f)
-				q[i] = 90.f;
-		}
-		if (q[5] > 0.f)
-			q[5] = 0.f;
-		if (q[5] < -110.f)
-			q[5] = -110.f;
-		q[4] = 0;
-		q[5] = 0;
 
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(q, psy_hand_bones);
@@ -962,7 +978,7 @@ int main_render_thread(void)
 		//}
 
 
-		scf = .001f;
+		scf = .005f;
 		mat4_t H_scf = {
 			{
 				{scf, 0, 0, 0},
@@ -978,7 +994,7 @@ int main_render_thread(void)
 		//hw_b.m[2][3] = 400.f;
 		mat4_t_mult_pbr(&H_scf, &hw_b, &dynahex_hw_b);
 		dynahex_hw_b.m[1][3] = -6.f;
-		dynahex_hw_b.m[2][3] = 1.f;
+		dynahex_hw_b.m[2][3] = 2.f;
 
 		///*Kill render of all legs 1-5, leaving only leg 0*/
 		//mat4_t zeros = { { {0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0} } };
@@ -1046,9 +1062,40 @@ int main_render_thread(void)
 				joint* end = &dynahex_bones->leg[leg].chain[3];
 				vect3_t zero = { {0,0,0} };
 				vect3_t anchor_b;
-				gd_ik_single(hb_0, start, end, &zero, &targ_b, &anchor_b, 20000.f);
+				//gd_ik_single(hb_0, start, end, &zero, &targ_b, &anchor_b, 20000.f);				UNCOMMENT TO DO IK AND LOAD OUT NEW POSITIONS TO THE LEG!!!!!!
 			}
 		}
+
+
+
+		/*
+		* UDP stuff to control a hexapod leg (scale to whole robot later)
+		*/
+		if (tick > udpsend_ts)	//periodically send a ping pessage so the server knows to point the hose at us
+		{
+			udpsend_ts = tick + 750;
+			sendto(robot_client.s, "hello", 5, 0, (struct sockaddr*)&robot_client.si_other, robot_client.slen);
+		}
+		int recieved_length = recvfrom(robot_client.s, (char*)udp_rx_buf, BUFLEN, 0, (struct sockaddr*)&(robot_client.si_other), &robot_client.slen);
+		if (recieved_length > 0)
+		{
+			if ((recieved_length % 4) == 0 && (recieved_length/4) == 18)	//checksum not sent over udp. check size of packet to confirm load
+			{
+				int i = 0;
+				for (int leg = 0; leg < 6; leg++)
+				{
+					for (int joint = 1; joint <= 3; joint++)
+					{
+						int32_t val = ((int32_t*)udp_rx_buf)[i];
+						float fval = (float)val;
+						dynahex_bones->leg[leg].chain[joint].q = fval / 4096.f;
+						i++;
+					}
+				}
+			}
+		}
+		
+
 
 		model = ht_matrix_to_mat4_t(dynahex_hw_b);
 		lightingShader.setMat4("model", model);

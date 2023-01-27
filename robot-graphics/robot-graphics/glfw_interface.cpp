@@ -272,7 +272,11 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
 	{
 		vect3_t pos = h_origin(P->CamRobot.hw_b);
-		printf("coord = (%f, %f, %f) q = (%f, %f, %f)\r\n", pos.v[0], pos.v[1], pos.v[2], P->CamRobot.j[1].q, P->CamRobot.j[2].q, P->CamRobot.j[3].q);
+		//printf("coord = (%f, %f, %f) q = (%f, %f, %f)\r\n", pos.v[0], pos.v[1], pos.v[2], P->CamRobot.j[1].q, P->CamRobot.j[2].q, P->CamRobot.j[3].q);
+		for(int i = 0; i < 3; i++)
+			printf("Player.CamRobot.hw_b.m[%d][3] = %f;\r\n",i, pos.v[i]);
+		for (int i = 1; i <= 2; i++)
+			printf("Player.CamRobot.j[%d].q = fmod(%f + PI, 2 * PI) - PI;\r\n", i, P->CamRobot.j[i].q);
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && P->CamRobot.hw_b.m[2][3] == -10)
