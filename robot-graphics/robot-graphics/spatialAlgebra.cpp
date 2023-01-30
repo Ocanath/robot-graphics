@@ -334,15 +334,48 @@ float vect_mag(float* v, int n)
 	return (float)sqrt((double)v_dot_v);
 }
 
+
+typedef union u32_fmt_t
+{
+	uint32_t u32;
+	int32_t i32;
+	float f32;
+	int16_t i16[sizeof(uint32_t) / sizeof(int16_t)];
+	uint16_t ui16[sizeof(uint32_t) / sizeof(uint16_t)];
+	int8_t i8[sizeof(uint32_t) / sizeof(int8_t)];
+	uint8_t ui8[sizeof(uint32_t) / sizeof(uint8_t)];
+}u32_fmt_t;
+
+float Q_rsqrt(float number)
+{
+	u32_fmt_t conv;
+	conv.f32 = number;
+	conv.u32 = 0x5f3759df - (conv.u32 >> 1);
+	conv.f32 *= 1.5F - (number * 0.5F * conv.f32 * conv.f32);
+	return conv.f32;
+}
+
+
+/**/
+float inverse_vect_mag(float* v, int n)
+{
+	float v_dot_v = 0.f;
+	for (int i = 0; i < n; i++)
+		v_dot_v += v[i] * v[i];
+	return Q_rsqrt(v_dot_v);
+}
+
+
 /**/
 void vect_normalize(float* v, int n)
 {
-	float mag = vect_mag(v,n);
+	float inv_mag = inverse_vect_mag(v, n);
 	for (int i = 0; i < n; i++)
 	{
-		v[i] = v[i] / mag;
+		v[i] = v[i] * inv_mag;
 	}
 }
+
 
 float vect3_magnitude(vect3_t v)
 {
