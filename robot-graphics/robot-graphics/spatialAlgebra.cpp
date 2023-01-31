@@ -37,6 +37,7 @@ vect6_t spatial_vect6_cross(vect6_t a, vect6_t b)
 	return ret;
 }
 
+
 mat6_t spatial_cross_operator(vect6_t v)
 {
 	vect3_t a;
@@ -186,6 +187,24 @@ mat4_t ht_inverse(mat4_t hin)
 
 	hout.m[3][0] = 0; hout.m[3][1] = 0; hout.m[3][2] = 0; hout.m[3][3] = 1.0;
 	return hout;
+}
+
+/*returns the inverse of a homogeneous transform type mat4_t matrix*/
+void ht_inverse_ptr(mat4_t * hin, mat4_t * hout)
+{
+	int r; int c;
+	for (r = 0; r < 3; r++)
+	{
+		for (c = 0; c < 3; c++)
+		{
+			hout->m[r][c] = hin->m[c][r];
+		}
+	}
+	hout->m[0][3] = -(hout->m[0][0] * hin->m[0][3] + hout->m[0][1] * hin->m[1][3] + hout->m[0][2] * hin->m[2][3]);
+	hout->m[1][3] = -(hout->m[1][0] * hin->m[0][3] + hout->m[1][1] * hin->m[1][3] + hout->m[1][2] * hin->m[2][3]);
+	hout->m[2][3] = -(hout->m[2][0] * hin->m[0][3] + hout->m[2][1] * hin->m[1][3] + hout->m[2][2] * hin->m[2][3]);
+
+	hout->m[3][0] = 0; hout->m[3][1] = 0; hout->m[3][2] = 0; hout->m[3][3] = 1.0;
 }
 
 /*returns homogeneous transform mat4_t matrix which is the rotation 'analge' around the x axis */

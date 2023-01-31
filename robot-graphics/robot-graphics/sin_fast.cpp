@@ -155,6 +155,13 @@ float fmod_2pi(float in)
 	return in-TWO_PI*fv;
 }
 
+/*
+This function performs 'wrapping' operations on input angles in radians
+*/
+float wrap_2pi(float in)
+{
+	return fmod_2pi(in + PI) - PI;
+}
 
 float unwrap(float theta,float * prev_theta)
 {

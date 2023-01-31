@@ -32,6 +32,7 @@ float atan2_approx(float sinVal, float cosVal);
 float cos_fast(float theta);
 float sin_fast(float theta);
 
+float wrap_2pi(float in);
 
 float cos_fast_2(float theta);
 float sin_fast_2(float theta);

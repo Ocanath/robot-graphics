@@ -112,6 +112,7 @@ mat3_t Rx(float angle);
 mat3_t Ry(float angle);
 mat3_t Rz(float angle);
 mat4_t ht_inverse(mat4_t hin);
+void ht_inverse_ptr(mat4_t* hin, mat4_t* hout);
 mat4_t Hx(float angle);
 mat4_t Hy(float angle);
 mat4_t Hz(float angle);
