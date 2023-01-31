@@ -348,9 +348,9 @@ int main_render_thread(void)
 	for (int l = 0; l < NUM_LEGS; l++)
 	{
 		joint* j = dynahex_bones->leg[l].chain;
-		j[1].q = -1.2f;
-		j[2].q = -1.6f;
-		j[3].q = 0;
+		j[1].q = .2f;
+		j[2].q = -0.05;
+		j[3].q = 2.f;
 	}
 	forward_kinematics_dynahexleg(dynahex_bones);
 	print_mat4_t(dynahex_bones->leg[0].chain[3].hb_i);
@@ -1073,24 +1073,15 @@ int main_render_thread(void)
 				vect3_t anchor_b;
 				
 				//gd_ik_single(hb_0, start, end, &zero, &targ_b, &anchor_b, 20000.f);				//UNCOMMENT TO DO IK AND LOAD OUT NEW POSITIONS TO THE LEG!!!!!!
-				
-				
-				//forward_kinematics(hb_0, start);
-				//vect3_t ep = h_origin(end->hb_i);
-				//vect3_t dif;
-				//for (int i = 0; i < 3; i++)
-				//	dif.v[i] = ep.v[i] - targ_b.v[i];
-				//float mdif = vect_mag(dif.v,3);
-				//printf("mdif = %f\r\n",mdif);
+				ik_closedform_hexapod(hb_0, start, &targ_b);
 
-				//float q1 = start->q;
-				//float q2 = start->child->q;
-				//float q3 = start->child->child->q;
-				//ik_closedform_hexapod(hb_0, start, &targ_b);
-				//float dif1 = wrap_2pi(start->q - q1);
-				//float dif2 = wrap_2pi(start->child->q - q2);
-				//float dif3 = wrap_2pi(start->child->child->q - q3);
-				//printf("%f,%f,%f\r\n", dif1*RAD_TO_DEG, dif2 * RAD_TO_DEG, dif3 * RAD_TO_DEG);
+				forward_kinematics(hb_0, start);
+				vect3_t ep = h_origin(end->hb_i);
+				vect3_t dif;
+				for (int i = 0; i < 3; i++)
+					dif.v[i] = ep.v[i] - targ_b.v[i];
+				float mdif = vect_mag(dif.v,3);
+				printf("mdif = %f\r\n",mdif);
 			}
 		}
 

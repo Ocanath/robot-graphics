@@ -175,7 +175,7 @@ void ik_closedform_hexapod(mat4_t * hb_0, joint * start, vect3_t * targ_b)
 	for (int i = 0; i < 3; i++)
 		vdif.v[i] = targ_1.v[i] - sols[solidx].v[i];
 	float theta2 = atan2_approx(vdif.v[1], vdif.v[0]);
-	j->q = -(theta2 + theta1);
+	j->q = PI-((PI-theta1)+theta2);
 	j->sin_q = sin_fast(j->q);
 	j->cos_q = cos_fast(j->q);
 
