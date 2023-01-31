@@ -1071,17 +1071,26 @@ int main_render_thread(void)
 				joint* end = start->child->child;
 				vect3_t zero = { {0,0,0} };
 				vect3_t anchor_b;
-				
-				//gd_ik_single(hb_0, start, end, &zero, &targ_b, &anchor_b, 20000.f);				//UNCOMMENT TO DO IK AND LOAD OUT NEW POSITIONS TO THE LEG!!!!!!
-				ik_closedform_hexapod(hb_0, start, &targ_b);
 
-				forward_kinematics(hb_0, start);
-				vect3_t ep = h_origin(end->hb_i);
-				vect3_t dif;
-				for (int i = 0; i < 3; i++)
-					dif.v[i] = ep.v[i] - targ_b.v[i];
-				float mdif = vect_mag(dif.v,3);
-				printf("mdif = %f\r\n",mdif);
+				/*Either one of these does IK for the hexapod. 
+				* the top one is numerical and expensive.
+				* for some reason, it seems to do better on my microcontroller
+				* 
+				* the bottom one is closed form, and should be faster than the gd one.
+				*/
+				//gd_ik_single(hb_0, start, end, &zero, &targ_b, &anchor_b, 20000.f);				//UNCOMMENT TO DO IK AND LOAD OUT NEW POSITIONS TO THE LEG!!!!!!
+				//ik_closedform_hexapod(hb_0, start, &targ_b);
+
+
+				/*This code checks the distance in mm between generated setpoint (by ik) and true setpoint (targ)
+				*/
+				//forward_kinematics(hb_0, start);
+				//vect3_t ep = h_origin(end->hb_i);
+				//vect3_t dif;
+				//for (int i = 0; i < 3; i++)
+				//	dif.v[i] = ep.v[i] - targ_b.v[i];
+				//float mdif = vect_mag(dif.v,3);
+				//printf("mdif = %f\r\n",mdif);
 			}
 		}
 

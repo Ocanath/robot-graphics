@@ -124,4 +124,6 @@ vect6_t c_change_spatial(mat4_t ha_b, vect6_t vb);
 vect4_t vect3_to_vect4(vect3_t in);
 vect3_t vect4_to_vect3(vect4_t in);
 
+float Q_rsqrt(float number);
+
 #endif

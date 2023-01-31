@@ -25,6 +25,9 @@
     <Filter Include="Header Files\app-robotics">
       <UniqueIdentifier>{baa2693e-06b7-4ae6-be21-b45f7255b707}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\networking">
+      <UniqueIdentifier>{44e50713-182a-4228-8ed5-9fa27591e925}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -172,6 +175,12 @@
     </ClInclude>
     <ClInclude Include="hexapod_footpath.h">
       <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="WinUdpBkstServer.h">
+      <Filter>Header Files\networking</Filter>
+    </ClInclude>
+    <ClInclude Include="WinUdpClient.h">
+      <Filter>Header Files\networking</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -202,6 +202,8 @@
     <ClInclude Include="utils.h" />
     <ClInclude Include="vboindexer.hpp" />
     <ClInclude Include="vect_fixed.h" />
+    <ClInclude Include="WinUdpBkstServer.h" />
+    <ClInclude Include="WinUdpClient.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

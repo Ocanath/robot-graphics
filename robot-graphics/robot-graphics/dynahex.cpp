@@ -61,7 +61,8 @@ float dist_vect3(vect3_t * p0, vect3_t * p1)
         tmp = tmp * tmp;
         sum_sq += (double)tmp;
     }
-    return (float)(sqrt(sum_sq));
+    //return (float)(sqrt(sum_sq));
+	return 1.f / Q_rsqrt(sum_sq);
 }
 
 /*
@@ -88,7 +89,7 @@ uint8_t get_intersection_circles(vect3_t * o0, float r0, vect3_t * o1, float r1,
 
     // solve for h
     float h_sq = r0_sq - a * a;
-    float h = sqrt(h_sq);
+    float h = 1.f/Q_rsqrt(h_sq);
 
     float one_by_d = 1.f / d;
     // find p2
@@ -114,8 +115,6 @@ uint8_t get_intersection_circles(vect3_t * o0, float r0, vect3_t * o1, float r1,
 * is only valid for anchor points which are 
 * 
 */
-
-#include "utils.h"
 void ik_closedform_hexapod(mat4_t * hb_0, joint * start, vect3_t * targ_b)
 {
 	mat4_t h0_b;
@@ -140,8 +139,8 @@ void ik_closedform_hexapod(mat4_t * hb_0, joint * start, vect3_t * targ_b)
 
 	//final q1 result, load it into kinematic structure
 	start->q = (atan2_approx(targ_0.v[1] - targ_0_offset.v[1], targ_0.v[0] - targ_0_offset.v[0]) - PI);
-	start->sin_q = sin(start->q);
-	start->cos_q = cos(start->q);
+	start->sin_q = sin_fast(start->q);
+	start->cos_q = cos_fast(start->q);
 	
 	//do FK so we can express the target in frame 1 and do a 2 link planar arm solution
 	forward_kinematics(hb_0, start);
