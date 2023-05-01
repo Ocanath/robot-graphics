@@ -384,7 +384,8 @@ int main_render_thread(void)
 		float ysign = (i & 2) ? -1.f : 1.f;
 		light[i].position = glm::vec3(xw * xsign, yw * ysign, zh);
 	}
-	light[4].position = glm::vec3(0, 0, 6);
+	enum { KEYBOARD_CONTROLLED_LIGHT_IDX = 4, ROBOT_CONNECTED_LIGHT_IDX = 3};
+	light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(0, 0, 6);
 	for (int i = 0; i < NUM_LIGHTS; i++)
 	{
 		light[i].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
@@ -410,11 +411,14 @@ int main_render_thread(void)
 	if (udp_server.set_nonblocking() != NO_ERROR)
 		printf("socket at port %d set to non-blocking ok\r\n", udp_server.port);
 
+	/*UDP client for ESP32 udp server that points the hose at us if we ping it*/
 	uint8_t udp_rx_buf[BUFLEN];	//large udp recive buffer
 	WinUdpClient robot_client(3145);
 	robot_client.set_nonblocking();
 	robot_client.si_other.sin_addr.S_un.S_addr = robot_client.get_bkst_ip();
 	uint64_t udpsend_ts = 0;
+	uint64_t udp_connected_ts = 0;
+
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -492,17 +496,17 @@ int main_render_thread(void)
 		{
 			float displacement_per_sec = .01f*(time-movement_press_time) + 1.f/fps;
 			if ( (mnljki & (1 << 0)) != 0)
-				light[4].position += glm::vec3(displacement_per_sec, 0, 0);
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(displacement_per_sec, 0, 0);
 			if ((mnljki & (1 << 1)) != 0)
-				light[4].position += glm::vec3(-displacement_per_sec, 0, 0);
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(-displacement_per_sec, 0, 0);
 			if ((mnljki & (1 << 2)) != 0)
-				light[4].position += glm::vec3(0, displacement_per_sec, 0);
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, displacement_per_sec, 0);
 			if ((mnljki & (1 << 3)) != 0)
-				light[4].position += glm::vec3(0, -displacement_per_sec, 0);
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, -displacement_per_sec, 0);
 			if ((mnljki & (1 << 4)) != 0)
-				light[4].position += glm::vec3(0, 0, displacement_per_sec);
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, 0, displacement_per_sec);
 			if ((mnljki & (1 << 5)) != 0)
-				light[4].position += glm::vec3(0, 0, -displacement_per_sec);
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, 0, -displacement_per_sec);
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
@@ -523,19 +527,19 @@ int main_render_thread(void)
 		if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
 			float v = .01f * (time - ambient_press_time);
-			light[4].ambient += glm::vec3(v,v,v);
+			light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient += glm::vec3(v,v,v);
 			float mag = 0;
 			for (int r = 0; r < 3; r++)
-				mag += light[4].ambient[r] * light[4].ambient[r];
+				mag += light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient[r] * light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient[r];
 			printf("%f\r\n", mag);
 		}
 		else if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
 			float v = .01f * (time - ambient_press_time);
-			light[4].ambient += glm::vec3(-v,-v,-v);
+			light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient += glm::vec3(-v,-v,-v);
 			float mag = 0;
 			for (int r = 0; r < 3; r++)
-				mag += light[4].ambient[r] * light[4].ambient[r];
+				mag += light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient[r] * light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient[r];
 			printf("%f\r\n", mag);
 		}
 		else
@@ -1118,9 +1122,20 @@ int main_render_thread(void)
 						float fval = (float)val;
 						dynahex_bones->leg[leg].chain[joint].q = fval / 4096.f;
 						i++;
+
+						udp_connected_ts = tick;
 					}
 				}
 			}
+		}
+
+		if ((tick - udp_connected_ts) < 300)	//connected
+		{
+			light[ROBOT_CONNECTED_LIGHT_IDX].specular = glm::vec3(0.0f, 0.9f, 0.0f);
+		}
+		else
+		{
+			light[ROBOT_CONNECTED_LIGHT_IDX].specular = glm::vec3(0.9f, 0.0f, 0.0f);
 		}
 		
 
