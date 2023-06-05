@@ -60,8 +60,9 @@ public:
 
 		//Prepare the sockaddr_in structure
 		server.sin_family = AF_INET;
+		server.sin_addr.s_addr = inet_addr("127.0.0.1");
 		//server.sin_addr.s_addr = inet_addr(inet_addr_buf);	//assign the server with one of the IPV4 addresses (the last one) in the host address list.
-		server.sin_addr = in4addr_any;	//assign the desired port # to the special address 0.0.0.0, which is a 'meta address' used to specify that the server can have any IP address we like on the LAN!
+		//server.sin_addr = in4addr_any;	//assign the desired port # to the special address 0.0.0.0, which is a 'meta address' used to specify that the server can have any IP address we like on the LAN!
 		server.sin_port = htons(port);
 
 		inet_ntop(AF_INET, &server.sin_addr.s_addr, (PSTR)inet_addr_buf, 256);	//convert again the value we copied thru and display

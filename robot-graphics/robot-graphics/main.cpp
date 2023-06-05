@@ -95,6 +95,7 @@ unsigned int loadTexture(char const* path)
 /**/
 typedef struct light_params_t
 {
+	glm::vec4 base_color;
 	glm::vec3 position;
 	glm::vec3 ambient;
 	glm::vec3 diffuse;
@@ -342,15 +343,14 @@ int main_render_thread(void)
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F1-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F2-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F3-stripped.STL"));
-	//dynahex_modellist.push_back(AssetModel("misc_models/dynahex/FB.obj"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/FB-stripped.STL"));
 	mat4_t dynahex_hw_b = mat4_t_I();
 	for (int l = 0; l < NUM_LEGS; l++)
 	{
 		joint* j = dynahex_bones->leg[l].chain;
-		j[1].q = .2f;
-		j[2].q = -0.05;
-		j[3].q = 2.f;
+		j[1].q = 0;
+		j[2].q = 0;
+		j[3].q = 0;
 	}
 	forward_kinematics_dynahexleg(dynahex_bones);
 	print_mat4_t(dynahex_bones->leg[0].chain[3].hb_i);
@@ -394,6 +394,7 @@ int main_render_thread(void)
 		light[i].constant = 1.f;
 		light[i].linear = .09f;
 		light[i].quadratic = .028f;
+		light[i].base_color = glm::vec4(1.f);
 	}
 	float shininess = 32.f;
 	int cfg_idx = 32;
@@ -1131,11 +1132,17 @@ int main_render_thread(void)
 
 		if ((tick - udp_connected_ts) < 300)	//connected
 		{
-			light[ROBOT_CONNECTED_LIGHT_IDX].specular = glm::vec3(0.0f, 0.9f, 0.0f);
+			light[ROBOT_CONNECTED_LIGHT_IDX].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
+			light[ROBOT_CONNECTED_LIGHT_IDX].diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+			light[ROBOT_CONNECTED_LIGHT_IDX].specular = glm::vec3(0.9f, 0.9f, 0.9f);
+			light[ROBOT_CONNECTED_LIGHT_IDX].base_color = glm::vec4(1.f);
 		}
 		else
 		{
+			light[ROBOT_CONNECTED_LIGHT_IDX].ambient = glm::vec3(0.07f, 0, 0);
+			light[ROBOT_CONNECTED_LIGHT_IDX].diffuse = glm::vec3(0.7f, 0, 0);
 			light[ROBOT_CONNECTED_LIGHT_IDX].specular = glm::vec3(0.9f, 0.0f, 0.0f);
+			light[ROBOT_CONNECTED_LIGHT_IDX].base_color = glm::vec4(1.f, 0.f, 0.f, 1.f); 
 		}
 		
 
@@ -1166,7 +1173,6 @@ int main_render_thread(void)
 		lightCubeShader.use();
 		lightCubeShader.setMat4("projection", CameraProjection);
 		lightCubeShader.setMat4("view", View);
-
 		// we now draw as many light bulbs as we have point lights.
 		glBindVertexArray(lightCubeVAO);
 		for (unsigned int i = 0; i < NUM_LIGHTS; i++)
@@ -1175,6 +1181,7 @@ int main_render_thread(void)
 			model = glm::translate(model, light[i].position);
 			model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
 			lightCubeShader.setMat4("model", model);
+			lightCubeShader.setVec4("obj_color", light[i].base_color);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 
