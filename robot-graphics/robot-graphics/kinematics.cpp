@@ -4,6 +4,27 @@
 #include <math.h>
 
 /*
+	Recursive kinematic tree traversal for computing the state of the...kinematic tree
+	TODO: implement an iterative version of this to make it embedded system friendly, and maybe try it with an arm
+*/
+void tree_dfs(node_t * node)
+{
+	//printf("%s\r\n", node->name);
+	if (node->num_children == 0)
+		return;
+	for (int i = 0; i < node->num_children; i++)
+	{
+		nodelink_t* j = &node->nodelinks[i];
+		printf("calculating transform from %s to %s\r\n", j->parent->name, j->child->name);
+		mat4_t qrot = Hz(j->q);
+		mat4_t_mult_pbr(&qrot, &j->h_link, &j->h_parent_child);
+		mat4_t_mult_pbr(&j->parent->h_base_us, &j->h_parent_child, &j->child->h_base_us);
+		printf("base_%s = base_%s * %s_%s\r\n", j->child->name, j->parent->name, node->name, j->child->name);
+		tree_dfs(j->child);
+	}
+}
+
+/*
 	Copies the contents of one mat4_t to the other. could use memcpy interchangably
 */
 void copy_mat4_t(mat4_t * dest, mat4_t * src)
@@ -44,6 +65,17 @@ mat4_t get_rpy_xyz_htmatrix(vect3_t* xyz, vect3_t* rpy)
 	Hlink = mat4_t_mult(Hlink, Hx(rpy->v[0]));	//obtained Hrpy
 	for (int r = 0; r < 3; r++)
 		Hlink.m[r][3] = xyz->v[r];
+	return Hlink;
+}
+
+mat4_t get_rpy_xyz_mat4(float roll, float pitch, float yaw, float x, float y, float z)
+{
+	mat4_t Hlink = Hz(yaw);
+	Hlink = mat4_t_mult(Hlink, Hy(pitch));
+	Hlink = mat4_t_mult(Hlink, Hx(roll));	//obtained Hrpy
+	Hlink.m[0][3] = x;
+	Hlink.m[1][3] = y;
+	Hlink.m[2][3] = z;
 	return Hlink;
 }
 
@@ -99,6 +131,7 @@ void init_forward_kinematics_dh(joint* j, const dh_entry* dh, int num_joints)
 	for (int i = 1; i <= num_joints; i++)
 		mat4_t_mult_pbr(&j[i - 1].hb_i, &j[i].him1_i, &j[i].hb_i);
 }
+
 
 /*pre-loads all sin_q and cos_q for the chain*/
 void load_q(joint* chain_start)

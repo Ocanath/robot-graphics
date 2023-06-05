@@ -4,6 +4,28 @@
 #include "spatialAlgebra.h"
 #include "sin_fast.h"
 
+
+/*actually LINKS. links are nodes in urdf land*/
+typedef struct node_t
+{
+	mat4_t h_base_us;
+	const char* name;
+	struct nodelink_t* nodelinks;
+	int num_children;	//joints who have us as their parent with children present/
+}node_t;
+
+/*actually JOINTS. joints connect nodes of the tree, i.e. links*/
+typedef struct nodelink_t
+{
+	float q;
+	mat4_t h_parent_child;
+	mat4_t h_link;
+	
+	struct node_t* parent;
+	struct node_t* child;
+}nodelink_t;
+
+
 typedef struct dh_entry
 {
 	float d;
@@ -14,6 +36,7 @@ typedef struct dh_entry
 	//float cos_alpha;
 	//theta is stored separately
 }dh_entry;
+
 
 typedef struct joint
 {
@@ -34,6 +57,7 @@ typedef struct joint
 	mat6_t I_hat;			//6 matrix describing the spatial inertia of each frame with respect to the origin.
 
 	struct joint * child;
+	struct joint* parent;
 }joint;
 
 typedef struct kinematic_chain
@@ -66,6 +90,8 @@ void calc_tau(joint* j, int num_joints, vect6_t f, float* tau);
 void calc_tau3(joint* j, int num_joints, vect3_t* f, float* tau);	//faster alt to calc_tau
 void calc_taulist(joint* chain_start, vect3_t* f);
 int gd_ik_single(mat4_t* hb_0, joint* start, joint* end, vect3_t* anchor_end, vect3_t* targ_b, vect3_t* anchor_b, float epsilon_divisor);	//num anchors?
+mat4_t get_rpy_xyz_mat4(float roll, float pitch, float yaw, float x, float y, float z);
 
+void tree_dfs(node_t* node);
 
 #endif

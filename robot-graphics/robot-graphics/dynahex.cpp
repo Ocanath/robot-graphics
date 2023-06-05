@@ -1,12 +1,25 @@
 #include "dynahex.h"
 
 
-
+/*old school dh params*/
 const dh_entry hexleg_dh[NUM_FRAMES_HEXLEG] = {
 	{0,			0,					0},		//d,a,alpha
 	{65.66f,	-53.2f,				PI/2},
 	{29.00f,	-100.46602344f,		PI},
 	{21.50f,	-198.31677025f,		0.f}
+};
+
+const vect3_t hexleg_xyz[NUM_FRAMES_HEXLEG] = {
+	{{0, 0, 0}},//placeholder
+	{{-54.2f, 0.f, 65.66f}},
+	{{-100.46602344f, 0.f, 29.00f}},
+	{{-198.31677025f, 0.f, 21.50f}}
+};
+const vect3_t hexleg_rpy[NUM_FRAMES_HEXLEG] = {
+	{{0,0,0}},
+	{{PI/2,0,0}},
+	{{PI,0,0}},
+	{{0,0,0}},
 };
 
 
@@ -27,9 +40,9 @@ void init_dh_kinematics(dynahex_t * h)
 		joint * j = h->leg[leg].chain;		
 		j[0].him1_i = mat4_t_mult(Hz((float)leg * angle_f), hb_0_leg0);
 		copy_mat4_t(&j[0].hb_i, &j[0].him1_i);
-
-		init_forward_kinematics_dh(j, hexleg_dh, NUM_JOINTS_HEXLEG);
+		init_forward_kinematics_urdf(j, (vect3_t*)hexleg_xyz, (vect3_t*)hexleg_rpy, NUM_JOINTS_HEXLEG);
 	}
+
 }
 
 static vect3_t o_foottip_3 = { -15.31409f, -9.55025f, 0.f };
