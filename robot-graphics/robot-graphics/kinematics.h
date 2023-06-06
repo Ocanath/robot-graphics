@@ -12,6 +12,8 @@ typedef struct node_t
 	const char* name;
 	struct nodelink_t* nodelinks;
 	int num_children;	//joints who have us as their parent with children present/
+
+	void* model_ref;
 }node_t;
 
 /*actually JOINTS. joints connect nodes of the tree, i.e. links*/

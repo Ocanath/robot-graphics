@@ -15,11 +15,11 @@ void tree_dfs(node_t * node)
 	for (int i = 0; i < node->num_children; i++)
 	{
 		nodelink_t* j = &node->nodelinks[i];
-		printf("calculating transform from %s to %s\r\n", j->parent->name, j->child->name);
+		//printf("calculating transform from %s to %s\r\n", j->parent->name, j->child->name);
 		mat4_t qrot = Hz(j->q);
-		mat4_t_mult_pbr(&qrot, &j->h_link, &j->h_parent_child);
-		mat4_t_mult_pbr(&j->parent->h_base_us, &j->h_parent_child, &j->child->h_base_us);
-		printf("base_%s = base_%s * %s_%s\r\n", j->child->name, j->parent->name, node->name, j->child->name);
+		mat4_t_mult_pbr(&j->h_link, &qrot, &j->h_parent_child);
+		mat4_t_mult_pbr(&j->parent->h_base_us, (mat4_t*)&j->h_parent_child, (mat4_t*)&j->child->h_base_us);
+		//printf("base_%s = base_%s * %s_%s\r\n", j->child->name, j->parent->name, node->name, j->child->name);
 		tree_dfs(j->child);
 	}
 }

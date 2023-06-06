@@ -335,23 +335,41 @@ int main_render_thread(void)
 	AssetModel psy_palm("misc_models/psyonic-hand/PALM_BASE_FRAME.STL");
 	AssetModel psy_crosslink("misc_models/psyonic-hand/crosslink.STL");
 
+
+
+
+
+
+	/**/
+	vector<AssetModel> simpletree_modellist;
+	simpletree_modellist.push_back(AssetModel("misc_models/simple-tree/base.STL"));
+	simpletree_modellist.push_back(AssetModel("misc_models/simple-tree/link.STL"));
+
 	node_t base, link1, link2, link3, link4, link5, link6;
 	
 	/*special loading condition: base or root of the kinematic tree. hbase_us should be identity, or things break!*/
 	base.name = "base";
-	base.nodelinks = new nodelink_t[2];
-	base.nodelinks[0].parent = &base;
-	base.nodelinks[0].child = &link1;
-	base.nodelinks[1].parent = &base;
-	base.nodelinks[1].child = &link5;
-	base.num_children = 2;
 	base.h_base_us = mat4_t_Identity;//load identity for base_base
+	base.num_children = 2;//number of childrens
+	base.nodelinks = new nodelink_t[2];	//create memory for joint references
+	base.nodelinks[0].parent = &base;	//assign parent
+	base.nodelinks[0].child = &link1;	//and child
+	base.nodelinks[1].parent = &base;	//for each
+	base.nodelinks[1].child = &link5;	//joint
+	base.nodelinks[0].q = 0;
+	base.nodelinks[1].q = 0;
+	base.model_ref = (void*)(&simpletree_modellist[0]);	//create model reference for rendering
+	base.nodelinks[0].h_link = get_rpy_xyz_mat4(0, 0, 0, 7e-1, 12e-1, -0.92e-1);	//create link frames!
+	base.nodelinks[1].h_link = get_rpy_xyz_mat4(0, 0, 0, 7e-1, -12e-1, -0.92e-1);//(for both joints)
 
 	link1.name = "link1";
 	link1.nodelinks = new nodelink_t[1];
 	link1.nodelinks[0].parent = &link1;
 	link1.nodelinks[0].child = &link2;
+	link1.nodelinks[0].q = 0;
 	link1.num_children = 1;
+	link1.model_ref = (void*)(&simpletree_modellist[1]);
+	link1.nodelinks[0].h_link = get_rpy_xyz_mat4(0, 0, 0, 20e-1, 0, 0);
 
 	link2.name = "link2";
 	link2.nodelinks = new nodelink_t[2];
@@ -360,42 +378,70 @@ int main_render_thread(void)
 	link2.nodelinks[1].parent = &link2;
 	link2.nodelinks[1].child = &link4;
 	link2.num_children = 2;
+	link2.nodelinks[0].q = 0;
+	link2.nodelinks[1].q = 0;
+	link2.model_ref = (void*)(&simpletree_modellist[1]);
+	link2.nodelinks[0].h_link = get_rpy_xyz_mat4(0, 0, 1.57079633, 20e-1, 0, 0);
+	link2.nodelinks[1].h_link = get_rpy_xyz_mat4(0, 0, -1.57079633, 20e-1, 0, 0);
+
 
 	link4.name = "link4";
 	link4.nodelinks = new nodelink_t[1];
 	link4.nodelinks[0].parent = &link4;
 	link4.nodelinks[0].child = NULL;
 	link4.num_children = 0;
+	link4.model_ref = (void*)(&simpletree_modellist[1]);
 
 	link3.name = "link3";
 	link3.nodelinks = new nodelink_t[1];
 	link3.nodelinks[0].parent = &link3;
 	link3.nodelinks[0].child = NULL;
 	link3.num_children = 0;
+	link3.model_ref = (void*)(&simpletree_modellist[1]);
 
 	link5.name = "link5";
 	link5.nodelinks = new nodelink_t[1];
 	link5.nodelinks[0].parent = &link5;
 	link5.nodelinks[0].child = &link6;
+	link5.nodelinks[0].q = 0;
 	link5.num_children = 1;
+	link5.model_ref = (void*)(&simpletree_modellist[1]);
+	link5.nodelinks[0].h_link = get_rpy_xyz_mat4(0, 0, -1.57079633, 20e-1, 0, 0);
 
 	link6.name = "link6";
 	link6.nodelinks = new nodelink_t[1];
 	link6.nodelinks[0].parent = &link6;
 	link6.nodelinks[0].child = NULL;
 	link6.num_children = 0;
+	link6.model_ref = (void*)(&simpletree_modellist[1]);
+
+	nodelink_t* simpletree_jointlist[6] = { 
+		&base.nodelinks[0],
+		&base.nodelinks[1],
+		&link1.nodelinks[0],
+		&link2.nodelinks[0],
+		&link2.nodelinks[1],
+		&link5.nodelinks[0]
+	};
 
 	tree_dfs(&base);
 
+	print_mat4_t(base.h_base_us);
+	printf("\r\n");
+	print_mat4_t(link1.h_base_us);
+	printf("\r\n");
+	print_mat4_t(link2.h_base_us);
+	printf("\r\n");
+	print_mat4_t(link3.h_base_us);
+	printf("\r\n");
+	print_mat4_t(link4.h_base_us);
+	printf("\r\n");
+	print_mat4_t(link5.h_base_us);
+	printf("\r\n");
+	print_mat4_t(link6.h_base_us);
+	printf("\r\n");
 
 
-	delete[] base.nodelinks;
-	delete[] link1.nodelinks;
-	delete[] link2.nodelinks;
-	delete[] link3.nodelinks;
-	delete[] link4.nodelinks;
-	delete[] link5.nodelinks;
-	delete[] link6.nodelinks;
 
 	dynahex_bones = new dynahex_t;
 	init_dh_kinematics(dynahex_bones);
@@ -1229,6 +1275,56 @@ int main_render_thread(void)
 			}
 		}
 		
+		simpletree_jointlist[0]->q = 0.5*sin(time);
+		simpletree_jointlist[2]->q = 0.5 * sin(time);
+
+		simpletree_jointlist[1]->q = 0.5 * sin(time);
+		simpletree_jointlist[5]->q = 0.5 * sin(time);
+
+		simpletree_jointlist[3]->q = .3*sin(time*5)-2;
+		simpletree_jointlist[4]->q = -.3*sin(time*5)+2;
+		
+
+		tree_dfs(&base);
+		{
+			mat4_t hw_b = Hz(0);
+			hw_b.m[0][3] = -5.0;
+			hw_b.m[2][3] = 3.0;
+			mat4_t hw_lnk = mat4_t_mult(hw_b, base.h_base_us);
+			model = ht_matrix_to_mat4_t(hw_lnk);
+			lightingShader.setMat4("model", model);
+			((AssetModel*)base.model_ref)->Draw(lightingShader, NULL);
+
+			hw_lnk = mat4_t_mult(hw_b, link1.h_base_us);
+			model = ht_matrix_to_mat4_t(hw_lnk);
+			lightingShader.setMat4("model", model);
+			((AssetModel*)link1.model_ref)->Draw(lightingShader, NULL);
+
+			hw_lnk = mat4_t_mult(hw_b, link2.h_base_us);
+			model = ht_matrix_to_mat4_t(hw_lnk);
+			lightingShader.setMat4("model", model);
+			((AssetModel*)link2.model_ref)->Draw(lightingShader, NULL);
+
+			hw_lnk = mat4_t_mult(hw_b, link3.h_base_us);
+			model = ht_matrix_to_mat4_t(hw_lnk);
+			lightingShader.setMat4("model", model);
+			((AssetModel*)link3.model_ref)->Draw(lightingShader, NULL);
+			
+			hw_lnk = mat4_t_mult(hw_b, link4.h_base_us);
+			model = ht_matrix_to_mat4_t(hw_lnk);
+			lightingShader.setMat4("model", model);
+			((AssetModel*)link4.model_ref)->Draw(lightingShader, NULL);
+
+			hw_lnk = mat4_t_mult(hw_b, link5.h_base_us);
+			model = ht_matrix_to_mat4_t(hw_lnk);
+			lightingShader.setMat4("model", model);
+			((AssetModel*)link5.model_ref)->Draw(lightingShader, NULL);
+
+			hw_lnk = mat4_t_mult(hw_b, link6.h_base_us);
+			model = ht_matrix_to_mat4_t(hw_lnk);
+			lightingShader.setMat4("model", model);
+			((AssetModel*)link6.model_ref)->Draw(lightingShader, NULL);
+		}
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();
@@ -1251,6 +1347,14 @@ int main_render_thread(void)
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, true);
 	}
+	delete[] base.nodelinks;
+	delete[] link1.nodelinks;
+	delete[] link2.nodelinks;
+	delete[] link3.nodelinks;
+	delete[] link4.nodelinks;
+	delete[] link5.nodelinks;
+	delete[] link6.nodelinks;
+
 	glfwTerminate();
 	return 0;
 }
