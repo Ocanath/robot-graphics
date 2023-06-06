@@ -7,14 +7,14 @@
 	Recursive kinematic tree traversal for computing the state of the...kinematic tree
 	TODO: implement an iterative version of this to make it embedded system friendly, and maybe try it with an arm
 */
-void tree_dfs(node_t * node)
+void tree_dfs(link_t * node)
 {
 	//printf("%s\r\n", node->name);
 	if (node->num_children == 0)
 		return;
 	for (int i = 0; i < node->num_children; i++)
 	{
-		nodelink_t* j = &node->nodelinks[i];
+		joint2* j = &node->joints[i];
 		//printf("calculating transform from %s to %s\r\n", j->parent->name, j->child->name);
 		mat4_t qrot = Hz(j->q);
 		mat4_t_mult_pbr(&j->h_link, &qrot, &j->h_parent_child);

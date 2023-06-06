@@ -6,26 +6,26 @@
 
 
 /*actually LINKS. links are nodes in urdf land*/
-typedef struct node_t
+typedef struct link_t
 {
 	mat4_t h_base_us;
 	const char* name;
-	struct nodelink_t* nodelinks;
+	struct joint2* joints;
 	int num_children;	//joints who have us as their parent with children present/
 
 	void* model_ref;
-}node_t;
+}link_t;
 
 /*actually JOINTS. joints connect nodes of the tree, i.e. links*/
-typedef struct nodelink_t
+typedef struct joint2
 {
 	float q;
 	mat4_t h_parent_child;
 	mat4_t h_link;
 	
-	struct node_t* parent;
-	struct node_t* child;
-}nodelink_t;
+	struct link_t* parent;
+	struct link_t* child;
+}joint2;
 
 
 typedef struct dh_entry
@@ -94,6 +94,6 @@ void calc_taulist(joint* chain_start, vect3_t* f);
 int gd_ik_single(mat4_t* hb_0, joint* start, joint* end, vect3_t* anchor_end, vect3_t* targ_b, vect3_t* anchor_b, float epsilon_divisor);	//num anchors?
 mat4_t get_rpy_xyz_mat4(float roll, float pitch, float yaw, float x, float y, float z);
 
-void tree_dfs(node_t* node);
+void tree_dfs(link_t* node);
 
 #endif

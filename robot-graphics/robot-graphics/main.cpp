@@ -345,83 +345,83 @@ int main_render_thread(void)
 	simpletree_modellist.push_back(AssetModel("misc_models/simple-tree/base.STL"));
 	simpletree_modellist.push_back(AssetModel("misc_models/simple-tree/link.STL"));
 
-	node_t base, link1, link2, link3, link4, link5, link6;
+	link_t base, link1, link2, link3, link4, link5, link6;
 	
 	/*special loading condition: base or root of the kinematic tree. hbase_us should be identity, or things break!*/
 	base.name = "base";
 	base.h_base_us = mat4_t_Identity;//load identity for base_base
 	base.num_children = 2;//number of childrens
-	base.nodelinks = new nodelink_t[2];	//create memory for joint references
-	base.nodelinks[0].parent = &base;	//assign parent
-	base.nodelinks[0].child = &link1;	//and child
-	base.nodelinks[1].parent = &base;	//for each
-	base.nodelinks[1].child = &link5;	//joint
-	base.nodelinks[0].q = 0;
-	base.nodelinks[1].q = 0;
+	base.joints = new joint2[2];	//create memory for joint references
+	base.joints[0].parent = &base;	//assign parent
+	base.joints[0].child = &link1;	//and child
+	base.joints[1].parent = &base;	//for each
+	base.joints[1].child = &link5;	//joint
+	base.joints[0].q = 0;
+	base.joints[1].q = 0;
 	base.model_ref = (void*)(&simpletree_modellist[0]);	//create model reference for rendering
-	base.nodelinks[0].h_link = get_rpy_xyz_mat4(0, 0, 0, 7e-1, 12e-1, -0.92e-1);	//create link frames!
-	base.nodelinks[1].h_link = get_rpy_xyz_mat4(0, 0, 0, 7e-1, -12e-1, -0.92e-1);//(for both joints)
+	base.joints[0].h_link = get_rpy_xyz_mat4(0, 0, 0, 7e-1, 12e-1, -0.92e-1);	//create link frames!
+	base.joints[1].h_link = get_rpy_xyz_mat4(0, 0, 0, 7e-1, -12e-1, -0.92e-1);//(for both joints)
 
 	link1.name = "link1";
-	link1.nodelinks = new nodelink_t[1];
-	link1.nodelinks[0].parent = &link1;
-	link1.nodelinks[0].child = &link2;
-	link1.nodelinks[0].q = 0;
+	link1.joints = new joint2[1];
+	link1.joints[0].parent = &link1;
+	link1.joints[0].child = &link2;
+	link1.joints[0].q = 0;
 	link1.num_children = 1;
 	link1.model_ref = (void*)(&simpletree_modellist[1]);
-	link1.nodelinks[0].h_link = get_rpy_xyz_mat4(0, 0, 0, 20e-1, 0, 0);
+	link1.joints[0].h_link = get_rpy_xyz_mat4(0, 0, 0, 20e-1, 0, 0);
 
 	link2.name = "link2";
-	link2.nodelinks = new nodelink_t[2];
-	link2.nodelinks[0].parent = &link2;
-	link2.nodelinks[0].child = &link3;
-	link2.nodelinks[1].parent = &link2;
-	link2.nodelinks[1].child = &link4;
+	link2.joints = new joint2[2];
+	link2.joints[0].parent = &link2;
+	link2.joints[0].child = &link3;
+	link2.joints[1].parent = &link2;
+	link2.joints[1].child = &link4;
 	link2.num_children = 2;
-	link2.nodelinks[0].q = 0;
-	link2.nodelinks[1].q = 0;
+	link2.joints[0].q = 0;
+	link2.joints[1].q = 0;
 	link2.model_ref = (void*)(&simpletree_modellist[1]);
-	link2.nodelinks[0].h_link = get_rpy_xyz_mat4(0, 0, 1.57079633, 20e-1, 0, 0);
-	link2.nodelinks[1].h_link = get_rpy_xyz_mat4(0, 0, -1.57079633, 20e-1, 0, 0);
+	link2.joints[0].h_link = get_rpy_xyz_mat4(0, 0, 1.57079633, 20e-1, 0, 0);
+	link2.joints[1].h_link = get_rpy_xyz_mat4(0, 0, -1.57079633, 20e-1, 0, 0);
 
 
 	link4.name = "link4";
-	link4.nodelinks = new nodelink_t[1];
-	link4.nodelinks[0].parent = &link4;
-	link4.nodelinks[0].child = NULL;
+	link4.joints = new joint2[1];
+	link4.joints[0].parent = &link4;
+	link4.joints[0].child = NULL;
 	link4.num_children = 0;
 	link4.model_ref = (void*)(&simpletree_modellist[1]);
 
 	link3.name = "link3";
-	link3.nodelinks = new nodelink_t[1];
-	link3.nodelinks[0].parent = &link3;
-	link3.nodelinks[0].child = NULL;
+	link3.joints = new joint2[1];
+	link3.joints[0].parent = &link3;
+	link3.joints[0].child = NULL;
 	link3.num_children = 0;
 	link3.model_ref = (void*)(&simpletree_modellist[1]);
 
 	link5.name = "link5";
-	link5.nodelinks = new nodelink_t[1];
-	link5.nodelinks[0].parent = &link5;
-	link5.nodelinks[0].child = &link6;
-	link5.nodelinks[0].q = 0;
+	link5.joints = new joint2[1];
+	link5.joints[0].parent = &link5;
+	link5.joints[0].child = &link6;
+	link5.joints[0].q = 0;
 	link5.num_children = 1;
 	link5.model_ref = (void*)(&simpletree_modellist[1]);
-	link5.nodelinks[0].h_link = get_rpy_xyz_mat4(0, 0, -1.57079633, 20e-1, 0, 0);
+	link5.joints[0].h_link = get_rpy_xyz_mat4(0, 0, -1.57079633, 20e-1, 0, 0);
 
 	link6.name = "link6";
-	link6.nodelinks = new nodelink_t[1];
-	link6.nodelinks[0].parent = &link6;
-	link6.nodelinks[0].child = NULL;
+	link6.joints = new joint2[1];
+	link6.joints[0].parent = &link6;
+	link6.joints[0].child = NULL;
 	link6.num_children = 0;
 	link6.model_ref = (void*)(&simpletree_modellist[1]);
 
-	nodelink_t* simpletree_jointlist[6] = { 
-		&base.nodelinks[0],
-		&base.nodelinks[1],
-		&link1.nodelinks[0],
-		&link2.nodelinks[0],
-		&link2.nodelinks[1],
-		&link5.nodelinks[0]
+	joint2* simpletree_jointlist[6] = { 
+		&base.joints[0],
+		&base.joints[1],
+		&link1.joints[0],
+		&link2.joints[0],
+		&link2.joints[1],
+		&link5.joints[0]
 	};
 
 	tree_dfs(&base);
@@ -1347,13 +1347,13 @@ int main_render_thread(void)
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, true);
 	}
-	delete[] base.nodelinks;
-	delete[] link1.nodelinks;
-	delete[] link2.nodelinks;
-	delete[] link3.nodelinks;
-	delete[] link4.nodelinks;
-	delete[] link5.nodelinks;
-	delete[] link6.nodelinks;
+	delete[] base.joints;
+	delete[] link1.joints;
+	delete[] link2.joints;
+	delete[] link3.joints;
+	delete[] link4.joints;
+	delete[] link5.joints;
+	delete[] link6.joints;
 
 	glfwTerminate();
 	return 0;
