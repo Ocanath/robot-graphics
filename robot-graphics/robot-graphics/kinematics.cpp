@@ -3,9 +3,114 @@
 #include <stdlib.h>
 #include <math.h>
 
+
+
+/*
+* Arguments:
+*
+* Si: the jacobian vector corresponding to the i'th joint
+* p_b: the reference point, represented in the chain base frame
+* hb_i1: the homogeneous transformation matrix
+*
+*/
+void calc_rotational_jacobian_entry_f(vect6_t* Si, vect3_t* p_b, mat4_t* hb_im1)
+{
+	vect3_t z, d, res;
+	for (int r = 0; r < 3; r++)
+	{
+		z.v[r] = hb_im1->m[r][2];
+		d.v[r] = p_b->v[r] - hb_im1->m[r][3];
+	}
+	cross_pbr(&z, &d, &res);
+	for (int r = 0; r < 3; r++)
+	{
+		Si->v[r] = z.v[r];
+		Si->v[r + 3] = res.v[r];
+	}
+}
+
+/*
+	Calculates the robot jacobian matrix satisfying the relationship v = J*qdot, where qdot is a vector of generalized joint velocities,
+	and v is the linear velocity of the argument 'point' (expressed in chain frame 0, and rigidly attached to the end effector frame).
+
+INPUTS:
+	j : pointer to a list of joints, sized 'num_joints'. This function loads the Si vector in this list, which is eqal to the column vector of the jacobian matrix for that joint
+	num_joints : number of joints in the joint list
+	point: point, rigidly attached to the end effector (highest numerical index of the joint matrix) frame, expressed in frame 0
+
+OUTPUTS:
+	Si vectors in the joint list j.
+NOTE:
+	This jacobian matrix is following the jacobian matrix convention defined in Featherstone's texts, which
+	loads the 'linear' (cross product) component in the latter 3 elements of the 6 vector. Therefore the resulting
+	velocity vector of the jacobian multiply will be:
+	{
+		w0,
+		w1,
+		w2,
+		v0,
+		v1,
+		v2
+	};
+	where v is the linear and w is the rotational component.
+*******************************************************************************************************************
+	Note also that the torque component for a given end effector force, for a given joint is given as follows:
+
+		1. tau_i = dot(Si  f)
+
+	Where f is the (6 vector) force and torque expressed in the 0 frame, Si is the column vector of
+	the jacobian, and tau_i is the torque of that joint. This is equivalent to:
+
+		2. [tau] = J^T * f
+
+	Where [tau] is a vector of torques (size n/number of joints), J^T is the transpose of the jacobian matrix defined above, and
+	f is the same generalized force/torque 6 vector expressed in the 0 frame.
+*/
+void calc_J_point(mat4_t* hb_0, joint* chain_start, vect3_t* point_b)
+{
+	/*
+	First, obtain the base case. This is contribution of the velocity from joint 1, and
+	is found using the vector formed by the origin of joint 1 and the point, and the
+	axis of rotation of joint 1 in the base frame.
+*/
+	joint* j = chain_start;	//i.e. Joint 1. joint 0 is NOT VALID, which is why hb_0 is passed as an argument and why we need to do a base case
+	calc_rotational_jacobian_entry_f(&j->Si, point_b, hb_0);	//get jacobian entry for joint 1 from hb_0 and the reference point in base frame
+
+	joint* parent = j;
+	while (j->child != NULL)
+	{
+		j = j->child;
+		calc_rotational_jacobian_entry_f(&j->Si, point_b, &parent->hb_i);
+		parent = j;
+	}
+}
+
+
+/*one time setup to establish the connection from each node BACK to its parent node!
+does dfs forward based on only children links, but creates the parent link before recursively entering the next node.
+*/
+void tree_assign_parent(link_t* node)
+{
+	if (node == NULL)	//safety. null pointer rejection. not algorithmically significant (is 'algorithmically' a word?)
+		return;
+
+	node->parent = NULL;	//initialize the parent pointer to NULL
+	if (node->num_children == 0)	//base case!
+		return;
+	for (int i = 0; i < node->num_children; i++)
+	{
+		joint2* j = &node->joints[i];
+		j->child->parent = node;	//
+		tree_dfs(j->child);
+	}
+}
+
 /*
 	Recursive kinematic tree traversal for computing the state of the...kinematic tree
 	TODO: implement an iterative version of this to make it embedded system friendly, and maybe try it with an arm
+
+
+	traverses the entire tree from the root to the branches with dfs
 */
 void tree_dfs(link_t * node)
 {
@@ -17,12 +122,42 @@ void tree_dfs(link_t * node)
 		joint2* j = &node->joints[i];
 		//printf("calculating transform from %s to %s\r\n", j->parent->name, j->child->name);
 		mat4_t qrot = Hz(j->q);
-		mat4_t_mult_pbr(&j->h_link, &qrot, &j->h_parent_child);
-		mat4_t_mult_pbr(&j->parent->h_base_us, (mat4_t*)&j->h_parent_child, (mat4_t*)&j->child->h_base_us);
+		mat4_t_mult_pbr(&j->h_link, &qrot, &j->h_parent_child);	//local rotated link frame
+		mat4_t_mult_pbr(&node->h_base_us, (mat4_t*)&j->h_parent_child, (mat4_t*)&j->child->h_base_us);	//link frame in base frame calculation
 		//printf("base_%s = base_%s * %s_%s\r\n", j->child->name, j->parent->name, node->name, j->child->name);
+		
 		tree_dfs(j->child);
 	}
 }
+
+
+/*
+	IMPORTANT:
+
+	This function MUST be called on a node which has no children. you go up the tree,
+	backwards, to the root to compute the full jacobian.
+
+	so the last link of the hexapod, or the fingertip of a hand, etc.
+
+	incredibly simple function. iterative. relies on proper tree structure. make sure the parent node of the base is null!
+
+	note: p_b is in the base frame, and is an 'anchor' for the jacobian. most useful anchors will be some point affixed to the tip 
+	link geometry, but represented in the base frame! i.e. p_b is probably a point on 'branch', expressed in the base frame.
+
+	just a helpful tip for future jesse
+*/
+void tree_jacobian(link_t* branch, vect3_t * p_b)
+{
+	link_t* node = branch;
+	while (node->parent != NULL)
+	{
+		joint2* j = &branch->joints[0];
+		calc_rotational_jacobian_entry_f(&j->Si, p_b, &branch->parent->h_base_us);
+	}
+}
+
+
+
 
 /*
 	Copies the contents of one mat4_t to the other. could use memcpy interchangably
@@ -219,88 +354,6 @@ void calc_taulist(joint* chain_start, vect3_t* f)
 		j = j->child;
 	}
 }
-
-
-/*
-* Arguments:
-*
-* Si: the jacobian vector corresponding to the i'th joint
-* p_b: the reference point, represented in the chain base frame
-* hb_i1: the homogeneous transformation matrix
-*
-*/
-void calc_rotational_jacobian_entry_f(vect6_t* Si, vect3_t* p_b, mat4_t* hb_im1)
-{
-	vect3_t z, d, res;
-	for (int r = 0; r < 3; r++)
-	{
-		z.v[r] = hb_im1->m[r][2];
-		d.v[r] = p_b->v[r] - hb_im1->m[r][3];
-	}
-	cross_pbr(&z, &d, &res);
-	for (int r = 0; r < 3; r++)
-	{
-		Si->v[r] = z.v[r];
-		Si->v[r + 3] = res.v[r];
-	}
-}
-
-/*
-	Calculates the robot jacobian matrix satisfying the relationship v = J*qdot, where qdot is a vector of generalized joint velocities,
-	and v is the linear velocity of the argument 'point' (expressed in chain frame 0, and rigidly attached to the end effector frame).
-
-INPUTS:
-	j : pointer to a list of joints, sized 'num_joints'. This function loads the Si vector in this list, which is eqal to the column vector of the jacobian matrix for that joint
-	num_joints : number of joints in the joint list
-	point: point, rigidly attached to the end effector (highest numerical index of the joint matrix) frame, expressed in frame 0
-
-OUTPUTS:
-	Si vectors in the joint list j.
-NOTE:
-	This jacobian matrix is following the jacobian matrix convention defined in Featherstone's texts, which
-	loads the 'linear' (cross product) component in the latter 3 elements of the 6 vector. Therefore the resulting
-	velocity vector of the jacobian multiply will be:
-	{
-		w0,
-		w1,
-		w2,
-		v0,
-		v1,
-		v2
-	};
-	where v is the linear and w is the rotational component.
-*******************************************************************************************************************
-	Note also that the torque component for a given end effector force, for a given joint is given as follows:
-
-		1. tau_i = dot(Si  f)
-
-	Where f is the (6 vector) force and torque expressed in the 0 frame, Si is the column vector of
-	the jacobian, and tau_i is the torque of that joint. This is equivalent to:
-
-		2. [tau] = J^T * f
-
-	Where [tau] is a vector of torques (size n/number of joints), J^T is the transpose of the jacobian matrix defined above, and
-	f is the same generalized force/torque 6 vector expressed in the 0 frame.
-*/
-void calc_J_point(mat4_t* hb_0, joint * chain_start, vect3_t * point_b)
-{
-	/*
-	First, obtain the base case. This is contribution of the velocity from joint 1, and
-	is found using the vector formed by the origin of joint 1 and the point, and the
-	axis of rotation of joint 1 in the base frame.
-*/
-	joint* j = chain_start;	//i.e. Joint 1. joint 0 is NOT VALID, which is why hb_0 is passed as an argument and why we need to do a base case
-	calc_rotational_jacobian_entry_f(&j->Si, point_b, hb_0);	//get jacobian entry for joint 1 from hb_0 and the reference point in base frame
-
-	joint* parent = j;
-	while (j->child != NULL)
-	{
-		j = j->child;
-		calc_rotational_jacobian_entry_f(&j->Si, point_b, &parent->hb_i);
-		parent = j;
-	}
-}
-
 
 vect6_t calc_w_v(kinematic_chain * chain, vect3_t * w, vect3_t * v)
 {

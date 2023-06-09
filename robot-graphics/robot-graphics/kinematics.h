@@ -14,17 +14,22 @@ typedef struct link_t
 	int num_children;	//joints who have us as their parent with children present/
 
 	void* model_ref;
+	struct link_t* parent;	//traceback. in a tree, only ONE PARENT!
 }link_t;
+
 
 /*actually JOINTS. joints connect nodes of the tree, i.e. links*/
 typedef struct joint2
 {
-	float q;
-	mat4_t h_parent_child;
-	mat4_t h_link;
-	
-	struct link_t* parent;
-	struct link_t* child;
+	float q;	//general joint position term. for now, always rotation
+	mat4_t h_parent_child;	//rotated frame. equal to link frame rotated about z  by q
+	mat4_t h_link;//constant link frame formed by the rigid body linkage
+
+	vect6_t Si;	//row of the jacobian formed by this jointtt
+
+	//NOTE: the 'parent' field here is redundant. In the context of a URDF, this assignment indicates the 'link' node the joint should be associated with. see example from simple-tree
+	//struct link_t* parent; //ref to parent link
+	struct link_t* child;	//ref to child link
 }joint2;
 
 
@@ -94,6 +99,10 @@ void calc_taulist(joint* chain_start, vect3_t* f);
 int gd_ik_single(mat4_t* hb_0, joint* start, joint* end, vect3_t* anchor_end, vect3_t* targ_b, vect3_t* anchor_b, float epsilon_divisor);	//num anchors?
 mat4_t get_rpy_xyz_mat4(float roll, float pitch, float yaw, float x, float y, float z);
 
-void tree_dfs(link_t* node);
+
+
+void tree_dfs(link_t* node);	/*does kinematics of a gen2 kinematic TREE structure*/
+void tree_assign_parent(link_t* node);	//setup function for kinematic trees. assigns parent link in each node
+void tree_jacobian(link_t* branch, vect3_t* p_b);
 
 #endif
