@@ -117,6 +117,8 @@ void tree_assign_parent(link_t* node)
 */
 void tree_dfs(link_t * node)
 {
+	if(node == NULL)//safety
+		return;
 	//printf("%s\r\n", node->name);
 	if (node->num_children == 0)
 		return;

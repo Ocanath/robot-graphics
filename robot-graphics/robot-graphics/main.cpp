@@ -101,16 +101,18 @@ void render_robot(mat4_t* hw_b, Shader* shader, link_t* node)
 {
 	if (node == NULL)
 		return;
+
+	link_t* node_to_render = node;
+	mat4_t hw_lnk;
+	mat4_t_mult_pbr(hw_b, &node_to_render->h_base_us, &hw_lnk);
+	glm::mat4 model = ht_matrix_to_mat4_t(hw_lnk);
+	shader->setMat4("model", model);
+	((AssetModel*)node_to_render->model_ref)->Draw(*shader, NULL);
+
 	for (int i = 0; i < node->num_children; i++)
 	{
 		joint2* j = &node->joints[i];
-		mat4_t hw_lnk;
-		mat4_t_mult_pbr(hw_b, &node->h_base_us, &hw_lnk);
-		glm::mat4 model = ht_matrix_to_mat4_t(hw_lnk);
-		shader->setMat4("model", model);
-		((AssetModel*)node->model_ref)->Draw(*shader, NULL);
-		 if(node->num_children > 0)
-			render_robot(hw_b, shader, j->child);
+		render_robot(hw_b, shader, j->child);
 	}
 }
 
@@ -443,8 +445,6 @@ int main_render_thread(void)
 
 
 
-
-
 	dynahex_bones = new dynahex_t;
 	init_dh_kinematics(dynahex_bones);
 	vector<AssetModel> dynahex_modellist;
@@ -545,6 +545,7 @@ int main_render_thread(void)
 		light[i].quadratic = .028f;
 		light[i].base_color = glm::vec4(1.f);
 	}
+
 	float shininess = 32.f;
 	int cfg_idx = 32;
 
@@ -616,6 +617,31 @@ int main_render_thread(void)
 
 			sprintf_s(buf, "pointLights[%d].quadratic", i);
 			lightingShader.setFloat(buf, light[i].quadratic);			
+		}
+
+
+
+		if ((tick - udp_connected_ts) < 300)	//connected
+		{
+			//for (int i = 0; i < NUM_LIGHTS; i++)
+			{
+				int i = ROBOT_CONNECTED_LIGHT_IDX;
+				light[i].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
+				light[i].diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+				light[i].specular = glm::vec3(0.9f, 0.9f, 0.9f);
+				light[i].base_color = glm::vec4(1.f);
+			}
+		}
+		else
+		{
+			//for (int i = 0; i < NUM_LIGHTS; i++)
+			{
+				int i = ROBOT_CONNECTED_LIGHT_IDX;
+				light[i].ambient = glm::vec3(0.07f, 0, 0);
+				light[i].diffuse = glm::vec3(0.7f, 0, 0);
+				light[i].specular = glm::vec3(0.9f, 0.0f, 0.0f);
+				light[i].base_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+			}
 		}
 		// spotLight
 		//lightingShader.setVec3("spotLight.position", camera_position);
@@ -1279,23 +1305,6 @@ int main_render_thread(void)
 			}
 		}
 
-		if ((tick - udp_connected_ts) < 300)	//connected
-		{
-			light[ROBOT_CONNECTED_LIGHT_IDX].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
-			light[ROBOT_CONNECTED_LIGHT_IDX].diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-			light[ROBOT_CONNECTED_LIGHT_IDX].specular = glm::vec3(0.9f, 0.9f, 0.9f);
-			light[ROBOT_CONNECTED_LIGHT_IDX].base_color = glm::vec4(1.f);
-		}
-		else
-		{
-			light[ROBOT_CONNECTED_LIGHT_IDX].ambient = glm::vec3(0.07f, 0, 0);
-			light[ROBOT_CONNECTED_LIGHT_IDX].diffuse = glm::vec3(0.7f, 0, 0);
-			light[ROBOT_CONNECTED_LIGHT_IDX].specular = glm::vec3(0.9f, 0.0f, 0.0f);
-			light[ROBOT_CONNECTED_LIGHT_IDX].base_color = glm::vec4(1.f, 0.f, 0.f, 1.f); 
-		}
-		
-
-
 		model = ht_matrix_to_mat4_t(dynahex_hw_b);
 		lightingShader.setMat4("model", model);
 		dynahex_modellist[4].Draw(lightingShader, NULL);
@@ -1333,41 +1342,6 @@ int main_render_thread(void)
 			hw_b.m[0][3] = -5.0;
 			hw_b.m[2][3] = 3.0;
 			render_robot(&hw_b, &lightingShader, &base);
-
-			//mat4_t hw_lnk = mat4_t_mult(hw_b, base.h_base_us);
-			//model = ht_matrix_to_mat4_t(hw_lnk);
-			//lightingShader.setMat4("model", model);
-			//((AssetModel*)base.model_ref)->Draw(lightingShader, NULL);
-
-			//hw_lnk = mat4_t_mult(hw_b, link1.h_base_us);
-			//model = ht_matrix_to_mat4_t(hw_lnk);
-			//lightingShader.setMat4("model", model);
-			//((AssetModel*)link1.model_ref)->Draw(lightingShader, NULL);
-
-			//hw_lnk = mat4_t_mult(hw_b, link2.h_base_us);
-			//model = ht_matrix_to_mat4_t(hw_lnk);
-			//lightingShader.setMat4("model", model);
-			//((AssetModel*)link2.model_ref)->Draw(lightingShader, NULL);
-
-			//hw_lnk = mat4_t_mult(hw_b, link3.h_base_us);
-			//model = ht_matrix_to_mat4_t(hw_lnk);
-			//lightingShader.setMat4("model", model);
-			//((AssetModel*)link3.model_ref)->Draw(lightingShader, NULL);
-			//
-			//hw_lnk = mat4_t_mult(hw_b, link4.h_base_us);
-			//model = ht_matrix_to_mat4_t(hw_lnk);
-			//lightingShader.setMat4("model", model);
-			//((AssetModel*)link4.model_ref)->Draw(lightingShader, NULL);
-
-			//hw_lnk = mat4_t_mult(hw_b, link5.h_base_us);
-			//model = ht_matrix_to_mat4_t(hw_lnk);
-			//lightingShader.setMat4("model", model);
-			//((AssetModel*)link5.model_ref)->Draw(lightingShader, NULL);
-
-			//hw_lnk = mat4_t_mult(hw_b, link6.h_base_us);
-			//model = ht_matrix_to_mat4_t(hw_lnk);
-			//lightingShader.setMat4("model", model);
-			//((AssetModel*)link6.model_ref)->Draw(lightingShader, NULL);
 		}
 
 		// also draw the lamp object(s)
