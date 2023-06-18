@@ -460,38 +460,44 @@ int main_render_thread(void)
 	/*another hexapod structure. this */
 	joint2 hexjoints[18];
 	int jointlist_idx = 0;
-	link_t hexbase, hexlink1, hexlink2, hexlink3;
+	link_t hexbase, hexlink1[6], hexlink2[6], hexlink3[6];
 	hexbase.name = "hexbase";
 	hexbase.h_base_us = mat4_t_Identity;
 	hexbase.model_ref = (void*)&hexapod_modellist[0];
 	hexbase.joints = &hexjoints[jointlist_idx];
-	hexbase.num_children = 1;	//6; // but they gotta be assigned and im just gonna POC before I use an xml parser
+	hexbase.num_children = 6; // but they gotta be assigned and im just gonna POC before I use an xml parser
 	jointlist_idx += hexbase.num_children;
-	hexbase.joints[0].child = &hexlink1;
-	hexbase.joints[0].h_link = get_rpy_xyz_mat4(0.0, -0.0, 1.4824826666439834f, 9.68560403467281e-3f, 109.357754632563e-3f, -46.52e-3f);
+	mat4_t basetozero = get_rpy_xyz_mat4(0.0, -0.0, 1.4824826666439834f, 9.68560403467281e-3f, 109.357754632563e-3f, -46.52e-3f);
+	for (int leg = 0; leg < 6; leg++)
+	{
+		hexbase.joints[leg].child = &hexlink1[leg];
+		hexbase.joints[leg].h_link = mat4_t_mult(Hz((float)leg * TWO_PI / 6.f), basetozero);
+	}
 
-	hexlink1.name = "link 1";
-	hexlink1.model_ref = (void*)&hexapod_modellist[2];
-	hexlink1.joints = &hexjoints[jointlist_idx];
-	hexlink1.joints[0].h_link = get_rpy_xyz_mat4(1.5707963267948966f, 0.f, -3.141592653589793f, 53.19977678085327e-3f, -9.341271351859646e-3f, - 32.1600000000312e-3f);
-	hexlink1.num_children = 1;
-	jointlist_idx += hexlink1.num_children;
-	hexlink1.joints[0].child = &hexlink2;
+	for (int leg = 0; leg < 6; leg++)
+	{
+		hexlink1[leg].name = "link 1";
+		hexlink1[leg].model_ref = (void*)&hexapod_modellist[2];
+		hexlink1[leg].joints = &hexjoints[jointlist_idx];
+		hexlink1[leg].joints[0].h_link = get_rpy_xyz_mat4(1.5707963267948966f, 0.f, -3.141592653589793f, 53.19977678085327e-3f, -9.341271351859646e-3f, -32.1600000000312e-3f);
+		hexlink1[leg].num_children = 1;
+		jointlist_idx += hexlink1[leg].num_children;
+		hexlink1[leg].joints[0].child = &hexlink2[leg];
 
-	hexlink2.name = "link 2";
-	hexlink2.model_ref = (void*)&hexapod_modellist[3];
-	hexlink2.joints = &hexjoints[jointlist_idx];
-	hexlink2.joints[0].h_link = get_rpy_xyz_mat4(3.141592653589793f, 0, 3.141592653589793f, -17.75562321538834e-3f, 98.8847208563049e-3f, 33.359575692035264e-3f);
-	hexlink2.num_children = 1;
-	jointlist_idx += hexlink2.num_children;
-	hexlink2.joints[0].child = &hexlink3;
+		hexlink2[leg].name = "link 2";
+		hexlink2[leg].model_ref = (void*)&hexapod_modellist[3];
+		hexlink2[leg].joints = &hexjoints[jointlist_idx];
+		hexlink2[leg].joints[0].h_link = get_rpy_xyz_mat4(3.141592653589793f, 0, 3.141592653589793f, -17.75562321538834e-3f, 98.8847208563049e-3f, 33.359575692035264e-3f);
+		hexlink2[leg].num_children = 1;
+		jointlist_idx += hexlink2[leg].num_children;
+		hexlink2[leg].joints[0].child = &hexlink3[leg];
 
-	hexlink3.name = "link 3";
-	hexlink3.model_ref = (void*)&hexapod_modellist[4];
-	hexlink3.joints = &hexjoints[jointlist_idx];
-	hexlink3.num_children = 0;
-	hexlink3.joints = NULL;
-
+		hexlink3[leg].name = "link 3";
+		hexlink3[leg].model_ref = (void*)&hexapod_modellist[4];
+		hexlink3[leg].joints = &hexjoints[jointlist_idx];
+		hexlink3[leg].num_children = 0;
+		hexlink3[leg].joints = NULL;
+	}
 	tree_assign_parent(&hexbase);
 	tree_dfs(&hexbase);
 
@@ -1328,15 +1334,18 @@ int main_render_thread(void)
 		simpletree_jointlist[3]->q = .3*sin(time*5)-2;
 		simpletree_jointlist[4]->q = -.3*sin(time*5)+2;
 		
-
-		tree_dfs(&base);
+		for (int joint = 0; joint < 18; joint++)
+		{
+			hexjoints[joint].q = 1.f+sin(time + (float)joint);
+		}
+		tree_dfs(&hexbase);
 		{
 			mat4_t hw_b = Hscale(5.f);
 			hw_b.m[0][3] = -5.f;
-			hw_b.m[1][3] = 0.f;
+			hw_b.m[1][3] = 0;
 			hw_b.m[2][3] = 3.f;
-			hw_b = mat4_t_mult(hw_b, Hz(time / 2));
-			for (int i = 0; i < 3; i++)
+			hw_b = mat4_t_mult(hw_b, Hz(0));
+			for (int i = 0; i < 3; i++)		//assign target to this robot
 				target.v[i] = hw_b.m[i][3];
 			model = ht_matrix_to_mat4_t(hw_b);
 			lightingShader.setMat4("model", model);
