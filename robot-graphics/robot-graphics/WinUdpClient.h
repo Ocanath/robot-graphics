@@ -37,7 +37,7 @@ public:
 		}
 		printf("Initialised.\n");
 		//create socket
-		if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR)
+		if ((s = (int)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR)
 		{
 			printf("socket() failed with error code : %d", WSAGetLastError());
 			exit(EXIT_FAILURE);

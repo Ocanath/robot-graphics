@@ -1,4 +1,4 @@
-<robot name="ability_hand">
+<robot name="hexapods">
 
 	<!-- Establish base frame geometries -->
 	<link name="base" >

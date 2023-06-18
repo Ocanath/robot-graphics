@@ -154,6 +154,7 @@
   <ItemGroup>
     <ClCompile Include="dh_hex_fixed.cpp" />
     <ClCompile Include="dynahex.cpp" />
+    <ClCompile Include="external\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="finger-kinematics.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="glfw_interface.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="dh_hex_fixed.h" />
     <ClInclude Include="dynahex.h" />
+    <ClInclude Include="external\tinyxml2\tinyxml2.h" />
     <ClInclude Include="finger-kinematics.h" />
     <ClInclude Include="glfw_interface.h" />
     <ClInclude Include="Grips.h" />

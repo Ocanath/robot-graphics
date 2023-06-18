@@ -30,6 +30,8 @@
 #include "WinUdpBkstServer.h"
 #include "WinUdpClient.h"
 
+#include "external/tinyxml2/tinyxml2.h"
+
 #define NUM_LIGHTS 5
 
 /*
@@ -201,10 +203,21 @@ int main_render_thread(void);
 
 int main(void)
 {
-	std::thread t2(physics_thread);
-	t2.join();
-	std::thread t1(main_render_thread);
-	t1.join();
+	tinyxml2::XMLDocument doc;
+	doc.LoadFile("URDF/hexapod.urdf");
+	if (doc.ErrorID() != 0)
+	{
+		printf("error: %s\r\n", doc.ErrorName());
+	}
+	tinyxml2::XMLElement* element = doc.FirstChildElement("robot");
+	if (element != NULL)
+	{
+		printf("%s\r\n", element->GetText());
+	}
+	//std::thread t2(physics_thread);
+	//t2.join();
+	//std::thread t1(main_render_thread);
+	//t1.join();
 }
 
 
@@ -236,7 +249,6 @@ int main_render_thread(void)
 	glm::mat4 View = glm::mat4(1.0);
 	glm::mat4 Model = glm::mat4(1.0);
 	glm::mat4 MVP = CameraProjection * View * Model;
-	dh_entry CamDH[CAM_NUM_FRAMES];		//stack memory for forward kinematics
 	joint cam_joints[CAM_NUM_FRAMES];
 	CamControlStruct Player;				//specialized camera structure. carries around movement parameters
 	init_cam(&Player, cam_joints);
@@ -248,8 +260,8 @@ int main_render_thread(void)
 	//Player.CamRobot.hw_b.m[0][3] = -5.f;
 	//Player.CamRobot.hw_b.m[1][3] = 0.f;
 	//Player.CamRobot.hw_b.m[2][3] = 3.f;
-	Player.CamRobot.j[1].q = fmod(508.213196 + PI, 2 * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-2.250000 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[1].q = fmod(508.213196f + PI, 2.f * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-2.250000f + PI, 2.f * PI) - PI;
 	//Player.CamRobot.j[1].q = 0;
 	//Player.CamRobot.j[2].q = -PI/2;
 	Player.lock_in_flag = 0;
@@ -447,8 +459,6 @@ int main_render_thread(void)
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F3-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/FB-stripped.STL"));
 	
-
-
 
 
 	vector<AssetModel> hexapod_modellist;
@@ -684,7 +694,7 @@ int main_render_thread(void)
 			movement_press_time = time;
 		else
 		{
-			float displacement_per_sec = .01f*(time-movement_press_time) + 1.f/fps;
+			float displacement_per_sec = (.01f*(float)((time-movement_press_time))) + 1.f/(float)fps;
 			if ( (mnljki & (1 << 0)) != 0)
 				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(displacement_per_sec, 0, 0);
 			if ((mnljki & (1 << 1)) != 0)
@@ -716,7 +726,7 @@ int main_render_thread(void)
 		}
 		if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
-			float v = .01f * (time - ambient_press_time);
+			float v =(float)( .01f * (time - ambient_press_time));
 			light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient += glm::vec3(v,v,v);
 			float mag = 0;
 			for (int r = 0; r < 3; r++)
@@ -725,7 +735,7 @@ int main_render_thread(void)
 		}
 		else if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
-			float v = .01f * (time - ambient_press_time);
+			float v = (float)(.01f * (time - ambient_press_time));
 			light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient += glm::vec3(-v,-v,-v);
 			float mag = 0;
 			for (int r = 0; r < 3; r++)
@@ -1198,13 +1208,13 @@ int main_render_thread(void)
 			//foot_path(time, h, w, period, &foot_xy_1);
 			float one_16 = (float)(1 << 16);
 			vect3_32b_t foot_xy_1_32b;
-			foot_path(time, h, w, period, &foot_xy_1);
+			foot_path((float)time, h, w, period, &foot_xy_1);
 			//foot_path_fixed((uint32_t)(time * 1000.f), (int32_t)(h * one_16), (int32_t)(w * one_16), (int32_t)(period * 4096.f), &foot_xy_1_32b);
 			
 			/*Generate base for second half of the legs*/
 			vect3_t foot_xy_2;
 			vect3_32b_t foot_xy_2_32b;
-			foot_path(time+period/2.f, h, w, period, &foot_xy_2);
+			foot_path((float)time+period/2.f, h, w, period, &foot_xy_2);
 			//foot_path_fixed((uint32_t)((time + period/2) * 1000.f), (int32_t)(h* one_16), (int32_t)(w* one_16), (int32_t)(period * 4096.f), &foot_xy_2_32b);
 			//for (int i = 0; i < 3; i++)
 			//	foot_xy_2.v[i] = (float)foot_xy_2_32b.v[i] / one_16;
@@ -1325,18 +1335,18 @@ int main_render_thread(void)
 			}
 		}
 		
-		simpletree_jointlist[0]->q = 0.5*sin(time);
-		simpletree_jointlist[2]->q = 0.5 * sin(time);
+		simpletree_jointlist[0]->q = 0.5f* (float)sin(time);
+		simpletree_jointlist[2]->q = 0.5f * (float)sin(time);
 
-		simpletree_jointlist[1]->q = 0.5 * sin(time);
-		simpletree_jointlist[5]->q = 0.5 * sin(time);
+		simpletree_jointlist[1]->q = 0.5f * (float)sin(time);
+		simpletree_jointlist[5]->q = 0.5f * (float)sin(time);
 
-		simpletree_jointlist[3]->q = .3*sin(time*5)-2;
-		simpletree_jointlist[4]->q = -.3*sin(time*5)+2;
+		simpletree_jointlist[3]->q = .3f*(float)sin(time*5)-2;
+		simpletree_jointlist[4]->q = -.3f*(float)sin(time*5)+2;
 		
 		for (int joint = 0; joint < 18; joint++)
 		{
-			hexjoints[joint].q = 1.f+sin(time + (float)joint);
+			hexjoints[joint].q = 1.f+.1f*(float)sin(time*10.f + (float)joint);
 		}
 		tree_dfs(&hexbase);
 		{
@@ -1349,7 +1359,6 @@ int main_render_thread(void)
 				target.v[i] = hw_b.m[i][3];
 			model = ht_matrix_to_mat4_t(hw_b);
 			lightingShader.setMat4("model", model);
-			//hexapod_modellist[0].Draw(lightingShader, NULL);
 			render_robot(&hw_b, &lightingShader, &hexbase);
 		}
 
