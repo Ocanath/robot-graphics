@@ -238,6 +238,23 @@ mat4_t Hz(float angle)
 	ret.m[3][0] = 0;					ret.m[3][1] = 0;					ret.m[3][2] = 0;	ret.m[3][3] = 1;
 	return ret;
 }
+
+/*
+* returns a scale mat4 matrixxx
+*/
+mat4_t Hscale(float scf)
+{
+	mat4_t H_scf = {
+		{
+			{scf, 0, 0, 0},
+			{0, scf, 0, 0},
+			{0, 0, scf, 0},
+			{0, 0, 0, 1.f}
+		}
+	};
+	return H_scf;
+}
+
 /*
 	Returns vector cross product between 3 vectors A and B.
 */

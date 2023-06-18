@@ -116,6 +116,7 @@ void ht_inverse_ptr(mat4_t* hin, mat4_t* hout);
 mat4_t Hx(float angle);
 mat4_t Hy(float angle);
 mat4_t Hz(float angle);
+mat4_t Hscale(float scf);
 mat3_t mat3_T(mat3_t in);
 void matrix_vect_multiply(float ** M1, int rsize, float * v, int vsize, float * out);
 mat6_t h4_to_X(mat4_t ha_b);

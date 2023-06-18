@@ -95,7 +95,7 @@ void tree_assign_parent(link_t* node)
 		return;
 
 	node->parent = NULL;	//initialize the parent pointer to NULL
-	if (node->num_children == 0)	//base case!
+	if (node->joints == NULL)	//base case! num_children = 0 is also a base case
 		return;
 	for (int i = 0; i < node->num_children; i++)
 	{
