@@ -101,7 +101,10 @@ void tree_assign_parent(link_t* node)
 	{
 		joint2* j = &node->joints[i];
 		j->child->parent = node;	//
-		tree_dfs(j->child);
+		
+		printf("assigning %s the parent %s\r\n", j->child->name, node->name);
+		
+		tree_assign_parent(j->child);
 	}
 }
 
@@ -121,6 +124,7 @@ void tree_dfs(link_t * node)
 	{
 		joint2* j = &node->joints[i];
 		//printf("calculating transform from %s to %s\r\n", j->parent->name, j->child->name);
+		//printf("visiting %s\r\n", j->child->name);
 		mat4_t qrot = Hz(j->q);
 		mat4_t_mult_pbr(&j->h_link, &qrot, &j->h_parent_child);	//local rotated link frame
 		mat4_t_mult_pbr(&node->h_base_us, (mat4_t*)&j->h_parent_child, (mat4_t*)&j->child->h_base_us);	//link frame in base frame calculation

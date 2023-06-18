@@ -92,6 +92,29 @@ unsigned int loadTexture(char const* path)
 	return textureID;
 }
 
+
+/*
+recursive DFS implementation for rendering a 
+kinematic tree robot
+*/
+void render_robot(mat4_t* hw_b, Shader* shader, link_t* node)
+{
+	if (node == NULL)
+		return;
+	for (int i = 0; i < node->num_children; i++)
+	{
+		joint2* j = &node->joints[i];
+		mat4_t hw_lnk;
+		mat4_t_mult_pbr(hw_b, &node->h_base_us, &hw_lnk);
+		glm::mat4 model = ht_matrix_to_mat4_t(hw_lnk);
+		shader->setMat4("model", model);
+		((AssetModel*)node->model_ref)->Draw(*shader, NULL);
+		 if(node->num_children > 0)
+			render_robot(hw_b, shader, j->child);
+	}
+}
+
+
 /**/
 typedef struct light_params_t
 {
@@ -418,12 +441,6 @@ int main_render_thread(void)
 	vect3_t simpletree_anchor = h_origin(link6.h_base_us);
 	tree_jacobian(&link6, &simpletree_anchor);
 
-	/*another hexapod structure. this */
-	joint2 hexjoints[18];
-	link_t hexbase;
-	hexbase.name = "hexbase";
-	hexbase.joints = &hexjoints[0];
-	hexbase.num_children = 6;
 
 
 
@@ -436,6 +453,46 @@ int main_render_thread(void)
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F2-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F3-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/FB-stripped.STL"));
+	
+
+
+
+
+	vector<AssetModel> hexapod_modellist;
+	hexapod_modellist.push_back(AssetModel("URDF/render/FB_base_meters.STL"));
+	/*another hexapod structure. this */
+	joint2 hexjoints[18];
+	int jointlist_idx = 0;
+	link_t hexbase;
+	hexbase.name = "hexbase";
+	hexbase.model_ref = (void*)&hexapod_modellist[0];
+	hexbase.joints = &hexjoints[jointlist_idx];
+	hexbase.num_children = 6;
+	jointlist_idx += hexbase.num_children;
+	link_t hexlink1;
+	hexlink1.name = "link 1";
+	hexlink1.joints = &hexjoints[jointlist_idx];
+	hexlink1.num_children = 1;
+	jointlist_idx += hexlink1.num_children;
+	link_t hexlink2;
+	hexlink2.name = "link 2";
+	hexlink2.joints = &hexjoints[jointlist_idx];
+	hexlink2.num_children = 1;
+	jointlist_idx += hexlink2.num_children;
+	link_t hexlink3;
+	hexlink3.name = "link 3";
+	hexlink3.joints = &hexjoints[jointlist_idx];
+	hexlink3.num_children = 1;
+
+	
+	
+	
+	
+
+	
+	
+	
+	
 	mat4_t dynahex_hw_b = mat4_t_I();
 	for (int l = 0; l < NUM_LEGS; l++)
 	{
@@ -1275,40 +1332,42 @@ int main_render_thread(void)
 			mat4_t hw_b = Hz(0);
 			hw_b.m[0][3] = -5.0;
 			hw_b.m[2][3] = 3.0;
-			mat4_t hw_lnk = mat4_t_mult(hw_b, base.h_base_us);
-			model = ht_matrix_to_mat4_t(hw_lnk);
-			lightingShader.setMat4("model", model);
-			((AssetModel*)base.model_ref)->Draw(lightingShader, NULL);
+			render_robot(&hw_b, &lightingShader, &base);
 
-			hw_lnk = mat4_t_mult(hw_b, link1.h_base_us);
-			model = ht_matrix_to_mat4_t(hw_lnk);
-			lightingShader.setMat4("model", model);
-			((AssetModel*)link1.model_ref)->Draw(lightingShader, NULL);
+			//mat4_t hw_lnk = mat4_t_mult(hw_b, base.h_base_us);
+			//model = ht_matrix_to_mat4_t(hw_lnk);
+			//lightingShader.setMat4("model", model);
+			//((AssetModel*)base.model_ref)->Draw(lightingShader, NULL);
 
-			hw_lnk = mat4_t_mult(hw_b, link2.h_base_us);
-			model = ht_matrix_to_mat4_t(hw_lnk);
-			lightingShader.setMat4("model", model);
-			((AssetModel*)link2.model_ref)->Draw(lightingShader, NULL);
+			//hw_lnk = mat4_t_mult(hw_b, link1.h_base_us);
+			//model = ht_matrix_to_mat4_t(hw_lnk);
+			//lightingShader.setMat4("model", model);
+			//((AssetModel*)link1.model_ref)->Draw(lightingShader, NULL);
 
-			hw_lnk = mat4_t_mult(hw_b, link3.h_base_us);
-			model = ht_matrix_to_mat4_t(hw_lnk);
-			lightingShader.setMat4("model", model);
-			((AssetModel*)link3.model_ref)->Draw(lightingShader, NULL);
-			
-			hw_lnk = mat4_t_mult(hw_b, link4.h_base_us);
-			model = ht_matrix_to_mat4_t(hw_lnk);
-			lightingShader.setMat4("model", model);
-			((AssetModel*)link4.model_ref)->Draw(lightingShader, NULL);
+			//hw_lnk = mat4_t_mult(hw_b, link2.h_base_us);
+			//model = ht_matrix_to_mat4_t(hw_lnk);
+			//lightingShader.setMat4("model", model);
+			//((AssetModel*)link2.model_ref)->Draw(lightingShader, NULL);
 
-			hw_lnk = mat4_t_mult(hw_b, link5.h_base_us);
-			model = ht_matrix_to_mat4_t(hw_lnk);
-			lightingShader.setMat4("model", model);
-			((AssetModel*)link5.model_ref)->Draw(lightingShader, NULL);
+			//hw_lnk = mat4_t_mult(hw_b, link3.h_base_us);
+			//model = ht_matrix_to_mat4_t(hw_lnk);
+			//lightingShader.setMat4("model", model);
+			//((AssetModel*)link3.model_ref)->Draw(lightingShader, NULL);
+			//
+			//hw_lnk = mat4_t_mult(hw_b, link4.h_base_us);
+			//model = ht_matrix_to_mat4_t(hw_lnk);
+			//lightingShader.setMat4("model", model);
+			//((AssetModel*)link4.model_ref)->Draw(lightingShader, NULL);
 
-			hw_lnk = mat4_t_mult(hw_b, link6.h_base_us);
-			model = ht_matrix_to_mat4_t(hw_lnk);
-			lightingShader.setMat4("model", model);
-			((AssetModel*)link6.model_ref)->Draw(lightingShader, NULL);
+			//hw_lnk = mat4_t_mult(hw_b, link5.h_base_us);
+			//model = ht_matrix_to_mat4_t(hw_lnk);
+			//lightingShader.setMat4("model", model);
+			//((AssetModel*)link5.model_ref)->Draw(lightingShader, NULL);
+
+			//hw_lnk = mat4_t_mult(hw_b, link6.h_base_us);
+			//model = ht_matrix_to_mat4_t(hw_lnk);
+			//lightingShader.setMat4("model", model);
+			//((AssetModel*)link6.model_ref)->Draw(lightingShader, NULL);
 		}
 
 		// also draw the lamp object(s)
