@@ -34,6 +34,8 @@
 
 #define NUM_LIGHTS 5
 
+//#define GET_HEXAPOD_OFFSET_VALS
+
 /*
 Generic hex checksum calculation.
 TODO: use this in the psyonic API
@@ -203,21 +205,17 @@ int main_render_thread(void);
 
 int main(void)
 {
-	tinyxml2::XMLDocument doc;
-	doc.LoadFile("URDF/hexapod.urdf");
-	if (doc.ErrorID() != 0)
-	{
-		printf("error: %s\r\n", doc.ErrorName());
-	}
-	tinyxml2::XMLElement* element = doc.FirstChildElement("robot");
-	if (element != NULL)
-	{
-		printf("%s\r\n", element->GetText());
-	}
-	//std::thread t2(physics_thread);
-	//t2.join();
-	//std::thread t1(main_render_thread);
-	//t1.join();
+	//tinyxml2::XMLDocument doc;
+	//doc.LoadFile("URDF/blah.xml");
+
+	//tinyxml2::XMLElement* titleElement = doc.FirstChildElement("robot")->FirstChildElement("link");
+	//const char* title = titleElement->GetText();
+	//printf("Name of play (1): %s\n", title);
+
+	std::thread t2(physics_thread);
+	t2.join();
+	std::thread t1(main_render_thread);
+	t1.join();
 }
 
 
@@ -519,12 +517,15 @@ int main_render_thread(void)
 	
 	
 	mat4_t dynahex_hw_b = mat4_t_I();
+	const float q1_calib = 0;
+	const float q2_calib = (-17.46668627f * DEG_TO_RAD);
+	const float q3_calib = (-10.74216371 * DEG_TO_RAD);
 	for (int l = 0; l < NUM_LEGS; l++)
 	{
 		joint* j = dynahex_bones->leg[l].chain;
-		j[1].q = 0;
-		j[2].q = 0;
-		j[3].q = 0;
+		j[1].q = q1_calib;
+		j[2].q = q2_calib;
+		j[3].q = q3_calib;
 	}
 	forward_kinematics_dynahexleg(dynahex_bones);
 	print_mat4_t(dynahex_bones->leg[0].chain[3].hb_i);
@@ -666,6 +667,13 @@ int main_render_thread(void)
 				light[i].diffuse = glm::vec3(0.7f, 0, 0);
 				light[i].specular = glm::vec3(0.9f, 0.0f, 0.0f);
 				light[i].base_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+			}
+			for (int l = 0; l < NUM_LEGS; l++)
+			{
+				joint* j = dynahex_bones->leg[l].chain;
+				j[1].q = q1_calib;
+				j[2].q = q2_calib;
+				j[3].q = q3_calib;
 			}
 		}
 		// spotLight
@@ -1313,6 +1321,29 @@ int main_render_thread(void)
 				}
 			}
 		}
+#ifdef GET_HEXAPOD_OFFSET_VALS
+		/*offset capture:
+		* 1. match the orientation of the robot pre-udp connection
+		* 2. connect via udp/power on the robot
+		* 3. record the full configuration. each value is the offset, for each leg
+		*/
+		float qref[3] = { q1_calib, q2_calib, q3_calib };
+		for(int leg = 0; leg < 6; leg++)
+		{
+			printf("l%d:", leg);
+			for (int joint = 1; joint <= 3; joint++)
+			{
+				if (joint < 3)
+					printf("%f, ", dynahex_bones->leg[leg].chain[joint].q - qref[joint - 1]);
+				else
+					printf("%f", dynahex_bones->leg[leg].chain[joint].q - qref[joint - 1]);
+			}
+			printf(" ");
+		}
+		printf(")\r\n");
+#endif
+
+
 
 		model = ht_matrix_to_mat4_t(dynahex_hw_b);
 		lightingShader.setMat4("model", model);
@@ -1346,7 +1377,7 @@ int main_render_thread(void)
 		
 		for (int joint = 0; joint < 18; joint++)
 		{
-			hexjoints[joint].q = 1.f+.1f*(float)sin(time*10.f + (float)joint);
+			hexjoints[joint].q = 0;// 1.f + .1f * (float)sin(time * 10.f + (float)joint);
 		}
 		tree_dfs(&hexbase);
 		{
