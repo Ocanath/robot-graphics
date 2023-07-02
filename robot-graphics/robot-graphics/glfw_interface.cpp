@@ -227,8 +227,8 @@ glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double 
 		glfwSetCursorPos(window, xsize / 2, ysize / 2);
 	// Reset mouse position for next frame
 	// Compute new orientation
-	P->horizontalAngle += .003 * double(1024 / 2 - xpos);
-	P->verticalAngle += .003 * double(768 / 2 - ypos);
+	P->horizontalAngle += wrap_2pi(.003 * double(1024 / 2 - xpos));
+	P->verticalAngle += wrap_2pi(.003 * double(768 / 2 - ypos));
 	vect4_t move_v;
 	move_v.v[0] = 0; move_v.v[1] = 0; move_v.v[2] = 0; move_v.v[3] = 1;
 	char act = 0;
