@@ -46,25 +46,14 @@ public:
 		}
 		printf("Socket created.\n");
 
-		/*obtain and display the host IP address to console before beginning*/
-		char namebuf[256] = { 0 };
-		char inet_addr_buf[256] = { 0 };	/*Buffer to be used for displaying string-format IP addresses*/
-		int rc = gethostname(namebuf, 256);
-		printf("hostname: %s\r\n", namebuf);
-		hostent* phost = gethostbyname(namebuf);
-		for (int i = 0; phost->h_addr_list[i] != NULL; i++)
-		{
-			PCSTR retv = inet_ntop(AF_INET, phost->h_addr_list[i], (PSTR)inet_addr_buf, 256);
-			printf("Host has IP address %d: %s\r\n", i, inet_addr_buf);
-		}
-
 		//Prepare the sockaddr_in structure
 		server.sin_family = AF_INET;
-		server.sin_addr.s_addr = inet_addr("127.0.0.1");
+		server.sin_addr.s_addr = inet_addr("0.0.0.0");
 		//server.sin_addr.s_addr = inet_addr(inet_addr_buf);	//assign the server with one of the IPV4 addresses (the last one) in the host address list.
 		//server.sin_addr = in4addr_any;	//assign the desired port # to the special address 0.0.0.0, which is a 'meta address' used to specify that the server can have any IP address we like on the LAN!
 		server.sin_port = htons(port);
 
+		char inet_addr_buf[256] = { 0 };	/*Buffer to be used for displaying string-format IP addresses*/
 		inet_ntop(AF_INET, &server.sin_addr.s_addr, (PSTR)inet_addr_buf, 256);	//convert again the value we copied thru and display
 		printf("Binding to server address: %s with port %d\r\n", inet_addr_buf, port);
 

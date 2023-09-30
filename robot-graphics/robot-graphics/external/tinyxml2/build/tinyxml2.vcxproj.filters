@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\tinyxml2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\tinyxml2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{D8CA9753-4295-379B-8C75-31BC1E47E2C1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{718AF5F9-52DE-3E29-AB30-2D76A5068F6F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

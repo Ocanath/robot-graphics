@@ -515,7 +515,12 @@ int main_render_thread(void)
 	
 	
 	
-	
+	/*Notes on hexapod calibration:
+	* the configuration below is a 'on the ground' position used for leg calibration.
+	* Basically, eyeball it.
+	* By taking the raw encoder pos when the robot has its legs splayed on the ground, you can use those positions to set the leg offsets.
+	* qtrue = qenc - qoffset
+	*/
 	mat4_t dynahex_hw_b = mat4_t_I();
 	const float q1_calib = 0;
 	const float q2_calib = (-17.46668627f * DEG_TO_RAD);
@@ -541,9 +546,10 @@ int main_render_thread(void)
 
 	psy_hand_bones = new kinematic_hand_t;
 	init_finger_kinematics(psy_hand_bones);
-	float q[6] = { 15,15,15,15, 0,-90 };
+	float qleft[6] = { 15,15,15,15, 0,-90 };
+	float qright[6] = { 15,15,15,15, 0,-90 };
 	float qd[6] = { 15,15,15,15,0,-90 };
-	transform_mpos_to_kpos(q, psy_hand_bones);
+	transform_mpos_to_kpos(qleft, psy_hand_bones);
 
 	double start_time = glfwGetTime();
 	double prev_time = start_time;
@@ -587,6 +593,19 @@ int main_render_thread(void)
 	WinUdpBkstServer udp_server(50134);
 	if (udp_server.set_nonblocking() != NO_ERROR)
 		printf("socket at port %d set to non-blocking ok\r\n", udp_server.port);
+
+
+	WinUdpBkstServer abh_lh_pos_soc(7240);
+	if(abh_lh_pos_soc.set_nonblocking() != NO_ERROR)
+		printf("socket at port %d set to non-blocking ok\r\n", abh_lh_pos_soc.port);
+	WinUdpBkstServer abh_rh_pos_soc(7242);
+	if (abh_rh_pos_soc.set_nonblocking() != NO_ERROR)
+		printf("socket at port %d set to non-blocking ok\r\n", abh_rh_pos_soc.port);
+	WinUdpBkstServer abh_lh_finger_soc(34345);
+	abh_lh_finger_soc.set_nonblocking();
+	WinUdpBkstServer abh_rh_finger_soc(23234);
+	abh_rh_finger_soc.set_nonblocking();
+
 
 	/*UDP client for ESP32 udp server that points the hose at us if we ping it*/
 	uint8_t udp_rx_buf[BUFLEN];	//large udp recive buffer
@@ -883,26 +902,6 @@ int main_render_thread(void)
 		for (int ch = 0; ch < NUM_CHANNELS; ch++)
 			qd[ch] = system_griplist_default[cfg_idx]->wp[ch].qd;
 
-
-
-
-		int rc = udp_server.read();
-		if (rc != WSAEWOULDBLOCK && udp_server.recv_len == sizeof(u32_fmt_t)*7)
-		{
-			u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
-			//if (pfmt[6].u32 == get_checksum32((uint32_t*)pfmt, 6))
-			{
-				for (int ch = 0; ch < 6; ch++)
-				{
-					q[ch] = pfmt[ch].f32;
-				}
-			}
-		}
-
-		//do the math for the psyonic hand
-		transform_mpos_to_kpos(q, psy_hand_bones);
-		finger_kinematics(psy_hand_bones);
-
 		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 		{
 			debug_msg_queued = 1;
@@ -1090,12 +1089,6 @@ int main_render_thread(void)
 		//mat4_t hw_b = Hx(PI / 2 + .2*sin(time) );
 		//hw_b = mat4_t_mult(hw_b, Hy(.2*sin(time + 1)));
 		//hw_b = mat4_t_mult(hw_b, Hz(.2*sin(time + 2)));
-		mat4_t hw_b = Hx(PI);
-		hw_b = mat4_t_mult(hw_b, Hz(PI/2));
-		hw_b = mat4_t_mult(tf, hw_b);
-		//hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
-		hw_b.m[0][3] = 0;
-		hw_b.m[2][3] = 1.f;
 
 		/*create a model meters to mm scale matrix*/
 		mat4_t scale_matrix = {
@@ -1106,6 +1099,36 @@ int main_render_thread(void)
 				{0,0,0,1.f},
 			}
 		};
+
+		mat4_t hw_b = Hx(PI);
+		hw_b = mat4_t_mult(hw_b, Hz(PI/2));
+		hw_b = mat4_t_mult(tf, hw_b);
+		//hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
+		hw_b.m[0][3] = 0;
+		hw_b.m[2][3] = 1.f;
+
+
+		{
+			int rc = abh_lh_finger_soc.read();
+			if (rc != WSAEWOULDBLOCK && abh_lh_finger_soc.recv_len == 15)
+			{
+				//u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
+				u32_fmt_t pfmt;
+				int bidx = 2;
+				for (int ch = 0; ch < 6; ch++)
+				{
+					for (int i = 0; i < sizeof(int16_t); i++)
+					{
+						pfmt.ui8[i] = abh_lh_finger_soc.r_buf[bidx];
+						bidx++;
+					}
+					qleft[ch] = ((float)pfmt.i16[0]) * 3000.f / 32767.f;
+				}
+			}
+		}
+		//do the math for the psyonic hand
+		transform_mpos_to_kpos(qleft, psy_hand_bones);
+		finger_kinematics(psy_hand_bones);
 		{
 			{//THUMB RENDER
 				//mat4_t hb_0 = mat4_t_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
@@ -1187,6 +1210,110 @@ int main_render_thread(void)
 
 			}
 		}
+
+		{
+			int rc = abh_rh_finger_soc.read();
+			if (rc != WSAEWOULDBLOCK && abh_rh_finger_soc.recv_len == 15)
+			{
+				//u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
+				u32_fmt_t pfmt;
+				int bidx = 2;
+				for (int ch = 0; ch < 6; ch++)
+				{
+					for (int i = 0; i < sizeof(int16_t); i++)
+					{
+						pfmt.ui8[i] = abh_rh_finger_soc.r_buf[bidx];
+						bidx++;
+					}
+					qright[ch] = ((float)pfmt.i16[0]) * 3000.f / 32767.f;
+				}
+			}
+		}
+		//do the math for the psyonic hand
+		transform_mpos_to_kpos(qright, psy_hand_bones);
+		finger_kinematics(psy_hand_bones);
+		{
+			{//THUMB RENDER
+				//mat4_t hb_0 = mat4_t_I();	//for fingers, this is NOT the identity. Load it into the 0th entry of the joint Him1_i matrix
+				mat4_t hb_0 = psy_hand_bones->finger[4].chain[0].hb_i;
+				mat4_t hw_0 = mat4_t_mult(hw_b, hb_0);
+
+				model = ht_matrix_to_mat4_t(hw_0);
+				lightingShader.setMat4("model", model);
+				//psy_thumb_modellist[0].Draw(lightingShader, NULL);
+				//psy_palm.Draw(lightingShader, NULL);	//render the palm too
+				for (int i = 1; i <= 2; i++)
+				{
+					mat4_t hw_i = mat4_t_mult(hw_b, psy_hand_bones->finger[4].chain[i].hb_i);
+					hw_i = mat4_t_mult(hw_i, scale_matrix);
+					model = ht_matrix_to_mat4_t(hw_i);
+					lightingShader.setMat4("model", model);
+					psy_thumb_modellist[i].Draw(lightingShader, NULL);
+				}
+			}
+			for (int fidx = 0; fidx <= 3; fidx++)
+			{//FINGER RENDER
+
+				/*Establish hw_0 frame*/
+				mat4_t hb_0 = psy_hand_bones->finger[fidx].chain[0].him1_i;	//store it here
+				mat4_t hw_0 = mat4_t_mult(hw_b, hb_0);
+
+				{
+					mat4_t h0_crosslink = mat4_t_Identity;
+					vect3_t crosslink_origin = { {9.47966f, -0.62133f, -0.04458f} };
+
+					vect3_t o2, v_crx, v_cry, v_crz;
+					mat4_t h0_2 = mat4_t_mult(psy_hand_bones->finger[fidx].chain[1].him1_i, psy_hand_bones->finger[fidx].chain[2].him1_i);
+					h_origin_pbr(&h0_2, &o2);
+
+					//get direction vector pointing from crosslink location to the origin of frame 2 (where the crosslink x intersects)
+					for (int i = 0; i < 3; i++)
+						v_crx.v[i] = o2.v[i] - crosslink_origin.v[i];
+					v_crx.v[2] = 0;
+					v_crx = vect3_normalize(v_crx);
+					v_crz = { {0,0,-1} };
+					v_cry = cross(v_crz, v_crx);
+					v_cry = vect3_normalize(v_cry);
+					float dp = vect_dot(v_crx.v, v_crz.v, 3);
+					if (abs_f(dp) > 0.00001f)
+					{
+						v_crz = cross(v_crx, v_cry);
+						v_crz = vect3_normalize(v_crz);
+					}
+					for (int r = 0; r < 3; r++)
+					{
+						h0_crosslink.m[r][0] = v_crx.v[r];
+						h0_crosslink.m[r][1] = v_cry.v[r];
+						h0_crosslink.m[r][2] = v_crz.v[r];
+						h0_crosslink.m[r][3] = crosslink_origin.v[r];
+					}
+
+					mat4_t hw_crosslink = mat4_t_mult(hw_0, h0_crosslink);
+					hw_crosslink = mat4_t_mult(hw_crosslink, scale_matrix);
+					model = ht_matrix_to_mat4_t(hw_crosslink);
+					lightingShader.setMat4("model", model);
+					psy_crosslink.Draw(lightingShader, NULL);
+				}
+
+				mat4_t f0_mesh = mat4_t_mult(hw_0, scale_matrix);
+				model = ht_matrix_to_mat4_t(f0_mesh);
+				lightingShader.setMat4("model", model);
+				psy_finger_modellist[0].Draw(lightingShader, NULL);
+
+				for (int i = 1; i <= 2; i++)
+				{
+					mat4_t hw_i = mat4_t_mult(hw_b, psy_hand_bones->finger[fidx].chain[i].hb_i);
+
+					hw_i = mat4_t_mult(hw_i, scale_matrix);
+					model = ht_matrix_to_mat4_t(hw_i);
+
+					lightingShader.setMat4("model", model);
+					psy_finger_modellist[i].Draw(lightingShader, NULL);
+				}
+
+			}
+		}
+
 
 		//float v = .1f * sin(time);
 		//for (int leg = 0; leg < 6; leg++)

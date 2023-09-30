@@ -1,0 +1,10 @@
+^C:\USERS\OCANATH\OCANATHPROJ\VS\ROBOT-GRAPHICS\ROBOT-GRAPHICS\ROBOT-GRAPHICS\EXTERNAL\TINYXML2\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/Ocanath/OcanathProj/VS/robot-graphics/robot-graphics/robot-graphics/external/tinyxml2 -BC:/Users/Ocanath/OcanathProj/VS/robot-graphics/robot-graphics/robot-graphics/external/tinyxml2/build --check-stamp-file C:/Users/Ocanath/OcanathProj/VS/robot-graphics/robot-graphics/robot-graphics/external/tinyxml2/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
