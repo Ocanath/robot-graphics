@@ -57,6 +57,26 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+void parse_abh_fpos_udp_cmd(WinUdpBkstServer * soc, float * q)
+{
+	int rc = soc->read();
+	if (rc != WSAEWOULDBLOCK && soc->recv_len == 15)
+	{
+		//u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
+		u32_fmt_t pfmt;
+		int bidx = 2;
+		for (int ch = 0; ch < 6; ch++)
+		{
+			for (int i = 0; i < sizeof(int16_t); i++)
+			{
+				pfmt.ui8[i] = soc->r_buf[bidx];
+				bidx++;
+			}
+			q[ch] = ((float)pfmt.i16[0]) * 150.f / 32767.f;
+		}
+	}
+}
+
 // utility function for loading a 2D texture from file
 // ---------------------------------------------------
 unsigned int loadTexture(char const* path)
@@ -252,14 +272,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = 3.495361;
-	Player.CamRobot.hw_b.m[1][3] = -3.121598;
+	Player.CamRobot.j[1].q = fmod(159.493164 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-1.830593 + PI, 2 * PI) - PI;
+	Player.CamRobot.hw_b.m[0][3] = -2.819276;
+	Player.CamRobot.hw_b.m[1][3] = -2.069642;
 	Player.CamRobot.hw_b.m[2][3] = 4.880762;
-	//Player.CamRobot.hw_b.m[0][3] = -5.f;
-	//Player.CamRobot.hw_b.m[1][3] = 0.f;
-	//Player.CamRobot.hw_b.m[2][3] = 3.f;
-	Player.CamRobot.j[1].q = fmod(508.213196f + PI, 2.f * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-2.250000f + PI, 2.f * PI) - PI;
 	//Player.CamRobot.j[1].q = 0;
 	//Player.CamRobot.j[2].q = -PI/2;
 	Player.lock_in_flag = 0;
@@ -1105,27 +1122,10 @@ int main_render_thread(void)
 		hw_b = mat4_t_mult(tf, hw_b);
 		//hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
 		hw_b.m[0][3] = 0;
-		hw_b.m[2][3] = 1.f;
+		hw_b.m[2][3] = 3.f;
 
 
-		{
-			int rc = abh_lh_finger_soc.read();
-			if (rc != WSAEWOULDBLOCK && abh_lh_finger_soc.recv_len == 15)
-			{
-				//u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
-				u32_fmt_t pfmt;
-				int bidx = 2;
-				for (int ch = 0; ch < 6; ch++)
-				{
-					for (int i = 0; i < sizeof(int16_t); i++)
-					{
-						pfmt.ui8[i] = abh_lh_finger_soc.r_buf[bidx];
-						bidx++;
-					}
-					qleft[ch] = ((float)pfmt.i16[0]) * 3000.f / 32767.f;
-				}
-			}
-		}
+		parse_abh_fpos_udp_cmd(&abh_lh_finger_soc, qleft);
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(qleft, psy_hand_bones);
 		finger_kinematics(psy_hand_bones);
@@ -1210,25 +1210,15 @@ int main_render_thread(void)
 
 			}
 		}
+		
+		parse_abh_fpos_udp_cmd(&abh_rh_finger_soc, qright);
+		hw_b.m[1][3] = 2;
 
-		{
-			int rc = abh_rh_finger_soc.read();
-			if (rc != WSAEWOULDBLOCK && abh_rh_finger_soc.recv_len == 15)
-			{
-				//u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
-				u32_fmt_t pfmt;
-				int bidx = 2;
-				for (int ch = 0; ch < 6; ch++)
-				{
-					for (int i = 0; i < sizeof(int16_t); i++)
-					{
-						pfmt.ui8[i] = abh_rh_finger_soc.r_buf[bidx];
-						bidx++;
-					}
-					qright[ch] = ((float)pfmt.i16[0]) * 3000.f / 32767.f;
-				}
-			}
-		}
+
+		mat4_t hmir = mat4_t_Identity;
+		hmir.m[0][0] = -1;
+		hw_b = mat4_t_mult(hw_b, hmir);
+
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(qright, psy_hand_bones);
 		finger_kinematics(psy_hand_bones);
