@@ -196,6 +196,9 @@ void get_xyz_rpy(mat4_t* M, vect3_t* xyz, vect3_t * rpy)
 	double yaw = atan2(M->m[1][0], M->m[0][0]);
 	double pitch = atan2(-M->m[2][0], sqrt((double)(M->m[2][1] * M->m[2][1] + M->m[2][2] * M->m[2][2])));
 	double roll = atan2(M->m[2][1], M->m[2][2]);
+	rpy->v[0] = roll;
+	rpy->v[1] = pitch;
+	rpy->v[2] = yaw;
 	h_origin_pbr(M, xyz);
 }
 

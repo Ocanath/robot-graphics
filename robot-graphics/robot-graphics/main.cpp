@@ -56,6 +56,28 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	// height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
 }
+uint8_t parse_abh_htmat(WinUdpBkstServer* soc, mat4_t * m)
+{
+	int rc = soc->read();
+	if (rc != WSAEWOULDBLOCK && soc->recv_len == 64)
+	{
+		int bidx = 0;
+		u32_fmt_t pfmt;
+		for (int r = 0; r < 4; r++)
+		{
+			for (int c = 0; c < 4; c++)
+			{
+				for (int i = 0; i < sizeof(float); i++)
+				{
+					pfmt.ui8[i] = soc->r_buf[bidx++];
+				}
+				m->m[r][c] = pfmt.f32;
+			}
+		}
+		return 1;
+	}
+	return 0;
+}
 
 void parse_abh_fpos_udp_cmd(WinUdpBkstServer * soc, float * q)
 {
@@ -272,10 +294,10 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.j[1].q = fmod(159.493164 + PI, 2 * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-1.830593 + PI, 2 * PI) - PI;
-	Player.CamRobot.hw_b.m[0][3] = -2.819276;
-	Player.CamRobot.hw_b.m[1][3] = -2.069642;
+	Player.CamRobot.j[1].q = fmod(7693.654297 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-1.803592 + PI, 2 * PI) - PI;
+	Player.CamRobot.hw_b.m[0][3] = -5.233556;
+	Player.CamRobot.hw_b.m[1][3] = 0.276400;
 	Player.CamRobot.hw_b.m[2][3] = 4.880762;
 	//Player.CamRobot.j[1].q = 0;
 	//Player.CamRobot.j[2].q = -PI/2;
@@ -632,7 +654,8 @@ int main_render_thread(void)
 	uint64_t udpsend_ts = 0;
 	uint64_t udp_connected_ts = 0;
 
-
+	mat4_t lh_htmat = mat4_t_Identity;
+	mat4_t rh_htmat = mat4_t_Identity;
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -1126,6 +1149,17 @@ int main_render_thread(void)
 
 
 		parse_abh_fpos_udp_cmd(&abh_lh_finger_soc, qleft);
+		{
+			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
+			vect3_t lh_rpy; vect3_t lh_xyz; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
+			for (int r = 0; r < 3; r++)
+			{
+				for (int c = 0; c < 3; c++)
+				{
+					hw_b.m[r][c] = lh_htmat.m[r][c]*.01;
+				}
+			}
+		}
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(qleft, psy_hand_bones);
 		finger_kinematics(psy_hand_bones);
@@ -1212,9 +1246,18 @@ int main_render_thread(void)
 		}
 		
 		parse_abh_fpos_udp_cmd(&abh_rh_finger_soc, qright);
+		{
+			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
+			vect3_t rh_rpy; vect3_t rh_xyz; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
+			for (int r = 0; r < 3; r++)
+			{
+				for (int c = 0; c < 3; c++)
+				{
+					hw_b.m[r][c] = rh_htmat.m[r][c]* .01;
+				}
+			}
+		}
 		hw_b.m[1][3] = 2;
-
-
 		mat4_t hmir = mat4_t_Identity;
 		hmir.m[0][0] = -1;
 		hw_b = mat4_t_mult(hw_b, hmir);
