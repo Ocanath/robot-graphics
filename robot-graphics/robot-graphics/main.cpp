@@ -634,16 +634,16 @@ int main_render_thread(void)
 		printf("socket at port %d set to non-blocking ok\r\n", udp_server.port);
 
 
-	WinUdpBkstServer abh_lh_pos_soc(7240);
+	WinUdpBkstServer abh_lh_pos_soc(7242);
 	if(abh_lh_pos_soc.set_nonblocking() != NO_ERROR)
 		printf("socket at port %d set to non-blocking ok\r\n", abh_lh_pos_soc.port);
-	WinUdpBkstServer abh_rh_pos_soc(7242);
+	WinUdpBkstServer abh_rh_pos_soc(7240);
 	if (abh_rh_pos_soc.set_nonblocking() != NO_ERROR)
 		printf("socket at port %d set to non-blocking ok\r\n", abh_rh_pos_soc.port);
-	WinUdpBkstServer abh_lh_finger_soc(34345);
+	WinUdpBkstServer abh_lh_finger_soc(23234);
 	abh_lh_finger_soc.set_nonblocking();
-	WinUdpBkstServer abh_rh_finger_soc(23234);
-	abh_rh_finger_soc.set_nonblocking();
+	WinUdpBkstServer abh_rh_finger_soc(34345);
+	abh_rh_finger_soc.set_nonblocking(); 
 
 
 	/*UDP client for ESP32 udp server that points the hose at us if we ping it*/
@@ -1145,6 +1145,7 @@ int main_render_thread(void)
 		hw_b = mat4_t_mult(tf, hw_b);
 		//hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
 		hw_b.m[0][3] = 0;
+		hw_b.m[1][3] = 2;
 		hw_b.m[2][3] = 3.f;
 
 
@@ -1152,11 +1153,16 @@ int main_render_thread(void)
 		{
 			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
 			vect3_t lh_rpy; vect3_t lh_xyz; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
+			vect3_t shuffle;
+			shuffle.v[0] = lh_rpy.v[1]+PI;
+			shuffle.v[1] = lh_rpy.v[2]*0;
+			shuffle.v[2] = lh_rpy.v[0]+0.2+PI/2;
+			mat4_t m = get_rpy_xyz_htmatrix(&lh_xyz, &shuffle);
 			for (int r = 0; r < 3; r++)
 			{
 				for (int c = 0; c < 3; c++)
 				{
-					hw_b.m[r][c] = lh_htmat.m[r][c]*.01;
+					hw_b.m[r][c] = m.m[r][c] * .01;
 				}
 			}
 		}
@@ -1249,15 +1255,20 @@ int main_render_thread(void)
 		{
 			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
 			vect3_t rh_rpy; vect3_t rh_xyz; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
+			vect3_t shuffle;
+			shuffle.v[0] = rh_rpy.v[1];	//good
+			shuffle.v[1] = rh_rpy.v[2]*0 + PI;
+			shuffle.v[2] = rh_rpy.v[0]+2.83+PI+PI/2;	//good
+			mat4_t m = get_rpy_xyz_htmatrix(&rh_xyz, &shuffle);
 			for (int r = 0; r < 3; r++)
 			{
 				for (int c = 0; c < 3; c++)
 				{
-					hw_b.m[r][c] = rh_htmat.m[r][c]* .01;
+					hw_b.m[r][c] = m.m[r][c]* .01;
 				}
 			}
 		}
-		hw_b.m[1][3] = 2;
+		hw_b.m[1][3] = 0;
 		mat4_t hmir = mat4_t_Identity;
 		hmir.m[0][0] = -1;
 		hw_b = mat4_t_mult(hw_b, hmir);
