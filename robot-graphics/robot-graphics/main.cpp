@@ -31,6 +31,7 @@
 #include "WinUdpClient.h"
 
 #include "external/tinyxml2/tinyxml2.h"
+#include "IIRsos.h"
 
 #define NUM_LIGHTS 5
 
@@ -656,6 +657,12 @@ int main_render_thread(void)
 
 	mat4_t lh_htmat = mat4_t_Identity;
 	mat4_t rh_htmat = mat4_t_Identity;
+	iirSOS lpfs[6] = { 0 };
+	for (int i = 0; i < 6; i++)
+	{
+		m_mcpy(&lpfs[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
+	}
+
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -1149,14 +1156,22 @@ int main_render_thread(void)
 		hw_b.m[2][3] = 3.f;
 
 
-		parse_abh_fpos_udp_cmd(&abh_lh_finger_soc, qleft);
+		
 		{
 			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
 			vect3_t lh_rpy; vect3_t lh_xyz; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
+
+			//filter
+			lh_rpy.v[0] = sos_f(&lpfs[0], lh_rpy.v[0]);
+			lh_rpy.v[1] = sos_f(&lpfs[1], lh_rpy.v[1]);
+			lh_rpy.v[2] = sos_f(&lpfs[2], lh_rpy.v[2]);
+
 			vect3_t shuffle;
 			shuffle.v[0] = lh_rpy.v[1]+PI;
-			shuffle.v[1] = lh_rpy.v[2]*0;
+			shuffle.v[1] = (lh_rpy.v[2] + PI/2)*0;
 			shuffle.v[2] = lh_rpy.v[0]+0.2+PI/2;
+
+
 			mat4_t m = get_rpy_xyz_htmatrix(&lh_xyz, &shuffle);
 			for (int r = 0; r < 3; r++)
 			{
@@ -1166,6 +1181,8 @@ int main_render_thread(void)
 				}
 			}
 		}
+		parse_abh_fpos_udp_cmd(&abh_lh_finger_soc, qleft);
+
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(qleft, psy_hand_bones);
 		finger_kinematics(psy_hand_bones);
@@ -1251,14 +1268,19 @@ int main_render_thread(void)
 			}
 		}
 		
-		parse_abh_fpos_udp_cmd(&abh_rh_finger_soc, qright);
+		
 		{
 			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
 			vect3_t rh_rpy; vect3_t rh_xyz; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
+			
+			rh_rpy.v[0] = sos_f(&lpfs[3], rh_rpy.v[0]);
+			rh_rpy.v[1] = sos_f(&lpfs[4], rh_rpy.v[1]);
+			rh_rpy.v[2] = sos_f(&lpfs[5], rh_rpy.v[2]);
+			
 			vect3_t shuffle;
-			shuffle.v[0] = rh_rpy.v[1];	//good
-			shuffle.v[1] = rh_rpy.v[2]*0 + PI;
-			shuffle.v[2] = rh_rpy.v[0]+2.83+PI+PI/2;	//good
+			shuffle.v[0] = rh_rpy.v[1] + PI;	//good
+			shuffle.v[1] = 0*(rh_rpy.v[2] + PI/2);
+			shuffle.v[2] = rh_rpy.v[0]+2.83+PI+PI/2+PI;	//good
 			mat4_t m = get_rpy_xyz_htmatrix(&rh_xyz, &shuffle);
 			for (int r = 0; r < 3; r++)
 			{
@@ -1268,6 +1290,8 @@ int main_render_thread(void)
 				}
 			}
 		}
+		parse_abh_fpos_udp_cmd(&abh_rh_finger_soc, qright);
+
 		hw_b.m[1][3] = 0;
 		mat4_t hmir = mat4_t_Identity;
 		hmir.m[0][0] = -1;

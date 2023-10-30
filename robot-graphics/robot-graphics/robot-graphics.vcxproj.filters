@@ -99,6 +99,9 @@
     <ClCompile Include="external\tinyxml2\tinyxml2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IIRsos.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -187,6 +190,9 @@
     </ClInclude>
     <ClInclude Include="external\tinyxml2\tinyxml2.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IIRsos.h">
+      <Filter>Header Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
