@@ -53,13 +53,20 @@ private:
 		'z',
 		'x',
 	};
-
+	const vect3_t anchors_f6[3] = {
+		{{0.051000e1f, -0.016597e1f, 0.003679e1f}},
+		{{0.051000e1f, - 0.009134e1f, -0.014338e1f}},
+		{{0.051000e1f, 0.026286e1f, 0.009645e1f}}
+	};
 	mat4_t scale;
 public:
 	mat4_t hw_b;
 	std::vector<AssetModel> modellist;
 	joint joints[NUM_JOINTS_Z1 + 1] = { 0 };
 	mat4_t hw_i;
+
+	
+
 	Z1_arm(void)
 	{
 
@@ -130,6 +137,19 @@ public:
 	{
 		//load_q(&joints[1]);
 		z1_forward_kinematics(&joints[0].hb_i, &joints[1]);
+	}
+
+	void num_ik(mat4_t targ_b)
+	{
+		fk();
+		/*per-anchor*/
+		for (int i = 0; i < 3; i++)
+		{
+			vect3_t anchor_b;
+			htmatrix_vect3_mult(&joints[6].hb_i, (vect3_t*)&anchors_f6[i], &anchor_b);
+			calc_J_point(&joints[0].hb_i, &joints[1], &anchor_b);
+
+		}
 	}
 	void render_arm(Shader& s)
 	{
