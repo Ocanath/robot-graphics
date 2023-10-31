@@ -665,6 +665,7 @@ int main_render_thread(void)
 	}
 
 	Z1_arm z1;
+	uint8_t start_ik = 0;
 	z1.hw_b = Hz(PI);
 	z1.hw_b.m[0][3] = 0;
 	z1.hw_b.m[1][3] = 1;
@@ -1161,7 +1162,7 @@ int main_render_thread(void)
 		//hw_b.m[2][3] = 1.5f+.1*(.5f*sin(time+3)+.5f);
 		hw_b.m[0][3] = 0;
 		hw_b.m[1][3] = 2;
-		hw_b.m[2][3] = 3.f;
+		hw_b.m[2][3] = 10.f;
 
 
 		
@@ -1276,24 +1277,52 @@ int main_render_thread(void)
 			}
 		}
 		
-		z1.joints[1].q = sin(time) * 0.3;
-		z1.joints[3].q = -0.3*(-0.5*cos(time)+0.5);
-		z1.joints[6].q = time * 3;
-		z1.fk();
-		z1.render_arm(lightingShader);
-		
-		//mat4_t z1_hw_i = { 
-		//	{
-		//		{10.f,0,0,0},
-		//		{0,10.f,0,0},
-		//		{0,0,10.f,2.f},
-		//		{0,0,0,1}
-		//	}
-		//};
-		//model = ht_matrix_to_mat4_t(z1_hw_i);
-		//lightingShader.setMat4("model", model);
-		//z1.modellist[1].Draw(lightingShader, NULL);
 
+		//z1.fk();
+		if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+		{
+			start_ik = 1;
+		}
+		if (start_ik != 0)
+		{
+			mat4_t z1_ik_targ = {
+				{
+					{ 1, 0, 0, 0, },
+					{0, 1, 0, 0, },
+					{0, 0, 1, 2, },
+					{0.000000, 0.000000, 0.000000, 1.000000, }
+				}
+			};
+			z1.num_ik(&z1_ik_targ);
+			//printf("oanchor = ");
+			//vect3_t oanchor;
+			//htmatrix_vect3_mult(&z1.joints[6].hb_i, (vect3_t*)&z1.arm_anchors_f6[0], &oanchor);
+			//print_vect3(oanchor);
+			//printf("\r\n");
+			mat4_t hf6_targ = mat4_t_Identity;
+			hf6_targ.m[0][3] = 0.051e1f;
+			mat4_t htarg = mat4_t_mult(z1.joints[6].hb_i, hf6_targ);
+			print_mat4_t(htarg);
+			printf("\r\n\r\n");
+		}
+		z1.render_arm(lightingShader);
+
+
+		/*print target htmatrix which is guaranteed achievable in the workspace*/
+		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+		{
+			mat4_t hf6_targ = mat4_t_Identity;
+			hf6_targ.m[0][3] = 0.051e1f;
+
+			vect3_t otarg_f6 = { {0.051e1,0,0} };
+			vect3_t otarg_b = mat4_t_vect3_mult(z1.joints[6].hb_i, otarg_f6);
+			mat4_t htarg = mat4_t_mult(z1.joints[6].hb_i, hf6_targ);
+			printf("htarg = \r\n");
+			print_mat4_t(htarg);
+			printf("\r\n\r\n otarg = ");
+			print_vect3(otarg_b);
+			printf("\r\n");
+		}
 		
 		{
 			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);

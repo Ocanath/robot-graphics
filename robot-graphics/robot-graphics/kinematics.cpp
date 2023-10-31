@@ -21,7 +21,7 @@ void calc_rotational_jacobian_entry_f(vect6_t* Si, vect3_t* p_b, mat4_t* hb_im1)
 		z.v[r] = hb_im1->m[r][2];
 		d.v[r] = p_b->v[r] - hb_im1->m[r][3];
 	}
-	cross_pbr(&z, &d, &res);
+	cross_pbr(&z, &d, &res);	//axis of rotation cross vector formed by target point minus origin of current axis of rotation
 	for (int r = 0; r < 3; r++)
 	{
 		Si->v[r] = z.v[r];
@@ -398,6 +398,15 @@ void calc_tau3(joint * j, int num_joints, vect3_t * f, float* tau)
 		tau[i] = dp;
 	}
 }
+
+float calc_tau3_single_entry(joint* j, vect3_t* f)
+{
+	float tau = 0.f;
+	for (int r = 0; r < 3; r++)
+		tau += j->Si.v[r + 3] * f->v[r];
+	return tau;
+}
+
 
 /*pass by reference htmatrix (special subset of mat4_t) and 3 vector)*/
 void htmatrix_vect3_mult(mat4_t* m, vect3_t* v, vect3_t* ret)
