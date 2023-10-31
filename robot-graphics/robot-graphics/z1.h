@@ -63,16 +63,16 @@ public:
 
 	const vect3_t arm_anchors_f6[4] = {
 		{{0.051000e1f, 0, 0}},
-		{{0.051000e1f, -1.0, -1.0}},
-		{{0.051000e1f, -1.0, 1.0}},
-		{{0.051000e1f, 0, 1}}
+		{{0.051000e1f, -2.0, -2.0}},
+		{{0.051000e1f, -2.0, 2.0}},
+		{{0.051000e1f, 0, 2}}
 	};
 
 	const vect3_t targ_anchors[4] = {	//this set of points can be arbitrary, but best performance should theoretically be some homogeneous transformation of the arm anchors. This one is hand transformed with a very simple transform.
 		{{0.0, 0, 0}},
-		{{0.0, -1.0, -1.0}},
-		{{0.0, -1.0, 1.0}},
-		{{0.0, 0, 1}}
+		{{0.0, -2.0, -2.0}},
+		{{0.0, -2.0, 2.0}},
+		{{0.0, 0, 2}}
 	};
 
 
@@ -188,41 +188,54 @@ public:
 	mat4_t ht_b_targ = get_rpy_xyz_htmatrix(p_targ, rpy_targ);
 
 	*/
-	void num_ik(mat4_t* ht_b_targ)
+	double num_ik(mat4_t* ht_b_targ, int iters)
 	{
-		
-		fk();
-		/*per-anchor*/
-		for (int anchor_idx = 0; anchor_idx < 4; anchor_idx++)
+		double td = 0;
+		for (int ncyc = 0; ncyc < iters; ncyc++)	//iterate for specified number of cycs
 		{
-			/*obtain the anchor*/
-			vect3_t anchor_b_current_loc;
-			htmatrix_vect3_mult(&joints[6].hb_i, (vect3_t*)&arm_anchors_f6[anchor_idx], &anchor_b_current_loc);
-			
-			/*Must make SPECIFIC jacobian calculation which uses varying axis of rotation.*/
-			z1_jacobian(&joints[0].hb_i, &joints[1], &anchor_b_current_loc);
-
-			vect3_t anchor_b_target_loc;
-			htmatrix_vect3_mult(ht_b_targ, (vect3_t*)&targ_anchors[anchor_idx], &anchor_b_target_loc);
-
-			vect3_t virtual_force = { {0,0,0} };
-			for (int i = 0; i < 3; i++)
+			fk();
+			/*per-anchor*/
+			for (int anchor_idx = 0; anchor_idx < 4; anchor_idx++)
 			{
-				double dvf = ((double)anchor_b_target_loc.v[i] - (double)anchor_b_current_loc.v[i]);
-				dvf = dvf / 20.0;	//small scale for numerical stabilities
-				virtual_force.v[i] = (float)dvf;
-			}
-			
-			for (int i = 1; i <= NUM_JOINTS_Z1; i++)
-			{
-				joint* j = &joints[i];
-				
-				double tau = 0.;
-				for (int r = 0; r < 3; r++)
-					tau += (((double)j->Si.v[r + 3]) * ((double)virtual_force.v[r])) / 20.0;
-				j->q += (float)tau;
+				/*obtain the anchor*/
+				vect3_t anchor_b_current_loc;
+				htmatrix_vect3_mult(&joints[6].hb_i, (vect3_t*)&arm_anchors_f6[anchor_idx], &anchor_b_current_loc);
+
+				/*Must make SPECIFIC jacobian calculation which uses varying axis of rotation.*/
+				z1_jacobian(&joints[0].hb_i, &joints[1], &anchor_b_current_loc);
+
+				vect3_t anchor_b_target_loc;
+				htmatrix_vect3_mult(ht_b_targ, (vect3_t*)&targ_anchors[anchor_idx], &anchor_b_target_loc);
+
+				/*compute virtual force vector between each anchor and target location in the base frame*/
+				vect3_t virtual_force = { {0,0,0} };
+				for (int i = 0; i < 3; i++)
+				{
+					double dvf = ((double)anchor_b_target_loc.v[i] - (double)anchor_b_current_loc.v[i]);
+					dvf = dvf / 16.0;	//small scale for numerical stabilities
+					virtual_force.v[i] = (float)dvf;
+				}
+
+				for (int i = 1; i <= NUM_JOINTS_Z1; i++)
+				{
+					joint* j = &joints[i];
+
+					double tau = 0.;
+					for (int r = 0; r < 3; r++)
+						tau += (((double)j->Si.v[r + 3]) * ((double)virtual_force.v[r])) / 16.0;
+					j->q += (float)tau;
+				}
+
+				if (ncyc == iters - 1)
+				{
+					double x = (double)virtual_force.v[0];
+					double y = (double)virtual_force.v[1];
+					double z = (double)virtual_force.v[2];
+					td += sqrt(x * x + y * y + z * z);//double precision vf vector magnitude, representing distance to 
+				}
 			}
 		}
+		return td;
 	}
 	void render_arm(Shader& s)
 	{

@@ -1285,25 +1285,32 @@ int main_render_thread(void)
 		}
 		if (start_ik != 0)
 		{
-			mat4_t z1_ik_targ = {
-				{
-					{ 1, 0, 0, 0, },
-					{0, 1, 0, 0, },
-					{0, 0, 1, 2, },
-					{0.000000, 0.000000, 0.000000, 1.000000, }
-				}
-			};
-			z1.num_ik(&z1_ik_targ);
-			//printf("oanchor = ");
-			//vect3_t oanchor;
-			//htmatrix_vect3_mult(&z1.joints[6].hb_i, (vect3_t*)&z1.arm_anchors_f6[0], &oanchor);
-			//print_vect3(oanchor);
-			//printf("\r\n");
-			mat4_t hf6_targ = mat4_t_Identity;
-			hf6_targ.m[0][3] = 0.051e1f;
-			mat4_t htarg = mat4_t_mult(z1.joints[6].hb_i, hf6_targ);
-			print_mat4_t(htarg);
-			printf("\r\n\r\n");
+			float roll = sin(time);
+			float pitch = (-cos(time)*0.5+0.5)*- PI/2;
+			float yaw = 0; 
+			float x = 1;
+			float y = 0;
+			float z = 4;
+			
+			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
+			double err = 1000.;
+			int iters = 0;
+			int iters_per_iter = 100;
+			while (err > .0001)
+			{
+				err = z1.num_ik(&z1_ik_targ, iters_per_iter);
+				iters += iters_per_iter;
+				if (iters > 20000)
+					break;
+			}
+			printf("err %f, fps = %f, iters = %d\r\n", err, fps, iters);
+
+			/*Example of how to computeulate the origin of the target frame in the base frame. construct the frame6-to-target homogeneous transformation*/
+			//mat4_t hf6_targ = mat4_t_Identity;
+			//hf6_targ.m[0][3] = 0.051e1f;
+			//mat4_t htarg = mat4_t_mult(z1.joints[6].hb_i, hf6_targ);
+			//print_mat4_t(htarg);
+			//printf("\r\n\r\n");
 		}
 		z1.render_arm(lightingShader);
 
