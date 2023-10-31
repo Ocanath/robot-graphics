@@ -63,16 +63,16 @@ public:
 
 	const vect3_t arm_anchors_f6[4] = {
 		{{0.051000e1f, 0, 0}},
-		{{0.051000e1f, -0.016597e1f, 0.003679e1f}},
-		{{0.051000e1f, -0.009134e1f, -0.014338e1f}},
-		{{0.051000e1f, 0.026286e1f, 0.009645e1f}}
+		{{0.051000e1f, -1.0, -1.0}},
+		{{0.051000e1f, -1.0, 1.0}},
+		{{0.051000e1f, 0, 1}}
 	};
 
 	const vect3_t targ_anchors[4] = {	//this set of points can be arbitrary, but best performance should theoretically be some homogeneous transformation of the arm anchors. This one is hand transformed with a very simple transform.
-		{{0, 0, 0}},
-		{ {0.f, -0.016597e1f, 0.003679e1f} },
-		{ {0.f, -0.009134e1f, -0.014338e1f} },
-		{ {0.f, 0.026286e1f, 0.009645e1f} }
+		{{0.0, 0, 0}},
+		{{0.0, -1.0, -1.0}},
+		{{0.0, -1.0, 1.0}},
+		{{0.0, 0, 1}}
 	};
 
 
@@ -193,7 +193,7 @@ public:
 		
 		fk();
 		/*per-anchor*/
-		for (int anchor_idx = 0; anchor_idx < 1; anchor_idx++)
+		for (int anchor_idx = 0; anchor_idx < 4; anchor_idx++)
 		{
 			/*obtain the anchor*/
 			vect3_t anchor_b_current_loc;
@@ -205,13 +205,13 @@ public:
 			vect3_t anchor_b_target_loc;
 			htmatrix_vect3_mult(ht_b_targ, (vect3_t*)&targ_anchors[anchor_idx], &anchor_b_target_loc);
 
-			vect3_t virtual_force = { {0,0,0.1} };
-			//for (int i = 0; i < 3; i++)
-			//{
-			//	double dvf = ((double)anchor_b_target_loc.v[i] - (double)anchor_b_current_loc.v[i]);
-			//	dvf = dvf / 20.0;	//small scale for numerical stabilities
-			//	virtual_force.v[i] = (float)dvf;
-			//}
+			vect3_t virtual_force = { {0,0,0} };
+			for (int i = 0; i < 3; i++)
+			{
+				double dvf = ((double)anchor_b_target_loc.v[i] - (double)anchor_b_current_loc.v[i]);
+				dvf = dvf / 20.0;	//small scale for numerical stabilities
+				virtual_force.v[i] = (float)dvf;
+			}
 			
 			for (int i = 1; i <= NUM_JOINTS_Z1; i++)
 			{
