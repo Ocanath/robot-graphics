@@ -54,6 +54,8 @@ typedef struct joint
 	float sin_q;
 	float tau_static;	//helper variable which contains the result of J^T*f, for some arbitrary force f
 
+	char rotaxis;
+
 	vect6_t Si;			//vector corresponding to the i'th column of the jacobian matrix. Si*q(i) = vi, where vi is the ith's joint's contribution to the total chain velocity in frame 0
 	mat4_t hb_i;			//homogeneous transformation relating the BASE frame to the current frame (i). hb_0 = him1_0
 	mat4_t him1_i;		//homogeneous transformation describing the rotation and translation from frame i-1 to the current frame (i). 

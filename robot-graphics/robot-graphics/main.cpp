@@ -32,6 +32,7 @@
 
 #include "external/tinyxml2/tinyxml2.h"
 #include "IIRsos.h"
+#include "z1.h"
 
 #define NUM_LIGHTS 5
 
@@ -500,7 +501,7 @@ int main_render_thread(void)
 
 
 	vector<AssetModel> hexapod_modellist;
-	hexapod_modellist.push_back(AssetModel("URDF/render/FB_base_meters.STL"));
+	hexapod_modellist.push_back(AssetModel("URDF/render/merged_link1_base_mesh_meters.STL"));
 	hexapod_modellist.push_back(AssetModel("URDF/render/FB_gbx_leg1_meters.STL"));
 	hexapod_modellist.push_back(AssetModel("URDF/render/J1_link1_meters.STL"));
 	hexapod_modellist.push_back(AssetModel("URDF/render/J2_link2_meters.STL"));
@@ -662,6 +663,13 @@ int main_render_thread(void)
 	{
 		m_mcpy(&lpfs[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
 	}
+
+	Z1_arm z1;
+	z1.hw_b = Hz(PI);
+	z1.hw_b.m[0][3] = 0;
+	z1.hw_b.m[1][3] = 1;
+	z1.hw_b.m[2][3] = 2.0f;
+	z1.fk();
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -1268,6 +1276,24 @@ int main_render_thread(void)
 			}
 		}
 		
+		z1.joints[1].q = sin(time) * 0.3;
+		z1.joints[3].q = -0.3*(-0.5*cos(time)+0.5);
+		z1.joints[6].q = time * 3;
+		z1.fk();
+		z1.render_arm(lightingShader);
+		
+		//mat4_t z1_hw_i = { 
+		//	{
+		//		{10.f,0,0,0},
+		//		{0,10.f,0,0},
+		//		{0,0,10.f,2.f},
+		//		{0,0,0,1}
+		//	}
+		//};
+		//model = ht_matrix_to_mat4_t(z1_hw_i);
+		//lightingShader.setMat4("model", model);
+		//z1.modellist[1].Draw(lightingShader, NULL);
+
 		
 		{
 			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);

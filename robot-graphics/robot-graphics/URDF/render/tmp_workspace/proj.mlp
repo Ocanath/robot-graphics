@@ -1,0 +1,48 @@
+<!DOCTYPE MeshLabDocument>
+<MeshLabProject>
+ <MeshGroup>
+  <MLMesh visible="1" idInFile="-1" label="FB_base_meters.STL" filename="FB_base_meters.stl">
+   <MLMatrix44>
+1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+</MLMatrix44>
+   <RenderingOption boxColor="234 234 234 255" pointColor="252 233 79 255" wireWidth="1" solidColor="192 192 192 255" wireColor="64 64 64 255" pointSize="3">100001000000000000000100000001011100000010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" idInFile="-1" label="FB_gbx_leg1_meters.STL" filename="FB_gbx_leg1_meters.stl">
+   <MLMatrix44>
+1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+</MLMatrix44>
+   <RenderingOption boxColor="234 234 234 255" pointColor="252 233 79 255" wireWidth="1" solidColor="192 192 192 255" wireColor="64 64 64 255" pointSize="3">100001000000000000000100000001011100000010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" idInFile="-1" label="FB_gbx_leg1_meters.STL_copy" filename="FB_gbx_leg1_meters.ply">
+   <MLMatrix44>
+1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+</MLMatrix44>
+   <RenderingOption boxColor="234 234 234 255" pointColor="252 233 79 255" wireWidth="1" solidColor="192 192 192 255" wireColor="64 64 64 255" pointSize="3">100001000000000000000100000001011100000010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" idInFile="-1" label="FB_gbx_leg1_meters.STL_copy_copy" filename="FB_gbx_leg1_meters.ply">
+   <MLMatrix44>
+1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+</MLMatrix44>
+   <RenderingOption boxColor="234 234 234 255" pointColor="252 233 79 255" wireWidth="1" solidColor="192 192 192 255" wireColor="64 64 64 255" pointSize="3">100001000000000000000100000001011100000010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" idInFile="-1" label="FB_gbx_leg1_meters.STL_copy_copy_copy" filename="FB_gbx_leg1_meters.ply">
+   <MLMatrix44>
+1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+</MLMatrix44>
+   <RenderingOption boxColor="234 234 234 255" pointColor="252 233 79 255" wireWidth="1" solidColor="192 192 192 255" wireColor="64 64 64 255" pointSize="3">100001000000000000000100000001011100000010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" idInFile="-1" label="FB_gbx_leg1_meters.STL_copy_copy_copy_copy" filename="FB_gbx_leg1_meters.ply">
+   <MLMatrix44>
+1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+</MLMatrix44>
+   <RenderingOption boxColor="234 234 234 255" pointColor="252 233 79 255" wireWidth="1" solidColor="192 192 192 255" wireColor="64 64 64 255" pointSize="3">100001000000000000000100000001011100000010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+  <MLMesh visible="1" idInFile="-1" label="FB_gbx_leg1_meters.STL_copy_copy_copy_copy_copy" filename="FB_gbx_leg1_meters.ply">
+   <MLMatrix44>
+1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 
+</MLMatrix44>
+   <RenderingOption boxColor="234 234 234 255" pointColor="252 233 79 255" wireWidth="1" solidColor="192 192 192 255" wireColor="64 64 64 255" pointSize="3">100001000000000000000100000001011100000010100000000100111011110000001001</RenderingOption>
+  </MLMesh>
+ </MeshGroup>
+ <RasterGroup/>
+</MeshLabProject>
