@@ -24,6 +24,7 @@
 using namespace std;
 
 extern unsigned int TextureFromFile(const char* path, const string& directory, bool gamma = false);
+extern void render_robot(mat4_t* hw_b, Shader* shader, link_t* node);
 
 class AssetModel
 {

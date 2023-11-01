@@ -39,3 +39,26 @@ unsigned int TextureFromFile(const char* path, const string& directory, bool gam
 
     return textureID;
 }
+
+/*
+recursive DFS implementation for rendering a
+kinematic tree robot
+*/
+void render_robot(mat4_t* hw_b, Shader* shader, link_t* node)
+{
+    if (node == NULL)
+        return;
+
+    link_t* node_to_render = node;
+    mat4_t hw_lnk;
+    mat4_t_mult_pbr(hw_b, &node_to_render->h_base_us, &hw_lnk);
+    glm::mat4 model = ht_matrix_to_mat4_t(hw_lnk);
+    shader->setMat4("model", model);
+    ((AssetModel*)node_to_render->model_ref)->Draw(*shader, NULL);
+
+    for (int i = 0; i < node->num_children; i++)
+    {
+        joint2* j = &node->joints[i];
+        render_robot(hw_b, shader, j->child);
+    }
+}

@@ -37,7 +37,7 @@ void print_mat4_t(mat4_t m)
 		}
 		printf("}\r\n");
 	}
-	printf("\r\n");
+	//printf("\r\n");
 }
 
 void print_mat4_32b(mat4_32b_t m)

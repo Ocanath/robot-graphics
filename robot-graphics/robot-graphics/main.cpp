@@ -33,6 +33,7 @@
 #include "external/tinyxml2/tinyxml2.h"
 #include "IIRsos.h"
 #include "z1.h"
+#include "psyhand_urdf.h"
 
 #define NUM_LIGHTS 5
 
@@ -138,30 +139,6 @@ unsigned int loadTexture(char const* path)
 	}
 
 	return textureID;
-}
-
-
-/*
-recursive DFS implementation for rendering a 
-kinematic tree robot
-*/
-void render_robot(mat4_t* hw_b, Shader* shader, link_t* node)
-{
-	if (node == NULL)
-		return;
-
-	link_t* node_to_render = node;
-	mat4_t hw_lnk;
-	mat4_t_mult_pbr(hw_b, &node_to_render->h_base_us, &hw_lnk);
-	glm::mat4 model = ht_matrix_to_mat4_t(hw_lnk);
-	shader->setMat4("model", model);
-	((AssetModel*)node_to_render->model_ref)->Draw(*shader, NULL);
-
-	for (int i = 0; i < node->num_children; i++)
-	{
-		joint2* j = &node->joints[i];
-		render_robot(hw_b, shader, j->child);
-	}
 }
 
 
@@ -528,17 +505,17 @@ int main_render_thread(void)
 		hexlink1[leg].name = "link 1";
 		hexlink1[leg].model_ref = (void*)&hexapod_modellist[2];
 		hexlink1[leg].joints = &hexjoints[jointlist_idx];
-		hexlink1[leg].joints[0].h_link = get_rpy_xyz_mat4(1.5707963267948966f, 0.f, -3.141592653589793f, 53.19977678085327e-3f, -9.341271351859646e-3f, -32.1600000000312e-3f);
 		hexlink1[leg].num_children = 1;
 		jointlist_idx += hexlink1[leg].num_children;
+		hexlink1[leg].joints[0].h_link = get_rpy_xyz_mat4(1.5707963267948966f, 0.f, -3.141592653589793f, 53.19977678085327e-3f, -9.341271351859646e-3f, -32.1600000000312e-3f);
 		hexlink1[leg].joints[0].child = &hexlink2[leg];
 
 		hexlink2[leg].name = "link 2";
 		hexlink2[leg].model_ref = (void*)&hexapod_modellist[3];
 		hexlink2[leg].joints = &hexjoints[jointlist_idx];
-		hexlink2[leg].joints[0].h_link = get_rpy_xyz_mat4(3.141592653589793f, 0, 3.141592653589793f, -17.75562321538834e-3f, 98.8847208563049e-3f, 33.359575692035264e-3f);
 		hexlink2[leg].num_children = 1;
 		jointlist_idx += hexlink2[leg].num_children;
+		hexlink2[leg].joints[0].h_link = get_rpy_xyz_mat4(3.141592653589793f, 0, 3.141592653589793f, -17.75562321538834e-3f, 98.8847208563049e-3f, 33.359575692035264e-3f);
 		hexlink2[leg].joints[0].child = &hexlink3[leg];
 
 		hexlink3[leg].name = "link 3";
@@ -663,15 +640,40 @@ int main_render_thread(void)
 	{
 		m_mcpy(&lpfs[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
 	}
-
+	
+	AbilityHandLeftUrdf left_abh_2;
+	
 	Z1_arm z1;
 	uint8_t start_ik = 0;
 	z1.hw_b = Hz(PI);
 	z1.hw_b.m[0][3] = 0;
 	z1.hw_b.m[1][3] = 1;
 	z1.hw_b.m[2][3] = 2.0f;
+	
+	z1.joints[1].q = 0.3;
+	z1.joints[2].q = 0.3;
+	z1.joints[3].q = -0.3;
+	z1.joints[4].q = 0.3;
+	z1.joints[5].q = 0.3;
+	z1.joints[6].q = 0.3;
+	z1.fk();
+	z1.joints[1].q = 0;
+	z1.joints[2].q = 0;
+	z1.joints[3].q = -0;
+	z1.joints[4].q = 0;
+	z1.joints[5].q = 0;
+	z1.joints[6].q = 0;
 	z1.fk();
 
+
+	{
+		mat4_t hf6_targ = mat4_t_Identity;
+		hf6_targ.m[0][3] = 0.051e1f;
+		mat4_t htarg = mat4_t_mult(z1.joints[6].hb_i, hf6_targ);
+		print_mat4_t(htarg);
+		printf("\r\n");
+	}
+	//print_mat4_t()
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -1285,14 +1287,23 @@ int main_render_thread(void)
 		}
 		if (start_ik != 0)
 		{
-			float roll = sin(time);
-			float pitch = (-cos(time)*0.5+0.5)*- PI/2;
-			float yaw = 0; 
-			float x = 1;
-			float y = 0;
-			float z = 4;
-			
-			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
+			//float roll = sin(time);
+			//float pitch = (-cos(time)*0.5+0.5)*- PI/2;
+			//float yaw = 0; 
+			//float x = 1;
+			//float y = 0;
+			//float z = 4;
+			//mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
+			mat4_t z1_ik_targ = {
+				{
+					{0.784573, -0.443946, 0.432849, 0.285926, },
+					{0.552033, 0.818008, -0.161624, 0.398402, },
+					{-0.282321, 0.365753, 0.886859, 1.573436, },
+					{0.000000, 0.000000, 0.000000, 1.000000, }
+				}
+			};
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(time));
+
 			double err = 1000.;
 			int iters = 0;
 			int iters_per_iter = 100;
@@ -1313,6 +1324,15 @@ int main_render_thread(void)
 			//printf("\r\n\r\n");
 		}
 		z1.render_arm(lightingShader);
+		left_abh_2.fk();
+		{
+			mat4_t hw_z16 = mat4_t_mult(z1.hw_b, z1.joints[6].hb_i);
+			mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 60e-2, 0, 0);
+			left_abh_2.hw_b = mat4_t_mult(hw_z16, hz16_abhw);
+
+			left_abh_2.hw_b = mat4_t_mult(left_abh_2.hw_b, Hscale(10.f));
+			left_abh_2.render(&lightingShader);	//then render
+		}
 
 
 		/*print target htmatrix which is guaranteed achievable in the workspace*/
@@ -1649,6 +1669,8 @@ int main_render_thread(void)
 			lightingShader.setMat4("model", model);
 			render_robot(&hw_b, &lightingShader, &hexbase);
 		}
+
+		
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();

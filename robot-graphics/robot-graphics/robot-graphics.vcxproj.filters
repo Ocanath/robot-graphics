@@ -102,9 +102,6 @@
     <ClCompile Include="IIRsos.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
-    <ClCompile Include="z1.cpp">
-      <Filter>Source Files\app-robotics</Filter>
-    </ClCompile>
     <ClCompile Include="model.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
@@ -201,6 +198,9 @@
       <Filter>Header Files\app-robotics</Filter>
     </ClInclude>
     <ClInclude Include="z1.h">
+      <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="psyhand_urdf.h">
       <Filter>Header Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>

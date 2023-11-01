@@ -21,7 +21,7 @@ typedef struct link_t
 /*actually JOINTS. joints connect nodes of the tree, i.e. links*/
 typedef struct joint2
 {
-	float q;	//general joint position term. for now, always rotation
+	float q;	//general joint position term. for now, always rotation about z
 	mat4_t h_parent_child;	//rotated frame. equal to link frame rotated about z  by q
 	mat4_t h_link;//constant link frame formed by the rigid body linkage
 

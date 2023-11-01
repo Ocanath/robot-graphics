@@ -177,7 +177,6 @@
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="vboindexer.cpp" />
     <ClCompile Include="vect_fixed.cpp" />
-    <ClCompile Include="z1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
@@ -197,6 +196,7 @@
     <ClInclude Include="m_mcpy.h" />
     <ClInclude Include="objloader.hpp" />
     <ClInclude Include="physics_thread.h" />
+    <ClInclude Include="psyhand_urdf.h" />
     <ClInclude Include="RenderRobot.h" />
     <ClInclude Include="shader-reader.h" />
     <ClInclude Include="sin_fast.h" />
