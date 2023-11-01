@@ -115,7 +115,17 @@ class AbilityHandLeftUrdf
 		{
 			tree_dfs(&wrist);
 		}
+		void load_q(float q[6])
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				palm.joints[i].q = q[i] * DEG_TO_RAD;
+				palm.joints[i].child->joints[0].q = palm.joints[i].q * 1.05851325f + 0.72349796f;
+			}
+			palm.joints[4].q = q[5] * DEG_TO_RAD;
+			palm.joints[4].child->joints[0].q = q[4] * DEG_TO_RAD;
 
+		}
 		void render(Shader * sh)
 		{
 			render_robot(&hw_b, sh, &wrist);

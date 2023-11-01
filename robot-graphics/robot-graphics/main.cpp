@@ -273,11 +273,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.j[1].q = fmod(7693.654297 + PI, 2 * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-1.803592 + PI, 2 * PI) - PI;
-	Player.CamRobot.hw_b.m[0][3] = -5.233556;
-	Player.CamRobot.hw_b.m[1][3] = 0.276400;
-	Player.CamRobot.hw_b.m[2][3] = 4.880762;
+	Player.CamRobot.j[1].q = fmod(102.796234 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-1.659000 + PI, 2 * PI) - PI;
+	Player.CamRobot.hw_b.m[0][3] = -7.578985;
+	Player.CamRobot.hw_b.m[1][3] = -7.428712;
+	Player.CamRobot.hw_b.m[2][3] = 6.549647;
 	//Player.CamRobot.j[1].q = 0;
 	//Player.CamRobot.j[2].q = -PI/2;
 	Player.lock_in_flag = 0;
@@ -584,7 +584,7 @@ int main_render_thread(void)
 		light[i].position = glm::vec3(xw * xsign, yw * ysign, zh);
 	}
 	enum { KEYBOARD_CONTROLLED_LIGHT_IDX = 4, ROBOT_CONNECTED_LIGHT_IDX = 3};
-	light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(0, 0, 6);
+	light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(-2, 1, 7.9);
 	for (int i = 0; i < NUM_LIGHTS; i++)
 	{
 		light[i].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
@@ -658,11 +658,11 @@ int main_render_thread(void)
 	z1.joints[6].q = 0.3;
 	z1.fk();
 	z1.joints[1].q = 0;
-	z1.joints[2].q = 0;
-	z1.joints[3].q = -0;
-	z1.joints[4].q = 0;
+	z1.joints[2].q = 1.5;
+	z1.joints[3].q = -1.17;
+	z1.joints[4].q = -1.9;
 	z1.joints[5].q = 0;
-	z1.joints[6].q = 0;
+	z1.joints[6].q = 0.01;
 	z1.fk();
 
 
@@ -1289,20 +1289,46 @@ int main_render_thread(void)
 		{
 			//float roll = sin(time);
 			//float pitch = (-cos(time)*0.5+0.5)*- PI/2;
-			//float yaw = 0; 
-			//float x = 1;
-			//float y = 0;
-			//float z = 4;
-			//mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
-			mat4_t z1_ik_targ = {
+			//float yaw = 0;
+			vect3_t lightboxpos_w = {
 				{
-					{0.784573, -0.443946, 0.432849, 0.285926, },
-					{0.552033, 0.818008, -0.161624, 0.398402, },
-					{-0.282321, 0.365753, 0.886859, 1.573436, },
-					{0.000000, 0.000000, 0.000000, 1.000000, }
+					light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.x,
+					light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.y,
+					light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.z
 				}
 			};
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(time));
+			mat4_t hb_w = ht_inverse(z1.hw_b);
+			vect3_t otarg_b = mat4_t_vect3_mult(hb_w, lightboxpos_w);
+
+			if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+			{
+				printf("targW=");
+				print_vect3(lightboxpos_w);
+				printf("\r\ntargB=");
+				print_vect3(otarg_b);
+				printf("\r\nq = {\r\n");
+				for(int i = 0; i < 6; i++)
+					printf("    %f\r\n", z1.joints[i+1].q);	
+				printf("};\r\n");
+			}
+
+			float roll = 0;
+			float pitch = -PI/2;
+			float yaw = 0;
+			float x = otarg_b.v[0];
+			float y = otarg_b.v[1];
+			float z = otarg_b.v[2];
+			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
+
+			//mat4_t z1_ik_targ = {
+			//	{
+			//		{0.784573, -0.443946, 0.432849, 0.285926, },
+			//		{0.552033, 0.818008, -0.161624, 0.398402, },
+			//		{-0.282321, 0.365753, 0.886859, 1.573436, },
+			//		{0.000000, 0.000000, 0.000000, 1.000000, }
+			//	}
+			//};
+			//z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(time));
 
 			double err = 1000.;
 			int iters = 0;
@@ -1314,7 +1340,7 @@ int main_render_thread(void)
 				if (iters > 20000)
 					break;
 			}
-			printf("err %f, fps = %f, iters = %d\r\n", err, fps, iters);
+			//printf("err %f, fps = %f, iters = %d\r\n", err, fps, iters);
 
 			/*Example of how to computeulate the origin of the target frame in the base frame. construct the frame6-to-target homogeneous transformation*/
 			//mat4_t hf6_targ = mat4_t_Identity;
@@ -1324,7 +1350,17 @@ int main_render_thread(void)
 			//printf("\r\n\r\n");
 		}
 		z1.render_arm(lightingShader);
+		/*connect abh to z1*/
 		left_abh_2.fk();
+		
+		float lh_q[6] = { 0 };
+		for (int i = 0; i < 5; i++)
+		{
+			lh_q[i] = (-0.5 * cos((float)i + time) + 0.5) * 50.f;
+		}
+		lh_q[5] = ((-0.5 * cos(5.f + time) + 0.5) * -100.f);
+		left_abh_2.load_q(lh_q);
+
 		{
 			mat4_t hw_z16 = mat4_t_mult(z1.hw_b, z1.joints[6].hb_i);
 			mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 60e-2, 0, 0);
@@ -1335,21 +1371,6 @@ int main_render_thread(void)
 		}
 
 
-		/*print target htmatrix which is guaranteed achievable in the workspace*/
-		if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
-		{
-			mat4_t hf6_targ = mat4_t_Identity;
-			hf6_targ.m[0][3] = 0.051e1f;
-
-			vect3_t otarg_f6 = { {0.051e1,0,0} };
-			vect3_t otarg_b = mat4_t_vect3_mult(z1.joints[6].hb_i, otarg_f6);
-			mat4_t htarg = mat4_t_mult(z1.joints[6].hb_i, hf6_targ);
-			printf("htarg = \r\n");
-			print_mat4_t(htarg);
-			printf("\r\n\r\n otarg = ");
-			print_vect3(otarg_b);
-			printf("\r\n");
-		}
 		
 		{
 			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
@@ -1658,7 +1679,7 @@ int main_render_thread(void)
 		}
 		tree_dfs(&hexbase);
 		{
-			mat4_t hw_b = Hscale(5.f);
+			mat4_t hw_b = Hscale(10.f);
 			hw_b.m[0][3] = -5.f;
 			hw_b.m[1][3] = 0;
 			hw_b.m[2][3] = 3.f;
