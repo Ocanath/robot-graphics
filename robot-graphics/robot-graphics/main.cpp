@@ -640,9 +640,10 @@ int main_render_thread(void)
 	{
 		m_mcpy(&lpfs[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
 	}
-	
+
 	AbilityHandRightUrdf abh_2;
-	
+	abh_2.filter_inputs = 1;
+
 	Z1_arm z1;
 	z1.hw_b = Hz(PI);
 	z1.hw_b.m[0][3] = 0;

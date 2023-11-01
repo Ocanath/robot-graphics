@@ -2,8 +2,21 @@
 #define PSYHAND_URDF_H
 #include "kinematics.h"
 #include "model.h"
+#include "IIRsos.h"
 
 #define NUM_MODELS 6
+
+
+static const iirSOS fingerfilt_lpf_template = {
+	-1.1429805025399011 ,
+	0.41280159809618877 ,
+	0.4082482904638631 ,
+	0.8164965809277261 ,
+	0.4082482904638631 ,
+	0.16523100148791153,
+	{0, 0, 0}
+};
+
 
 class AbilityHandLeftUrdf
 {
@@ -24,13 +37,19 @@ class AbilityHandLeftUrdf
 			"abh_models/thumb-F1.STL",
 			"abh_models/thumb-F2-left.STL"
 		};
-
+		iirSOS lpfs[6] = { 0 };
+		
 	public:
+		uint8_t filter_inputs = 0;
 		vector<AssetModel> modellist;
 		mat4_t hw_b = { 0 };
 		AbilityHandLeftUrdf()
 		{
 			hw_b = mat4_t_Identity;//identity to start
+			for (int i = 0; i < 6; i++)
+			{
+				memcpy(&lpfs[i], &fingerfilt_lpf_template, sizeof(iirSOS));
+			}
 
 			for (int i = 0; i < NUM_MODELS; i++)
 			{
@@ -117,6 +136,13 @@ class AbilityHandLeftUrdf
 		}
 		void load_q(float q[6])
 		{
+			if (filter_inputs != 0)
+			{
+				for (int ch = 0; ch < 6; ch++)
+				{
+					q[ch] = sos_f(&lpfs[ch], q[ch]);
+				}
+			}
 			for (int i = 0; i < 4; i++)
 			{
 				palm.joints[i].q = q[i] * DEG_TO_RAD;
@@ -153,14 +179,19 @@ private:
 		"abh_models/thumb-F1-MIR.STL",
 		"abh_models/thumb-F2-right.STL"
 	};
-
+	iirSOS lpfs[6] = { 0 };
+	
 public:
+	uint8_t filter_inputs = 0;	//flag to control whether lpf is applied
 	vector<AssetModel> modellist;
 	mat4_t hw_b = { 0 };
 	AbilityHandRightUrdf()
 	{
 		hw_b = mat4_t_Identity;//identity to start
-
+		for (int i = 0; i < 6; i++)
+		{
+			memcpy(&lpfs[i], &fingerfilt_lpf_template, sizeof(iirSOS));
+		}
 		for (int i = 0; i < NUM_MODELS; i++)
 		{
 			modellist.push_back((AssetModel)model_names[i]);
@@ -246,6 +277,13 @@ public:
 	}
 	void load_q(float q[6])
 	{
+		if (filter_inputs != 0)
+		{
+			for (int ch = 0; ch < 6; ch++)
+			{
+				q[ch] = sos_f(&lpfs[ch], q[ch]);
+			}
+		}
 		for (int i = 0; i < 4; i++)
 		{
 			palm.joints[i].q = q[i] * DEG_TO_RAD;
