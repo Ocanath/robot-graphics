@@ -641,7 +641,7 @@ int main_render_thread(void)
 		m_mcpy(&lpfs[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
 	}
 	
-	AbilityHandLeftUrdf left_abh_2;
+	AbilityHandRightUrdf abh_2;
 	
 	Z1_arm z1;
 	z1.hw_b = Hz(PI);
@@ -1352,7 +1352,7 @@ int main_render_thread(void)
 		}
 		z1.render_arm(lightingShader);
 		/*connect abh to z1*/
-		left_abh_2.fk();
+		abh_2.fk();
 		
 		//float lh_q[6] = { 0 };
 		//for (int i = 0; i < 5; i++)
@@ -1360,16 +1360,16 @@ int main_render_thread(void)
 		//	lh_q[i] = (-0.5 * cos((float)i + time) + 0.5) * 50.f;
 		//}
 		//lh_q[5] = ((-0.5 * cos(5.f + time) + 0.5) * -100.f);
-		left_abh_2.load_q(qleft);
+		abh_2.load_q(qleft);
 
 		{
 			mat4_t hw_z16 = mat4_t_mult(z1.hw_b, z1.joints[6].hb_i);
 			mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 60e-2, 0, 0);
-			left_abh_2.hw_b = mat4_t_mult(hw_z16, hz16_abhw);
-			left_abh_2.hw_b = mat4_t_mult(left_abh_2.hw_b, Hz(-PI/2));
+			abh_2.hw_b = mat4_t_mult(hw_z16, hz16_abhw);
+			abh_2.hw_b = mat4_t_mult(abh_2.hw_b, Hz(-PI/2));
 
-			left_abh_2.hw_b = mat4_t_mult(left_abh_2.hw_b, Hscale(10.f));
-			left_abh_2.render(&lightingShader);	//then render
+			abh_2.hw_b = mat4_t_mult(abh_2.hw_b, Hscale(10.f));
+			abh_2.render(&lightingShader);	//then render
 		}
 
 
