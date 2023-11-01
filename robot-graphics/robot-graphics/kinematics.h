@@ -100,8 +100,7 @@ void calc_tau3(joint* j, int num_joints, vect3_t* f, float* tau);	//faster alt t
 void calc_taulist(joint* chain_start, vect3_t* f);
 int gd_ik_single(mat4_t* hb_0, joint* start, joint* end, vect3_t* anchor_end, vect3_t* targ_b, vect3_t* anchor_b, float epsilon_divisor);	//num anchors?
 mat4_t get_rpy_xyz_mat4(float roll, float pitch, float yaw, float x, float y, float z);
-
-
+float limit_val(float val, float lower, float upper);
 
 void tree_dfs(link_t* node);	/*does kinematics of a gen2 kinematic TREE structure*/
 void tree_assign_parent(link_t* node);	//setup function for kinematic trees. assigns parent link in each node

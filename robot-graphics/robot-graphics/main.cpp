@@ -1170,6 +1170,9 @@ int main_render_thread(void)
 		{
 			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
 			vect3_t lh_rpy; vect3_t lh_xyz; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
+			lh_rpy.v[0] = limit_val(lh_rpy.v[0], -2, 2);
+			lh_rpy.v[1] = limit_val(lh_rpy.v[1], 0, 0.8);
+			lh_rpy.v[2] = limit_val(lh_rpy.v[2], -2.2, -0.8);
 
 			//filter
 			lh_rpy.v[0] = sos_f(&lpfs[0], lh_rpy.v[0]);
@@ -1312,8 +1315,8 @@ int main_render_thread(void)
 			float y = otarg_b.v[1];
 			float z = otarg_b.v[2];
 			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
-			print_vect3(lh_loopbacked_angles);
-			printf("\r\n");
+			//print_vect3(lh_loopbacked_angles);
+			//printf("\r\n");
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(-lh_loopbacked_angles.v[1]) );
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx( -(lh_loopbacked_angles.v[2] - 1.45) ));
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hy(lh_loopbacked_angles.v[0] - 3.57));
@@ -1351,13 +1354,13 @@ int main_render_thread(void)
 		/*connect abh to z1*/
 		left_abh_2.fk();
 		
-		float lh_q[6] = { 0 };
-		for (int i = 0; i < 5; i++)
-		{
-			lh_q[i] = (-0.5 * cos((float)i + time) + 0.5) * 50.f;
-		}
-		lh_q[5] = ((-0.5 * cos(5.f + time) + 0.5) * -100.f);
-		left_abh_2.load_q(lh_q);
+		//float lh_q[6] = { 0 };
+		//for (int i = 0; i < 5; i++)
+		//{
+		//	lh_q[i] = (-0.5 * cos((float)i + time) + 0.5) * 50.f;
+		//}
+		//lh_q[5] = ((-0.5 * cos(5.f + time) + 0.5) * -100.f);
+		left_abh_2.load_q(qleft);
 
 		{
 			mat4_t hw_z16 = mat4_t_mult(z1.hw_b, z1.joints[6].hb_i);

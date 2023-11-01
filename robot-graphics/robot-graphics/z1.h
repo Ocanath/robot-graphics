@@ -56,16 +56,6 @@ private:
 
 	mat4_t scale;
 
-	float limit_val(float val, float lower, float upper)
-	{
-		if (val > upper)
-			val = upper;
-		if (val < lower)
-			val = lower;
-		return val;
-	}
-
-
 public:
 	mat4_t hw_b;
 	std::vector<AssetModel> modellist;

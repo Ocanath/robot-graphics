@@ -108,6 +108,17 @@ void tree_assign_parent(link_t* node)
 	}
 }
 
+/*general purpose function, mainly for imposing basic workspace limits*/
+float limit_val(float val, float lower, float upper)
+{
+	if (val > upper)
+		val = upper;
+	if (val < lower)
+		val = lower;
+	return val;
+}
+
+
 /*
 	Recursive kinematic tree traversal for computing the state of the...kinematic tree
 	TODO: implement an iterative version of this to make it embedded system friendly, and maybe try it with an arm
