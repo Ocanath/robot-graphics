@@ -584,7 +584,7 @@ int main_render_thread(void)
 		light[i].position = glm::vec3(xw * xsign, yw * ysign, zh);
 	}
 	enum { KEYBOARD_CONTROLLED_LIGHT_IDX = 4, ROBOT_CONNECTED_LIGHT_IDX = 3};
-	light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(-2, 1, 7.9);
+	light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(-3.315305, 0.687942, 6.890452);
 	for (int i = 0; i < NUM_LIGHTS; i++)
 	{
 		light[i].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
@@ -656,12 +656,12 @@ int main_render_thread(void)
 	z1.joints[5].q = 0.3;
 	z1.joints[6].q = 0.3;
 	z1.fk();
-	z1.joints[1].q = 0;
-	z1.joints[2].q = 1.5;
-	z1.joints[3].q = -1.17;
-	z1.joints[4].q = -1.9;
-	z1.joints[5].q = 0;
-	z1.joints[6].q = 0.01;
+	z1.joints[1].q = 0.081756;
+	z1.joints[2].q = 1.627823;
+	z1.joints[3].q = -1.145399;
+	z1.joints[4].q = -1.472812;
+	z1.joints[5].q = 0.040201;
+	z1.joints[6].q = -0.070590;
 	z1.fk();
 
 
@@ -1166,7 +1166,7 @@ int main_render_thread(void)
 		hw_b.m[2][3] = 10.f;
 
 
-		
+		vect3_t lh_loopbacked_angles;
 		{
 			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
 			vect3_t lh_rpy; vect3_t lh_xyz; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
@@ -1176,13 +1176,13 @@ int main_render_thread(void)
 			lh_rpy.v[1] = sos_f(&lpfs[1], lh_rpy.v[1]);
 			lh_rpy.v[2] = sos_f(&lpfs[2], lh_rpy.v[2]);
 
-			vect3_t shuffle;
-			shuffle.v[0] = lh_rpy.v[1]+PI;
-			shuffle.v[1] = (lh_rpy.v[2] + PI/2)*0;
-			shuffle.v[2] = lh_rpy.v[0]+0.2+PI/2;
+			
+			lh_loopbacked_angles.v[0] = lh_rpy.v[1]+PI;
+			lh_loopbacked_angles.v[1] = (lh_rpy.v[2] + PI/2);
+			lh_loopbacked_angles.v[2] = lh_rpy.v[0]+0.2+PI/2;
 
 
-			mat4_t m = get_rpy_xyz_htmatrix(&lh_xyz, &shuffle);
+			mat4_t m = get_rpy_xyz_htmatrix(&lh_xyz, &lh_loopbacked_angles);
 			for (int r = 0; r < 3; r++)
 			{
 				for (int c = 0; c < 3; c++)
@@ -1312,9 +1312,11 @@ int main_render_thread(void)
 			float y = otarg_b.v[1];
 			float z = otarg_b.v[2];
 			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(0.3*sin(time)));
-			//z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(0.3 * sin(5*time)));
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hy(0.3 * cos(time)));
+			print_vect3(lh_loopbacked_angles);
+			printf("\r\n");
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(-lh_loopbacked_angles.v[1]) );
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx( -(lh_loopbacked_angles.v[2] - 1.45) ));
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hy(lh_loopbacked_angles.v[0] - 3.57));
 
 			//mat4_t z1_ik_targ = {
 			//	{
