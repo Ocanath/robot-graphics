@@ -273,11 +273,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.j[1].q = fmod(102.796234 + PI, 2 * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-1.659000 + PI, 2 * PI) - PI;
-	Player.CamRobot.hw_b.m[0][3] = -7.578985;
-	Player.CamRobot.hw_b.m[1][3] = -7.428712;
-	Player.CamRobot.hw_b.m[2][3] = 6.549647;
+	Player.CamRobot.j[1].q = fmod(-91.145767 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-1.805995 + PI, 2 * PI) - PI;
+	Player.CamRobot.hw_b.m[0][3] = -9.480493;
+	Player.CamRobot.hw_b.m[1][3] = 0.555928;
+	Player.CamRobot.hw_b.m[2][3] = 9.907876;
 	//Player.CamRobot.j[1].q = 0;
 	//Player.CamRobot.j[2].q = -PI/2;
 	Player.lock_in_flag = 0;
@@ -644,7 +644,6 @@ int main_render_thread(void)
 	AbilityHandLeftUrdf left_abh_2;
 	
 	Z1_arm z1;
-	uint8_t start_ik = 0;
 	z1.hw_b = Hz(PI);
 	z1.hw_b.m[0][3] = 0;
 	z1.hw_b.m[1][3] = 1;
@@ -1280,12 +1279,6 @@ int main_render_thread(void)
 		}
 		
 
-		//z1.fk();
-		if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
-		{
-			start_ik = 1;
-		}
-		if (start_ik != 0)
 		{
 			//float roll = sin(time);
 			//float pitch = (-cos(time)*0.5+0.5)*- PI/2;
@@ -1313,12 +1306,15 @@ int main_render_thread(void)
 			}
 
 			float roll = 0;
-			float pitch = -PI/2;
+			float pitch = -PI/2+PI/6;
 			float yaw = 0;
 			float x = otarg_b.v[0];
 			float y = otarg_b.v[1];
 			float z = otarg_b.v[2];
 			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(0.3*sin(time)));
+			//z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(0.3 * sin(5*time)));
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hy(0.3 * cos(time)));
 
 			//mat4_t z1_ik_targ = {
 			//	{
@@ -1365,6 +1361,7 @@ int main_render_thread(void)
 			mat4_t hw_z16 = mat4_t_mult(z1.hw_b, z1.joints[6].hb_i);
 			mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 60e-2, 0, 0);
 			left_abh_2.hw_b = mat4_t_mult(hw_z16, hz16_abhw);
+			left_abh_2.hw_b = mat4_t_mult(left_abh_2.hw_b, Hz(-PI/2));
 
 			left_abh_2.hw_b = mat4_t_mult(left_abh_2.hw_b, Hscale(10.f));
 			left_abh_2.render(&lightingShader);	//then render

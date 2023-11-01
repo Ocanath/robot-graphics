@@ -55,6 +55,17 @@ private:
 	};
 
 	mat4_t scale;
+
+	float limit_val(float val, float lower, float upper)
+	{
+		if (val > upper)
+			val = upper;
+		if (val < lower)
+			val = lower;
+		return val;
+	}
+
+
 public:
 	mat4_t hw_b;
 	std::vector<AssetModel> modellist;
@@ -93,6 +104,16 @@ public:
 		}
 		copy_mat4_t(&joints[0].hb_i, (mat4_t*)&mat4_t_Identity);
 		init_forward_kinematics_urdf(joints, (vect3_t*)z1_joints_xyz, (vect3_t*)z1_joints_rpy, 6);
+	}
+
+	void z1_limit_joints(void)
+	{
+		joints[1].q = limit_val(joints[1].q, -2.6179938779914944, 2.6179938779914944);
+		joints[2].q = limit_val(joints[2].q, 0, 3.141592653589793);
+		joints[3].q = limit_val(joints[3].q, -4.782202150464463, 0);
+		joints[4].q = limit_val(joints[4].q, -1.7453292519943295, 1.5707963267948966);
+		joints[5].q = limit_val(joints[5].q, -1.7278759594743864, 1.7278759594743864);
+		joints[6].q = limit_val(joints[6].q, -2.792526803190927, 2.792526803190927);
 	}
 
 	void z1_forward_kinematics(mat4_t* hb_0, joint* f1_joint)
@@ -225,6 +246,7 @@ public:
 						tau += (((double)j->Si.v[r + 3]) * ((double)virtual_force.v[r])) / 16.0;
 					j->q += (float)tau;
 				}
+				z1_limit_joints();	//impose rigid joint stoppers, brute force limitng the workspace for IK
 
 				if (ncyc == iters - 1)
 				{
