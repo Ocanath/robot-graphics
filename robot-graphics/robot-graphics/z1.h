@@ -12,7 +12,6 @@ class Z1_arm
 {
 private:
 	mat4_t homecfg_targ = { 0 };
-
 	const vect3_t z1_joints_rpy[NUM_JOINTS_Z1 + 1] =
 	{
 		{0,0,0},
@@ -64,7 +63,8 @@ public:
 	std::vector<AssetModel> modellist;
 	joint joints[NUM_JOINTS_Z1 + 1] = { 0 };
 	mat4_t hw_i;
-	mat4_t scale;
+	double render_scale = 10.;
+	mat4_t scale_matrix = { 0 };
 
 	const vect3_t targ_anchors[4] = {	//this set of points can be arbitrary, but best performance should theoretically be some homogeneous transformation of the arm anchors. This one is hand transformed with a very simple transform.
 		{{0.0, 0, 0}},
@@ -93,9 +93,7 @@ public:
 			arm_anchors_f6[anchor_idx] = mat4_t_vect3_mult(hf6_targ, targ_anchors[anchor_idx]);
 		}
 		copy_mat4_t(&hw_b, (mat4_t*)&mat4_t_Identity);
-		copy_mat4_t(&scale, (mat4_t*)&mat4_t_Identity);
-		for (int i = 0; i < 3; i++)
-			scale.m[i][i] = 10.f;
+		scale_matrix = Hscale(render_scale);
 		for (int i = 0; i <= NUM_JOINTS_Z1; i++)
 		{
 			joints[i].rotaxis = z1_rotaxis[i];
@@ -281,7 +279,8 @@ public:
 	{
 		for (int i = 1; i <= NUM_JOINTS_Z1; i++)
 		{
-			mat4_t hwb_sc = mat4_t_mult(hw_b, scale);
+			//scale is not dynamic. if you want it to be, reload scale_matrix here
+			mat4_t hwb_sc = mat4_t_mult(hw_b, scale_matrix);
 			hw_i = mat4_t_mult(hwb_sc, joints[i].hb_i);
 			//hw_i = mat4_t_mult(hw_i, scale);
 			glm::mat4 model = ht_matrix_to_mat4_t(hw_i);

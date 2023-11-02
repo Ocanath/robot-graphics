@@ -658,12 +658,12 @@ int main_render_thread(void)
 	//z1.joints[5].q = 0.3;
 	//z1.joints[6].q = 0.3;
 	//z1.fk();
-	//z1.joints[1].q = 0.081756;
-	//z1.joints[2].q = 1.627823;
-	//z1.joints[3].q = -1.145399;
-	//z1.joints[4].q = -1.472812;
-	//z1.joints[5].q = 0.040201;
-	//z1.joints[6].q = -0.070590;
+	z1.joints[1].q = 0.081756;
+	z1.joints[2].q = 1.627823;
+	z1.joints[3].q = -1.145399;
+	z1.joints[4].q = -1.472812;
+	z1.joints[5].q = 0.040201;
+	z1.joints[6].q = -0.070590;
 	z1.fk();
 
 	{
@@ -1277,7 +1277,7 @@ int main_render_thread(void)
 			mat4_t hb_w = ht_inverse(z1.hw_b);
 			vect3_t otarg_b = mat4_t_vect3_mult(hb_w, lightboxpos_w);
 			for(int i = 0; i < 3; i++)
-				otarg_b.v[i] /= 10.;
+				otarg_b.v[i] /= z1.render_scale;	//apply inverse scale transform here, as last step
 
 			if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 			{
@@ -1334,7 +1334,7 @@ int main_render_thread(void)
 		abh_2.load_q(qleft);
 
 		{
-			mat4_t hwb_sc = mat4_t_mult(z1.hw_b, z1.scale);
+			mat4_t hwb_sc = mat4_t_mult(z1.hw_b, z1.scale_matrix);
 			mat4_t hw_z16 = mat4_t_mult(hwb_sc, z1.joints[6].hb_i);
 			mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 103.e-3, 0, 0);
 			abh_2.hw_b = mat4_t_mult(hw_z16, hz16_abhw);
