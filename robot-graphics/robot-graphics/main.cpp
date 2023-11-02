@@ -650,21 +650,21 @@ int main_render_thread(void)
 	z1.hw_b.m[1][3] = 1;
 	z1.hw_b.m[2][3] = 2.0f;
 	
-	z1.joints[1].q = 0.3;
-	z1.joints[2].q = 0.3;
-	z1.joints[3].q = -0.3;
-	z1.joints[4].q = 0.3;
-	z1.joints[5].q = 0.3;
-	z1.joints[6].q = 0.3;
+	//
+	//z1.joints[1].q = 0.3;
+	//z1.joints[2].q = 0.3;
+	//z1.joints[3].q = -0.3;
+	//z1.joints[4].q = 0.3;
+	//z1.joints[5].q = 0.3;
+	//z1.joints[6].q = 0.3;
+	//z1.fk();
+	//z1.joints[1].q = 0.081756;
+	//z1.joints[2].q = 1.627823;
+	//z1.joints[3].q = -1.145399;
+	//z1.joints[4].q = -1.472812;
+	//z1.joints[5].q = 0.040201;
+	//z1.joints[6].q = -0.070590;
 	z1.fk();
-	z1.joints[1].q = 0.081756;
-	z1.joints[2].q = 1.627823;
-	z1.joints[3].q = -1.145399;
-	z1.joints[4].q = -1.472812;
-	z1.joints[5].q = 0.040201;
-	z1.joints[6].q = -0.070590;
-	z1.fk();
-	mat4_t z1_init_targ_b = z1.get_targ_from_cur_cfg();
 
 	{
 		mat4_t hf6_targ = mat4_t_Identity;
@@ -1276,6 +1276,8 @@ int main_render_thread(void)
 			};
 			mat4_t hb_w = ht_inverse(z1.hw_b);
 			vect3_t otarg_b = mat4_t_vect3_mult(hb_w, lightboxpos_w);
+			for(int i = 0; i < 3; i++)
+				otarg_b.v[i] /= 10.;
 
 			if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 			{
@@ -1302,9 +1304,11 @@ int main_render_thread(void)
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx( -(lh_loopbacked_angles.v[2] - 1.45) ));
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hy(lh_loopbacked_angles.v[0] - 3.57));
 
-
-			z1_ik_targ = mat4_t_mult(z1_init_targ_b, Hy(0.2*sin(time)));	//OVERRIDE PREVIOUS TARGET SETTING
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(0.2*cos(time)));	//OVERRIDE PREVIOUS TARGET SETTING
+			//mat4_t itrg = z1.init_targ();
+			//itrg.m[2][3] += 200e-3;
+			//mat4_t z1_ik_targ = mat4_t_mult(itrg, Hy(0.2*sin(time)));	//OVERRIDE PREVIOUS TARGET SETTING
+			//z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(0.2*cos(time)));	//OVERRIDE PREVIOUS TARGET SETTING
+			//mat4_t z1_ik_targ = z1.init_targ(); 
 
 			double err = 1000.;
 			int iters = 0;
@@ -1330,12 +1334,13 @@ int main_render_thread(void)
 		abh_2.load_q(qleft);
 
 		{
-			mat4_t hw_z16 = mat4_t_mult(z1.hw_b, z1.joints[6].hb_i);
-			mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 60e-2, 0, 0);
+			mat4_t hwb_sc = mat4_t_mult(z1.hw_b, z1.scale);
+			mat4_t hw_z16 = mat4_t_mult(hwb_sc, z1.joints[6].hb_i);
+			mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 103.e-3, 0, 0);
 			abh_2.hw_b = mat4_t_mult(hw_z16, hz16_abhw);
 			abh_2.hw_b = mat4_t_mult(abh_2.hw_b, Hz(-PI/2));
 
-			abh_2.hw_b = mat4_t_mult(abh_2.hw_b, Hscale(10.f));
+			//abh_2.hw_b = mat4_t_mult(abh_2.hw_b, Hscale(10.f));
 			abh_2.render(&lightingShader);	//then render
 		}
 

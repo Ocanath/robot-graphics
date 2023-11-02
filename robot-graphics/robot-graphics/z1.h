@@ -7,9 +7,12 @@
 #define NUM_LINKS_Z1 6
 
 
+
 class Z1_arm
 {
 private:
+	mat4_t homecfg_targ = { 0 };
+
 	const vect3_t z1_joints_rpy[NUM_JOINTS_Z1 + 1] =
 	{
 		{0,0,0},
@@ -25,12 +28,12 @@ private:
 	{
 		{0,			0,	0},
 
-		{0,0,0},	//{0,			0,	0.585e1f},
-		{0,			0,	0.045e1f},
-		{-0.353e1f,	0,	0},
-		{0.218e1f,	0,	0.057e1f},
-		{0.07e1f,	0,	0},
-		{0.0492e1f,	0,	0}
+		{0,0,0},	//{0,			0,	0.585f},
+		{0,			0,	0.045f},
+		{-0.353f,	0,	0},
+		{0.218f,	0,	0.057f},
+		{0.07f,	0,	0},
+		{0.0492f,	0,	0}
 	};
 
 	const char* z1_meshnames[NUM_LINKS_Z1] =
@@ -54,13 +57,14 @@ private:
 		'x',
 	};
 
-	mat4_t scale;
+	
 
 public:
 	mat4_t hw_b;
 	std::vector<AssetModel> modellist;
 	joint joints[NUM_JOINTS_Z1 + 1] = { 0 };
 	mat4_t hw_i;
+	mat4_t scale;
 
 	const vect3_t targ_anchors[4] = {	//this set of points can be arbitrary, but best performance should theoretically be some homogeneous transformation of the arm anchors. This one is hand transformed with a very simple transform.
 		{{0.0, 0, 0}},
@@ -72,7 +76,7 @@ public:
 	const mat4_t hf6_targ =
 	{
 		{
-			{1, 0, 0, 0.51},
+			{1, 0, 0, 103.e-3},
 			{0, 1, 0, 0},
 			{0, 0, 1, 0},
 			{0, 0, 0, 1}
@@ -102,6 +106,14 @@ public:
 		}
 		copy_mat4_t(&joints[0].hb_i, (mat4_t*)&mat4_t_Identity);
 		init_forward_kinematics_urdf(joints, (vect3_t*)z1_joints_xyz, (vect3_t*)z1_joints_rpy, 6);
+		fk();
+		homecfg_targ = get_targ_from_cur_cfg();
+	}
+
+	/*wrapper / read only alias for the home configuration*/
+	mat4_t init_targ(void)
+	{
+		return homecfg_targ;
 	}
 
 	void z1_limit_joints(void)
@@ -269,13 +281,31 @@ public:
 	{
 		for (int i = 1; i <= NUM_JOINTS_Z1; i++)
 		{
-			hw_i = mat4_t_mult(hw_b, joints[i].hb_i);
-			hw_i = mat4_t_mult(hw_i, scale);
+			mat4_t hwb_sc = mat4_t_mult(hw_b, scale);
+			hw_i = mat4_t_mult(hwb_sc, joints[i].hb_i);
+			//hw_i = mat4_t_mult(hw_i, scale);
 			glm::mat4 model = ht_matrix_to_mat4_t(hw_i);
 			s.setMat4("model", model);
 			modellist[i-1].Draw(s, NULL);
 		}
 	}
+	/*piecewise function which punches the robot
+		INPUTS:
+			init_cfg: pointer to the homogeneous transformation representing the initial configuration of the z1
+			ft: time variable. scalable. each segment of the path is calibrated for 1 ft unit. so if ft = t, each primitive will take 1 second.
+	*/
+	mat4_t generate_punch_path(mat4_t* init_cfg, double ft)
+	{
+		mat4_t ret_cfg = *init_cfg;	//copy init config
+		//const int xp1 = 
+		if (ft >= 0. && ft <= 1.)
+		{
+			//ret_cfg = 
+		}
+		return ret_cfg;
+	}
+
+
 };
 
 
