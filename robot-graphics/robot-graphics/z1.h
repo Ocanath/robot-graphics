@@ -304,6 +304,21 @@ public:
 		return ret_cfg;
 	}
 
+	vect3_t world_targ_to_base_targ(vect3_t & world_targ)
+	{
+		mat4_t hb_w = ht_inverse(hw_b);
+		vect3_t otarg_b = mat4_t_vect3_mult(hb_w, world_targ);
+		for (int i = 0; i < 3; i++)
+			otarg_b.v[i] /= render_scale;	//apply inverse scale transform here, as last step
+		return otarg_b;
+	}
+	vect3_t base_targ_to_world_targ(vect3_t base_targ)
+	{
+		for (int i = 0; i < 3; i++)
+			base_targ.v[i] *= render_scale;
+		vect3_t pb = mat4_t_vect3_mult(hw_b, base_targ);
+		return pb;
+	}
 
 };
 
