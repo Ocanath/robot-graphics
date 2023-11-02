@@ -62,13 +62,6 @@ public:
 	joint joints[NUM_JOINTS_Z1 + 1] = { 0 };
 	mat4_t hw_i;
 
-	const vect3_t arm_anchors_f6[4] = {
-		{{0.051000e1f, 0, 0}},
-		{{0.051000e1f, -2.0, -2.0}},
-		{{0.051000e1f, -2.0, 2.0}},
-		{{0.051000e1f, 0, 2}}
-	};
-
 	const vect3_t targ_anchors[4] = {	//this set of points can be arbitrary, but best performance should theoretically be some homogeneous transformation of the arm anchors. This one is hand transformed with a very simple transform.
 		{{0.0, 0, 0}},
 		{{0.0, -2.0, -2.0}},
@@ -76,10 +69,25 @@ public:
 		{{0.0, 0, 2}}
 	};
 
+	const mat4_t hf6_targ =
+	{
+		{
+			{1, 0, 0, 0.51},
+			{0, 1, 0, 0},
+			{0, 0, 1, 0},
+			{0, 0, 0, 1}
+		}
+	};
+
+	vect3_t arm_anchors_f6[4] = {0};
+
 
 	Z1_arm(void)
 	{
-
+		for (int anchor_idx = 0; anchor_idx < 4; anchor_idx++)
+		{
+			arm_anchors_f6[anchor_idx] = mat4_t_vect3_mult(hf6_targ, targ_anchors[anchor_idx]);
+		}
 		copy_mat4_t(&hw_b, (mat4_t*)&mat4_t_Identity);
 		copy_mat4_t(&scale, (mat4_t*)&mat4_t_Identity);
 		for (int i = 0; i < 3; i++)
@@ -193,6 +201,14 @@ public:
 		//load_q(&joints[1]);
 		z1_forward_kinematics(&joints[0].hb_i, &joints[1]);
 	}
+
+
+	mat4_t get_targ_from_cur_cfg(void)
+	{
+		fk(); //update cur cfg
+		return mat4_t_mult(joints[6].hb_i, hf6_targ);
+	}
+
 
 	/*input arguments:
 	Note: you can use rpy xyz to conveniently construct the input ht matrix

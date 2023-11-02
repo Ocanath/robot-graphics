@@ -635,8 +635,8 @@ int main_render_thread(void)
 
 	mat4_t lh_htmat = mat4_t_Identity;
 	mat4_t rh_htmat = mat4_t_Identity;
-	iirSOS lpfs[6] = { 0 };
-	for (int i = 0; i < 6; i++)
+	iirSOS lpfs[12] = { 0 };
+	for (int i = 0; i < 12; i++)
 	{
 		m_mcpy(&lpfs[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
 	}
@@ -664,7 +664,7 @@ int main_render_thread(void)
 	z1.joints[5].q = 0.040201;
 	z1.joints[6].q = -0.070590;
 	z1.fk();
-
+	mat4_t z1_init_targ_b = z1.get_targ_from_cur_cfg();
 
 	{
 		mat4_t hf6_targ = mat4_t_Identity;
@@ -768,31 +768,6 @@ int main_render_thread(void)
 		MVP = CameraProjection * View * Model;
 		
 
-		//manual control of the overhead light position
-		int mnljki = (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) << 0;
-		mnljki |= (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) << 1;
-		mnljki |= (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) << 2;
-		mnljki |= (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) << 3;
-		mnljki |= (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) << 4;
-		mnljki |= (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) << 5;
-		if (mnljki == 0)
-			movement_press_time = time;
-		else
-		{
-			float displacement_per_sec = (.01f*(float)((time-movement_press_time))) + 1.f/(float)fps;
-			if ( (mnljki & (1 << 0)) != 0)
-				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(displacement_per_sec, 0, 0);
-			if ((mnljki & (1 << 1)) != 0)
-				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(-displacement_per_sec, 0, 0);
-			if ((mnljki & (1 << 2)) != 0)
-				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, displacement_per_sec, 0);
-			if ((mnljki & (1 << 3)) != 0)
-				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, -displacement_per_sec, 0);
-			if ((mnljki & (1 << 4)) != 0)
-				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, 0, displacement_per_sec);
-			if ((mnljki & (1 << 5)) != 0)
-				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, 0, -displacement_per_sec);
-		}
 
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
@@ -1168,9 +1143,10 @@ int main_render_thread(void)
 
 
 		vect3_t lh_loopbacked_angles;
+		vect3_t lh_xyz;
 		{
 			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
-			vect3_t lh_rpy; vect3_t lh_xyz; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
+			vect3_t lh_rpy; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
 			lh_rpy.v[0] = limit_val(lh_rpy.v[0], -2, 2);
 			lh_rpy.v[1] = limit_val(lh_rpy.v[1], 0, 0.8);
 			lh_rpy.v[2] = limit_val(lh_rpy.v[2], -2.2, -0.8);
@@ -1179,6 +1155,10 @@ int main_render_thread(void)
 			lh_rpy.v[0] = sos_f(&lpfs[0], lh_rpy.v[0]);
 			lh_rpy.v[1] = sos_f(&lpfs[1], lh_rpy.v[1]);
 			lh_rpy.v[2] = sos_f(&lpfs[2], lh_rpy.v[2]);
+
+			lh_xyz.v[0] = sos_f(&lpfs[6], lh_xyz.v[0]);
+			lh_xyz.v[1] = sos_f(&lpfs[7], lh_xyz.v[1]);
+			lh_xyz.v[2] = sos_f(&lpfs[8], lh_xyz.v[2]);
 
 			
 			lh_loopbacked_angles.v[0] = lh_rpy.v[1]+PI;
@@ -1313,8 +1293,8 @@ int main_render_thread(void)
 			float pitch = -PI/2+PI/6;
 			float yaw = 0;
 			float x = otarg_b.v[0];
-			float y = otarg_b.v[1];
-			float z = otarg_b.v[2];
+			float y = otarg_b.v[1];// +-(lh_xyz.v[0] * 2 - 1);
+			float z = otarg_b.v[2];// +-(lh_xyz.v[1] * 2 - 1);
 			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
 			//print_vect3(lh_loopbacked_angles);
 			//printf("\r\n");
@@ -1322,15 +1302,9 @@ int main_render_thread(void)
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx( -(lh_loopbacked_angles.v[2] - 1.45) ));
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hy(lh_loopbacked_angles.v[0] - 3.57));
 
-			//mat4_t z1_ik_targ = {
-			//	{
-			//		{0.784573, -0.443946, 0.432849, 0.285926, },
-			//		{0.552033, 0.818008, -0.161624, 0.398402, },
-			//		{-0.282321, 0.365753, 0.886859, 1.573436, },
-			//		{0.000000, 0.000000, 0.000000, 1.000000, }
-			//	}
-			//};
-			//z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(time));
+
+			z1_ik_targ = mat4_t_mult(z1_init_targ_b, Hy(0.2*sin(time)));	//OVERRIDE PREVIOUS TARGET SETTING
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(0.2*cos(time)));	//OVERRIDE PREVIOUS TARGET SETTING
 
 			double err = 1000.;
 			int iters = 0;
@@ -1342,14 +1316,6 @@ int main_render_thread(void)
 				if (iters > 20000)
 					break;
 			}
-			//printf("err %f, fps = %f, iters = %d\r\n", err, fps, iters);
-
-			/*Example of how to computeulate the origin of the target frame in the base frame. construct the frame6-to-target homogeneous transformation*/
-			//mat4_t hf6_targ = mat4_t_Identity;
-			//hf6_targ.m[0][3] = 0.051e1f;
-			//mat4_t htarg = mat4_t_mult(z1.joints[6].hb_i, hf6_targ);
-			//print_mat4_t(htarg);
-			//printf("\r\n\r\n");
 		}
 		z1.render_arm(lightingShader);
 		/*connect abh to z1*/
@@ -1371,6 +1337,34 @@ int main_render_thread(void)
 
 			abh_2.hw_b = mat4_t_mult(abh_2.hw_b, Hscale(10.f));
 			abh_2.render(&lightingShader);	//then render
+		}
+
+
+
+		//manual control of the overhead light position
+		int mnljki = (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) << 0;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) << 1;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) << 2;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) << 3;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) << 4;
+		mnljki |= (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) << 5;
+		if (mnljki == 0)
+			movement_press_time = time;
+		else
+		{
+			float displacement_per_sec = (.01f * (float)((time - movement_press_time))) + 1.f / (float)fps;
+			if ((mnljki & (1 << 0)) != 0)
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(displacement_per_sec, 0, 0);
+			if ((mnljki & (1 << 1)) != 0)
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(-displacement_per_sec, 0, 0);
+			if ((mnljki & (1 << 2)) != 0)
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, displacement_per_sec, 0);
+			if ((mnljki & (1 << 3)) != 0)
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, -displacement_per_sec, 0);
+			if ((mnljki & (1 << 4)) != 0)
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, 0, displacement_per_sec);
+			if ((mnljki & (1 << 5)) != 0)
+				light[KEYBOARD_CONTROLLED_LIGHT_IDX].position += glm::vec3(0, 0, -displacement_per_sec);
 		}
 
 
