@@ -118,7 +118,8 @@ public:
 	{
 		joints[1].q = limit_val(joints[1].q, -2.6179938779914944, 2.6179938779914944);
 		joints[2].q = limit_val(joints[2].q, 0, 3.141592653589793);
-		joints[3].q = limit_val(joints[3].q, -4.782202150464463, 0);
+		//joints[3].q = limit_val(joints[3].q, -4.782202150464463, 0);
+		joints[3].q = limit_val(joints[3].q, -3.0, 0);
 		joints[4].q = limit_val(joints[4].q, -1.7453292519943295, 1.5707963267948966);
 		joints[5].q = limit_val(joints[5].q, -1.7278759594743864, 1.7278759594743864);
 		joints[6].q = limit_val(joints[6].q, -2.792526803190927, 2.792526803190927);

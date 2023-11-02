@@ -584,7 +584,7 @@ int main_render_thread(void)
 		light[i].position = glm::vec3(xw * xsign, yw * ysign, zh);
 	}
 	enum { KEYBOARD_CONTROLLED_LIGHT_IDX = 4, ROBOT_CONNECTED_LIGHT_IDX = 3};
-	light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(-3.315305, 0.687942, 6.890452);
+	light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(0,0,0);
 	for (int i = 0; i < NUM_LIGHTS; i++)
 	{
 		light[i].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
@@ -649,31 +649,34 @@ int main_render_thread(void)
 	z1.hw_b.m[0][3] = 0;
 	z1.hw_b.m[1][3] = 1;
 	z1.hw_b.m[2][3] = 2.0f;
-	
-	//
-	//z1.joints[1].q = 0.3;
-	//z1.joints[2].q = 0.3;
-	//z1.joints[3].q = -0.3;
-	//z1.joints[4].q = 0.3;
-	//z1.joints[5].q = 0.3;
-	//z1.joints[6].q = 0.3;
-	//z1.fk();
-	z1.joints[1].q = 0.081756;
-	z1.joints[2].q = 1.627823;
-	z1.joints[3].q = -1.145399;
-	z1.joints[4].q = -1.472812;
-	z1.joints[5].q = 0.040201;
-	z1.joints[6].q = -0.070590;
-	z1.fk();
-
 	{
-		mat4_t hf6_targ = mat4_t_Identity;
-		hf6_targ.m[0][3] = 0.051e1f;
-		mat4_t htarg = mat4_t_mult(z1.joints[6].hb_i, hf6_targ);
-		print_mat4_t(htarg);
-		printf("\r\n");
+		float init_z1_q[6] = {
+			-0.035043,
+			1.672107,
+			-1.434946,
+			-1.426727,
+			-0.105753,
+			0.689310
+		};
+		for (int i = 0; i < 6; i++)
+		{
+			z1.joints[i + 1].q = init_z1_q[i];
+		}
+		z1.fk();
+		mat4_t z1trg = z1.get_targ_from_cur_cfg();
+		vect3_t starttargorigin = h_origin(z1trg);
+		printf("origin of target in init config, base frame\r\n");
+		print_vect3(starttargorigin);
+		printf("\r\n--------------\r\n");
+		vect3_t trgw = z1.base_targ_to_world_targ(starttargorigin);
+		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(trgw.v[0], trgw.v[1], trgw.v[2]);
+		printf("origin target in world\r\n");
+		print_vect3(trgw);
+		printf("\r\n--------------\r\n");
 	}
-	//print_mat4_t()
+	mat4_t z1_start_cfg = z1.get_targ_from_cur_cfg();
+
+
 	while (!glfwWindowShouldClose(window))
 	{
 		double time = glfwGetTime();
@@ -1267,27 +1270,26 @@ int main_render_thread(void)
 			//float roll = sin(time);
 			//float pitch = (-cos(time)*0.5+0.5)*- PI/2;
 			//float yaw = 0;
-			vect3_t lightboxpos_w = {
-				{
-					light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.x,
-					light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.y,
-					light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.z
-				}
-			};
-			mat4_t hb_w = ht_inverse(z1.hw_b);
-			vect3_t otarg_b = mat4_t_vect3_mult(hb_w, lightboxpos_w);
-			for(int i = 0; i < 3; i++)
-				otarg_b.v[i] /= z1.render_scale;	//apply inverse scale transform here, as last step
-
+			// 
+			// 
+			// 
+			// 
+			//vect3_t lightboxpos_w = {
+			//	{
+			//		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.x,
+			//		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.y,
+			//		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.z
+			//	}
+			//};
+			//vect3_t otarg_b = z1.world_targ_to_base_targ(lightboxpos_w);
+			vect3_t otarg_b = h_origin(z1_start_cfg);
 			if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 			{
-				printf("targW=");
-				print_vect3(lightboxpos_w);
 				printf("\r\ntargB=");
 				print_vect3(otarg_b);
 				printf("\r\nq = {\r\n");
 				for(int i = 0; i < 6; i++)
-					printf("    %f\r\n", z1.joints[i+1].q);	
+					printf("    %f,\r\n", z1.joints[i+1].q);	
 				printf("};\r\n");
 			}
 
@@ -1295,20 +1297,23 @@ int main_render_thread(void)
 			float pitch = -PI/2+PI/6;
 			float yaw = 0;
 			float x = otarg_b.v[0];
-			float y = otarg_b.v[1];// +-(lh_xyz.v[0] * 2 - 1);
-			float z = otarg_b.v[2];// +-(lh_xyz.v[1] * 2 - 1);
+			float y = otarg_b.v[1] + -(lh_xyz.v[0] * 2 - 1)/5;
+			float z = otarg_b.v[2] + -(lh_xyz.v[1] * 2 - 1)/5;
 			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
-			//print_vect3(lh_loopbacked_angles);
-			//printf("\r\n");
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(-lh_loopbacked_angles.v[1]) );
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx( -(lh_loopbacked_angles.v[2] - 1.45) ));
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hy(lh_loopbacked_angles.v[0] - 3.57));
+
+			mat4_t z1trg = z1.get_targ_from_cur_cfg();
+			vect3_t starttargorigin = h_origin(z1trg);
+			vect3_t trgw = z1.base_targ_to_world_targ(starttargorigin);
+			light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(trgw.v[0], trgw.v[1], trgw.v[2]);
+
 
 			//mat4_t itrg = z1.init_targ();
 			//itrg.m[2][3] += 200e-3;
 			//mat4_t z1_ik_targ = mat4_t_mult(itrg, Hy(0.2*sin(time)));	//OVERRIDE PREVIOUS TARGET SETTING
 			//z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(0.2*cos(time)));	//OVERRIDE PREVIOUS TARGET SETTING
-			//mat4_t z1_ik_targ = z1.init_targ(); 
 
 			double err = 1000.;
 			int iters = 0;
