@@ -33,7 +33,7 @@ void print_mat4_t(mat4_t m)
 		printf("{");
 		for (c = 0; c < 4; c++)
 		{
-			printf("%f, ", m.m[r][c]);
+			printf("    %f, ", m.m[r][c]);
 		}
 		printf("}\r\n");
 	}
