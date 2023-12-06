@@ -39,6 +39,26 @@
 
 //#define GET_HEXAPOD_OFFSET_VALS
 
+
+void mount_abh_to_z1(Z1_arm* z1, void* abh, uint8_t is_left)
+{
+	mat4_t hwb_sc = mat4_t_mult(z1->hw_b, z1->scale_matrix);
+	mat4_t hw_z16 = mat4_t_mult(hwb_sc, z1->joints[6].hb_i);
+	mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 103.e-3, 0, 0);
+	if (is_left)
+	{
+		AbilityHandLeftUrdf* pHand = (AbilityHandLeftUrdf*)abh;
+		pHand->hw_b = mat4_t_mult(hw_z16, hz16_abhw);
+		pHand->hw_b = mat4_t_mult(pHand->hw_b, Hz(-PI / 2));
+	}
+	else
+	{
+		AbilityHandRightUrdf* pHand = (AbilityHandRightUrdf*)abh;
+		pHand->hw_b = mat4_t_mult(hw_z16, hz16_abhw);
+		pHand->hw_b = mat4_t_mult(pHand->hw_b, Hz(-PI / 2));
+	}
+}
+
 /*
 Generic hex checksum calculation.
 TODO: use this in the psyonic API
@@ -273,12 +293,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.j[1].q = fmod(-91.145767 + PI, 2 * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-1.805995 + PI, 2 * PI) - PI;
-	Player.CamRobot.hw_b.m[0][3] = -9.480493;
-	Player.CamRobot.hw_b.m[1][3] = 0.555928;
-	Player.CamRobot.hw_b.m[2][3] = 9.907876;
-	//Player.CamRobot.j[1].q = 0;
+	Player.CamRobot.hw_b.m[0][3] = -16.427097;
+	Player.CamRobot.hw_b.m[1][3] = -0.267377;
+	Player.CamRobot.hw_b.m[2][3] = 12.256087;
+	Player.CamRobot.j[1].q = fmod(78.475189 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-2.052593 + PI, 2 * PI) - PI;	//Player.CamRobot.j[1].q = 0;
 	//Player.CamRobot.j[2].q = -PI/2;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
@@ -643,40 +662,48 @@ int main_render_thread(void)
 		m_mcpy(&rh_qlpf[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
 	}
 
-	AbilityHandRightUrdf abh_2;
-	abh_2.filter_inputs = 1;
+	AbilityHandLeftUrdf lh_abh_2;
+	lh_abh_2.filter_inputs = 1;
+	Z1_arm lh_z1;
+	lh_z1.hw_b = Hz(PI);
+	lh_z1.hw_b.m[0][3] = 0;
+	lh_z1.hw_b.m[1][3] = -1;
+	lh_z1.hw_b.m[2][3] = 2.0f;
+	lh_z1.fk();
 
-	Z1_arm z1;
-	z1.hw_b = Hz(PI);
-	z1.hw_b.m[0][3] = 0;
-	z1.hw_b.m[1][3] = 1;
-	z1.hw_b.m[2][3] = 2.0f;
+	AbilityHandRightUrdf rh_abh_2;
+	rh_abh_2.filter_inputs = 1;
+	Z1_arm rh_z1;
+	rh_z1.hw_b = Hz(PI);
+	rh_z1.hw_b.m[0][3] = 0;
+	rh_z1.hw_b.m[1][3] = 1;
+	rh_z1.hw_b.m[2][3] = 2.0f;
 	float init_z1_q[6] = {
-		-0.035043,
-		1.672107,
-		-1.434946,
-		-1.426727,
-		-0.105753,
-		0.689310
+		0.000672,
+		1.400176,
+		-1.186352,
+		-0.213831,
+		-0.000783,
+		0.000078
 	};
 	{
 		for (int i = 0; i < 6; i++)
 		{
-			z1.joints[i + 1].q = init_z1_q[i];
+			rh_z1.joints[i + 1].q = init_z1_q[i];
 		}
-		z1.fk();
-		mat4_t z1trg = z1.get_targ_from_cur_cfg();
+		rh_z1.fk();
+		mat4_t z1trg = rh_z1.get_targ_from_cur_cfg();
 		vect3_t starttargorigin = h_origin(z1trg);
 		printf("origin of target in init config, base frame\r\n");
 		print_vect3(starttargorigin);
 		printf("\r\n--------------\r\n");
-		vect3_t trgw = z1.base_targ_to_world_targ(starttargorigin);
+		vect3_t trgw = rh_z1.base_targ_to_world_targ(starttargorigin);
 		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(trgw.v[0], trgw.v[1], trgw.v[2]);
 		printf("origin target in world\r\n");
 		print_vect3(trgw);
 		printf("\r\n--------------\r\n");
 	}
-	mat4_t z1_start_cfg = z1.get_targ_from_cur_cfg();
+	mat4_t z1_start_cfg = rh_z1.get_targ_from_cur_cfg();
 
 
 	while (!glfwWindowShouldClose(window))
@@ -1235,21 +1262,6 @@ int main_render_thread(void)
 		
 
 		{
-			//float roll = sin(time);
-			//float pitch = (-cos(time)*0.5+0.5)*- PI/2;
-			//float yaw = 0;
-			// 
-			// 
-			// 
-			// 
-			//vect3_t lightboxpos_w = {
-			//	{
-			//		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.x,
-			//		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.y,
-			//		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position.z
-			//	}
-			//};
-			//vect3_t otarg_b = z1.world_targ_to_base_targ(lightboxpos_w);
 			vect3_t otarg_b = h_origin(z1_start_cfg);
 			if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
 			{
@@ -1257,7 +1269,7 @@ int main_render_thread(void)
 				print_vect3(otarg_b);
 				printf("\r\nq = {\r\n");
 				for(int i = 0; i < 6; i++)
-					printf("    %f,\r\n", z1.joints[i+1].q);	
+					printf("    %f,\r\n", rh_z1.joints[i+1].q);	
 				printf("};\r\n");
 			}
 
@@ -1290,7 +1302,7 @@ int main_render_thread(void)
 					lh_xyz.v[i] /= length;  //normalize
 				}
 			}
-			mat4_t z1_ik_targ = z1.init_targ();
+			mat4_t z1_ik_targ = rh_z1.init_targ();
 			z1_ik_targ = mat4_t_mult(Hy(abduction_angle), z1_ik_targ);
 			z1_ik_targ = mat4_t_mult(Hz(wrist_flexion_angle), z1_ik_targ);
 			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(wrist_rotation_angle));
@@ -1298,60 +1310,112 @@ int main_render_thread(void)
 			z1_ik_targ.m[0][3] += 300e-3;
 			z1_ik_targ.m[2][3] += lh_xyz.v[1];
 			z1_ik_targ.m[0][3] += lh_xyz.v[0];
-
 			//put the light in the wrist
-			mat4_t z1trg = z1.get_targ_from_cur_cfg();
+			mat4_t z1trg = rh_z1.get_targ_from_cur_cfg();
 			vect3_t starttargorigin = h_origin(z1trg);
-			vect3_t trgw = z1.base_targ_to_world_targ(starttargorigin);
+			vect3_t trgw = rh_z1.base_targ_to_world_targ(starttargorigin);
 			light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(trgw.v[0], trgw.v[1], trgw.v[2]);
 			
-			for (int i = 0; i < 6; i++)
-			{
-				z1.joints[i + 1].q = init_z1_q[i];
-			}
-			z1.fk();
+			//for (int i = 0; i < 6; i++)
+			//{
+			//	rh_z1.joints[i + 1].q = init_z1_q[i];
+			//}
+			rh_z1.joints[1].q = 0;
+			rh_z1.fk();
 			double err = 1000.;
 			int iters = 0;
 			int iters_per_iter = 100;
 			while (err > .0001)
 			{
-				err = z1.num_ik(&z1_ik_targ, iters_per_iter);
+				err = rh_z1.num_ik(&z1_ik_targ, iters_per_iter);
 				iters += iters_per_iter;
 				if (iters > 20000)
 					break;
 			}
+			rh_z1.joints[1].q -= PI / 2;
 		}
 		for (int i = 0; i < 6; i++)
 		{
-			z1.joints[i + 1].q = sos_f(&lh_qlpf[i], z1.joints[i + 1].q);
+			rh_z1.joints[i + 1].q = sos_f(&lh_qlpf[i], rh_z1.joints[i + 1].q);
 		}
-		z1.fk();
-
-		z1.render_arm(lightingShader);
-
+		rh_z1.fk();
+		rh_z1.render_arm(lightingShader);
 		/*connect abh to z1*/
-		abh_2.fk();
+		rh_abh_2.fk();
+		rh_abh_2.load_q(qleft);
+		mount_abh_to_z1(&rh_z1, &rh_abh_2, 0);
+		rh_abh_2.render(&lightingShader);	//then render
+
 		
-		//float lh_q[6] = { 0 };
-		//for (int i = 0; i < 5; i++)
-		//{
-		//	lh_q[i] = (-0.5 * cos((float)i + time) + 0.5) * 50.f;
-		//}
-		//lh_q[5] = ((-0.5 * cos(5.f + time) + 0.5) * -100.f);
-		abh_2.load_q(qleft);
+
 
 		{
-			mat4_t hwb_sc = mat4_t_mult(z1.hw_b, z1.scale_matrix);
-			mat4_t hw_z16 = mat4_t_mult(hwb_sc, z1.joints[6].hb_i);
-			mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 103.e-3, 0, 0);
-			abh_2.hw_b = mat4_t_mult(hw_z16, hz16_abhw);
-			abh_2.hw_b = mat4_t_mult(abh_2.hw_b, Hz(-PI/2));
 
-			//abh_2.hw_b = mat4_t_mult(abh_2.hw_b, Hscale(10.f));
-			abh_2.render(&lightingShader);	//then render
+			vect3_t rh_xyz;
+			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
+			vect3_t rh_rpy; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
+			rh_rpy.v[0] = wrap_2pi(rh_rpy.v[0] - (-2.98));
+			rh_rpy.v[0] = satv(rh_rpy.v[0], PI / 2);
+			double wrist_rotation_angle = -(rh_rpy.v[0]);
+			wrist_rotation_angle = satv(wrist_rotation_angle, 2.5) - PI / 2;
+			//wrist flexion angle
+			double wrist_flexion_angle = rh_rpy.v[1];
+			wrist_flexion_angle = satv(wrist_flexion_angle, 0.2);
+			//and wrist abduction angle
+			
+			double abduction_angle = -wrap_2pi(rh_rpy.v[2] - (-2.5) );
+			abduction_angle = satv(abduction_angle, 0.5);
+			//xyz conditioning and filter
+			rh_xyz.v[0] = -(rh_xyz.v[0] - 0.5);
+			rh_xyz.v[1] = -(rh_xyz.v[1] - 0.5);
+			//restrict the radius of the mapped value to 200mm. i.e. saturate xyz
+			double length = vect_mag(rh_xyz.v, 3);
+			if (length > 150e-3)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					rh_xyz.v[i] *= 200e-3;
+					rh_xyz.v[i] /= length;  //normalize
+				}
+			}
+			mat4_t z1_ik_targ = rh_z1.init_targ();
+			z1_ik_targ = mat4_t_mult(Hy(abduction_angle), z1_ik_targ);
+			z1_ik_targ = mat4_t_mult(Hz(wrist_flexion_angle), z1_ik_targ);
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(wrist_rotation_angle));
+			z1_ik_targ.m[2][3] += 300e-3;
+			z1_ik_targ.m[0][3] += 300e-3;
+			z1_ik_targ.m[2][3] += rh_xyz.v[1];
+			z1_ik_targ.m[0][3] += rh_xyz.v[0];
+
+			//for (int i = 0; i < 6; i++)
+			//{
+			//	lh_z1.joints[i + 1].q = init_z1_q[i];
+			//}	
+			lh_z1.joints[1].q = 0;
+			lh_z1.fk();
+
+			double err = 1000.;
+			int iters = 0;
+			int iters_per_iter = 100;
+			while (err > .0001)
+			{
+				err = lh_z1.num_ik(&z1_ik_targ, iters_per_iter);
+				iters += iters_per_iter;
+				if (iters > 20000)
+					break;
+			}
+			lh_z1.joints[1].q += PI / 2;
 		}
-
-
+		for (int i = 0; i < 6; i++)
+		{
+			lh_z1.joints[i + 1].q = sos_f(&rh_qlpf[i], lh_z1.joints[i + 1].q);
+		}
+		lh_z1.fk();
+		lh_z1.render_arm(lightingShader);
+		lh_abh_2.fk();
+		mount_abh_to_z1(&lh_z1, &lh_abh_2, 1);
+		lh_abh_2.load_q(qright);
+		lh_abh_2.render(&lightingShader);
 
 		//manual control of the overhead light position
 		int mnljki = (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) << 0;
