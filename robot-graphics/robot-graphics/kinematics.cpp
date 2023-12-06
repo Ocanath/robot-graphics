@@ -118,6 +118,15 @@ float limit_val(float val, float lower, float upper)
 	return val;
 }
 
+/**/
+double satv(double in, double thresh)
+{
+	if (in > thresh)
+		in = thresh;
+	else if (in < -thresh)
+		in = -thresh;
+	return in;
+}
 
 /*
 	Recursive kinematic tree traversal for computing the state of the...kinematic tree

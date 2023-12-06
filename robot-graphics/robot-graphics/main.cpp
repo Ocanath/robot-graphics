@@ -635,10 +635,12 @@ int main_render_thread(void)
 
 	mat4_t lh_htmat = mat4_t_Identity;
 	mat4_t rh_htmat = mat4_t_Identity;
-	iirSOS lpfs[12] = { 0 };
-	for (int i = 0; i < 12; i++)
+	iirSOS lh_qlpf[6] = { 0 };
+	iirSOS rh_qlpf[6] = { 0 };
+	for (int i = 0; i < 6; i++)
 	{
-		m_mcpy(&lpfs[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
+		m_mcpy(&lh_qlpf[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
+		m_mcpy(&rh_qlpf[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
 	}
 
 	AbilityHandRightUrdf abh_2;
@@ -649,15 +651,15 @@ int main_render_thread(void)
 	z1.hw_b.m[0][3] = 0;
 	z1.hw_b.m[1][3] = 1;
 	z1.hw_b.m[2][3] = 2.0f;
+	float init_z1_q[6] = {
+		-0.035043,
+		1.672107,
+		-1.434946,
+		-1.426727,
+		-0.105753,
+		0.689310
+	};
 	{
-		float init_z1_q[6] = {
-			-0.035043,
-			1.672107,
-			-1.434946,
-			-1.426727,
-			-0.105753,
-			0.689310
-		};
 		for (int i = 0; i < 6; i++)
 		{
 			z1.joints[i + 1].q = init_z1_q[i];
@@ -832,9 +834,9 @@ int main_render_thread(void)
 
 		glBindVertexArray(cubeVAO);
 
-		const float bcd = 10;
+		const float bcd = 20;
 		float scf = bcd*2;
-		const float zoff = 10.f;
+		const float zoff = 20.f;
 		mat4_t hw_cube[6] =
 		{
 			{
@@ -1144,40 +1146,6 @@ int main_render_thread(void)
 		hw_b.m[1][3] = 2;
 		hw_b.m[2][3] = 10.f;
 
-
-		vect3_t lh_loopbacked_angles;
-		vect3_t lh_xyz;
-		{
-			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
-			vect3_t lh_rpy; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
-			lh_rpy.v[0] = limit_val(lh_rpy.v[0], -2, 2);
-			lh_rpy.v[1] = limit_val(lh_rpy.v[1], 0, 0.8);
-			lh_rpy.v[2] = limit_val(lh_rpy.v[2], -2.2, -0.8);
-
-			//filter
-			lh_rpy.v[0] = sos_f(&lpfs[0], lh_rpy.v[0]);
-			lh_rpy.v[1] = sos_f(&lpfs[1], lh_rpy.v[1]);
-			lh_rpy.v[2] = sos_f(&lpfs[2], lh_rpy.v[2]);
-
-			lh_xyz.v[0] = sos_f(&lpfs[6], lh_xyz.v[0]);
-			lh_xyz.v[1] = sos_f(&lpfs[7], lh_xyz.v[1]);
-			lh_xyz.v[2] = sos_f(&lpfs[8], lh_xyz.v[2]);
-
-			
-			lh_loopbacked_angles.v[0] = lh_rpy.v[1]+PI;
-			lh_loopbacked_angles.v[1] = (lh_rpy.v[2] + PI/2);
-			lh_loopbacked_angles.v[2] = lh_rpy.v[0]+0.2+PI/2;
-
-
-			mat4_t m = get_rpy_xyz_htmatrix(&lh_xyz, &lh_loopbacked_angles);
-			for (int r = 0; r < 3; r++)
-			{
-				for (int c = 0; c < 3; c++)
-				{
-					hw_b.m[r][c] = m.m[r][c] * .01;
-				}
-			}
-		}
 		parse_abh_fpos_udp_cmd(&abh_lh_finger_soc, qleft);
 
 		//do the math for the psyonic hand
@@ -1293,28 +1261,55 @@ int main_render_thread(void)
 				printf("};\r\n");
 			}
 
-			float roll = 0;
-			float pitch = -PI/2+PI/6;
-			float yaw = 0;
-			float x = otarg_b.v[0];
-			float y = otarg_b.v[1] + -(lh_xyz.v[0] * 2 - 1)/5;
-			float z = otarg_b.v[2] + -(lh_xyz.v[1] * 2 - 1)/5;
-			mat4_t z1_ik_targ = get_rpy_xyz_mat4(roll,pitch,yaw,x,y,z);
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(-lh_loopbacked_angles.v[1]) );
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx( -(lh_loopbacked_angles.v[2] - 1.45) ));
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hy(lh_loopbacked_angles.v[0] - 3.57));
 
+
+
+			vect3_t lh_xyz;
+			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
+			vect3_t lh_rpy; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
+			//get the wrist rotation angle
+			lh_rpy.v[0] = satv(lh_rpy.v[0], PI / 2);
+			double wrist_rotation_angle = -((lh_rpy.v[0] + 0.2 + PI / 2) - 1.45);
+			wrist_rotation_angle = satv(wrist_rotation_angle, 2.5) + PI / 2;
+			//wrist flexion angle
+			double wrist_flexion_angle = (lh_rpy.v[1] + PI) - 3.57 + 0.39;
+			wrist_flexion_angle = satv(wrist_flexion_angle, 0.5);
+			//and wrist abduction angle
+			double abduction_angle = ((lh_rpy.v[2] + PI / 2) - 1.3);
+			abduction_angle = satv(abduction_angle, 0.5);
+			//xyz conditioning and filter
+			lh_xyz.v[0] = (lh_xyz.v[0] - 0.5);
+			lh_xyz.v[1] = (-lh_xyz.v[1] + 0.5);
+			//restrict the radius of the mapped value to 200mm. i.e. saturate xyz
+			double length = vect_mag(lh_xyz.v, 3);
+			if (length > 150e-3)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					lh_xyz.v[i] *= 200e-3;
+					lh_xyz.v[i] /= length;  //normalize
+				}
+			}
+			mat4_t z1_ik_targ = z1.init_targ();
+			z1_ik_targ = mat4_t_mult(Hy(abduction_angle), z1_ik_targ);
+			z1_ik_targ = mat4_t_mult(Hz(wrist_flexion_angle), z1_ik_targ);
+			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(wrist_rotation_angle));
+			z1_ik_targ.m[2][3] += 300e-3;
+			z1_ik_targ.m[0][3] += 300e-3;
+			z1_ik_targ.m[2][3] += lh_xyz.v[1];
+			z1_ik_targ.m[0][3] += lh_xyz.v[0];
+
+			//put the light in the wrist
 			mat4_t z1trg = z1.get_targ_from_cur_cfg();
 			vect3_t starttargorigin = h_origin(z1trg);
 			vect3_t trgw = z1.base_targ_to_world_targ(starttargorigin);
 			light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(trgw.v[0], trgw.v[1], trgw.v[2]);
-
-
-			//mat4_t itrg = z1.init_targ();
-			//itrg.m[2][3] += 200e-3;
-			//mat4_t z1_ik_targ = mat4_t_mult(itrg, Hy(0.2*sin(time)));	//OVERRIDE PREVIOUS TARGET SETTING
-			//z1_ik_targ = mat4_t_mult(z1_ik_targ, Hz(0.2*cos(time)));	//OVERRIDE PREVIOUS TARGET SETTING
-
+			
+			for (int i = 0; i < 6; i++)
+			{
+				z1.joints[i + 1].q = init_z1_q[i];
+			}
+			z1.fk();
 			double err = 1000.;
 			int iters = 0;
 			int iters_per_iter = 100;
@@ -1326,7 +1321,14 @@ int main_render_thread(void)
 					break;
 			}
 		}
+		for (int i = 0; i < 6; i++)
+		{
+			z1.joints[i + 1].q = sos_f(&lh_qlpf[i], z1.joints[i + 1].q);
+		}
+		z1.fk();
+
 		z1.render_arm(lightingShader);
+
 		/*connect abh to z1*/
 		abh_2.fk();
 		
@@ -1382,10 +1384,6 @@ int main_render_thread(void)
 		{
 			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
 			vect3_t rh_rpy; vect3_t rh_xyz; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
-			
-			rh_rpy.v[0] = sos_f(&lpfs[3], rh_rpy.v[0]);
-			rh_rpy.v[1] = sos_f(&lpfs[4], rh_rpy.v[1]);
-			rh_rpy.v[2] = sos_f(&lpfs[5], rh_rpy.v[2]);
 			
 			vect3_t shuffle;
 			shuffle.v[0] = rh_rpy.v[1] + PI;	//good
