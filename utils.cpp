@@ -1,4 +1,4 @@
-#include <glad/glad.h>	//needs to be first include in file always
+#include <glad.h>	//needs to be first include in file always
 
 
 #include "utils.h"
