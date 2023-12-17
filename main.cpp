@@ -1,4 +1,4 @@
-#include <glad.h>
+////#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -27,8 +27,8 @@
 #include "m_mcpy.h"
 
 #include "hexapod_footpath.h"
-#include "WinUdpBkstServer.h"
-#include "WinUdpClient.h"
+// #include "WinUdpBkstServer.h"
+// #include "WinUdpClient.h"
 
 #include "external/tinyxml2/tinyxml2.h"
 #include "IIRsos.h"
@@ -78,48 +78,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	// make sure the viewport matches the new window dimensions; note that width and 
 	// height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
-}
-uint8_t parse_abh_htmat(WinUdpBkstServer* soc, mat4_t * m)
-{
-	int rc = soc->read();
-	if (rc != WSAEWOULDBLOCK && soc->recv_len == 64)
-	{
-		int bidx = 0;
-		u32_fmt_t pfmt;
-		for (int r = 0; r < 4; r++)
-		{
-			for (int c = 0; c < 4; c++)
-			{
-				for (int i = 0; i < sizeof(float); i++)
-				{
-					pfmt.ui8[i] = soc->r_buf[bidx++];
-				}
-				m->m[r][c] = pfmt.f32;
-			}
-		}
-		return 1;
-	}
-	return 0;
-}
-
-void parse_abh_fpos_udp_cmd(WinUdpBkstServer * soc, float * q)
-{
-	int rc = soc->read();
-	if (rc != WSAEWOULDBLOCK && soc->recv_len == 15)
-	{
-		//u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
-		u32_fmt_t pfmt;
-		int bidx = 2;
-		for (int ch = 0; ch < 6; ch++)
-		{
-			for (int i = 0; i < sizeof(int16_t); i++)
-			{
-				pfmt.ui8[i] = soc->r_buf[bidx];
-				bidx++;
-			}
-			q[ch] = ((float)pfmt.i16[0]) * 150.f / 32767.f;
-		}
-	}
 }
 
 // utility function for loading a 2D texture from file
@@ -627,30 +585,7 @@ int main_render_thread(void)
 
 
 
-	WinUdpBkstServer udp_server(50134);
-	if (udp_server.set_nonblocking() != NO_ERROR)
-		printf("socket at port %d set to non-blocking ok\r\n", udp_server.port);
 
-
-	WinUdpBkstServer abh_lh_pos_soc(7242);
-	if(abh_lh_pos_soc.set_nonblocking() != NO_ERROR)
-		printf("socket at port %d set to non-blocking ok\r\n", abh_lh_pos_soc.port);
-	WinUdpBkstServer abh_rh_pos_soc(7240);
-	if (abh_rh_pos_soc.set_nonblocking() != NO_ERROR)
-		printf("socket at port %d set to non-blocking ok\r\n", abh_rh_pos_soc.port);
-	WinUdpBkstServer abh_lh_finger_soc(23234);
-	abh_lh_finger_soc.set_nonblocking();
-	WinUdpBkstServer abh_rh_finger_soc(34345);
-	abh_rh_finger_soc.set_nonblocking(); 
-
-
-	/*UDP client for ESP32 udp server that points the hose at us if we ping it*/
-	uint8_t udp_rx_buf[BUFLEN];	//large udp recive buffer
-	WinUdpClient robot_client(3145);
-	robot_client.set_nonblocking();
-	robot_client.si_other.sin_addr.S_un.S_addr = robot_client.get_bkst_ip();
-	uint64_t udpsend_ts = 0;
-	uint64_t udp_connected_ts = 0;
 
 	mat4_t lh_htmat = mat4_t_Identity;
 	mat4_t rh_htmat = mat4_t_Identity;
@@ -711,7 +646,6 @@ int main_render_thread(void)
 		double time = glfwGetTime();
 		double fps = 1.0 / (time - prev_time);
 		prev_time = time;
-		uint64_t tick = GetTickCount64();
 
 		// render
 		// ------
@@ -732,59 +666,29 @@ int main_render_thread(void)
 		for (int i = 0; i < NUM_LIGHTS; i++)
 		{
 			char buf[32] = { 0 };
-			sprintf_s(buf, "pointLights[%d].position", i);
+			sprintf(buf, "pointLights[%d].position", i);
 			lightingShader.setVec3(buf, light[i].position);
 
-			sprintf_s(buf, "pointLights[%d].ambient", i);
+			sprintf(buf, "pointLights[%d].ambient", i);
 			lightingShader.setVec3(buf, light[i].ambient);
 
-			sprintf_s(buf, "pointLights[%d].diffuse", i);
+			sprintf(buf, "pointLights[%d].diffuse", i);
 			lightingShader.setVec3(buf, light[i].diffuse);
 
-			sprintf_s(buf, "pointLights[%d].specular", i);
+			sprintf(buf, "pointLights[%d].specular", i);
 			lightingShader.setVec3(buf, light[i].specular);
 
-			sprintf_s(buf, "pointLights[%d].constant", i);
+			sprintf(buf, "pointLights[%d].constant", i);
 			lightingShader.setFloat(buf, light[i].constant);
 
-			sprintf_s(buf, "pointLights[%d].linear", i);
+			sprintf(buf, "pointLights[%d].linear", i);
 			lightingShader.setFloat(buf, light[i].linear);
 
-			sprintf_s(buf, "pointLights[%d].quadratic", i);
+			sprintf(buf, "pointLights[%d].quadratic", i);
 			lightingShader.setFloat(buf, light[i].quadratic);			
 		}
 
 
-
-		if ((tick - udp_connected_ts) < 300)	//connected
-		{
-			//for (int i = 0; i < NUM_LIGHTS; i++)
-			{
-				int i = ROBOT_CONNECTED_LIGHT_IDX;
-				light[i].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
-				light[i].diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-				light[i].specular = glm::vec3(0.9f, 0.9f, 0.9f);
-				light[i].base_color = glm::vec4(1.f);
-			}
-		}
-		else
-		{
-			//for (int i = 0; i < NUM_LIGHTS; i++)
-			{
-				int i = ROBOT_CONNECTED_LIGHT_IDX;
-				light[i].ambient = glm::vec3(0.07f, 0, 0);
-				light[i].diffuse = glm::vec3(0.7f, 0, 0);
-				light[i].specular = glm::vec3(0.9f, 0.0f, 0.0f);
-				light[i].base_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-			}
-			for (int l = 0; l < NUM_LEGS; l++)
-			{
-				joint* j = dynahex_bones->leg[l].chain;
-				j[1].q = q1_calib;
-				j[2].q = q2_calib;
-				j[3].q = q3_calib;
-			}
-		}
 		// spotLight
 		//lightingShader.setVec3("spotLight.position", camera_position);
 		//lightingShader.setVec3("spotLight.direction", glm::vec3(1,0,0) );
@@ -999,138 +903,11 @@ int main_render_thread(void)
 				}
 			}
 		}
-		
-
-
-		//printf("link transformed = \n");
-		//print_mat4_t(psy_hand_bones->finger[0].chain[1].him1_i);
-		//printf("\nlink dh-original= \n");
-		//print_mat4_t(psy_hand_bones->finger[0].chain[1].h_link);
-		//printf("\nfinger hb_0\n");
-		//print_mat4_t(psy_hand_bones->finger[0].chain[0].hb_i);
 
 		float tau[3] = { 0,0,0 };	//num joints + 1
 		vect3_t f = { 0,0,0 };
 		vect3_t thumb_force = { 0,0,0 };
 		vect3_t o_thumb_b = psy_hand_bones->finger[4].ef_pos_b;
-
-
-
-		///*Shirk Implementation/Test*/
-		//float k = .02f;
-		//
-		////float tau4 = k * get_vect_err(DEG_TO_RAD * qd[4], DEG_TO_RAD * q[4]) * RAD_TO_DEG;
-		////float tau5 = k * get_vect_err(DEG_TO_RAD * qd[5], DEG_TO_RAD * q[5]) * RAD_TO_DEG;
-		//float finger_error[6];
-		//for (int i = 0; i < 6; i++)
-		//	finger_error[i] = get_vect_err(DEG_TO_RAD * qd[i], DEG_TO_RAD * q[i]) * RAD_TO_DEG;
-		//float tau4 = k * finger_error[4];
-		//float tau5 = k * finger_error[5];
-
-		//#define NUM_THUMB_REFPOINTS 4
-		//vect3_t o_thumb_mid, o_thumb_low, o_thumb_side;
-		//vect3_t thumb_midref_2 = { -21.39, -9.25, -2.81 };
-		//vect3_t thumb_lowref_2 = { -46.09, -5.32, -2.58 };
-		//vect3_t thumb_sideref_2 = { -34.52f, 0, 11.f };
-		//htmatrix_vect3_mult(&psy_hand_bones->finger[4].chain[2].hb_i, &thumb_midref_2, &o_thumb_mid);
-		//htmatrix_vect3_mult(&psy_hand_bones->finger[4].chain[2].hb_i, &thumb_lowref_2, &o_thumb_low);
-		//htmatrix_vect3_mult(&psy_hand_bones->finger[4].chain[2].hb_i, &thumb_sideref_2, &o_thumb_side);
-		//vect3_t* thumb_pos_b[NUM_THUMB_REFPOINTS] = { &o_thumb_b, &o_thumb_mid, &o_thumb_low, &o_thumb_side };
-		//float weight[NUM_THUMB_REFPOINTS] = { 44.f, 44.f, 44.f, 44.f };
-		//		
-		//float shirk = 0;
-		//for (int i = 0; i < 4; i++)
-		//{
-		//	joint* j = psy_hand_bones->finger[i].chain;
-		//	vect3_t o_f_b = psy_hand_bones->finger[i].ef_pos_b;
-		//	//htmatrix_vect3_mult(&j[0].him1_i, &psy_hand_bones->finger[i].ef_pos_0, &o_f_b);	//wow. wordy
-
-		//	vect3_t knuckle_1 = { -15.44f, -6.91f, 0.f, };
-		//	vect3_t knuckle_b, knuckle_force_b;
-		//	htmatrix_vect3_mult(&j[1].hb_i, &knuckle_1, &knuckle_b);
-
-		//	/*As the figner approaches its setpoint, reduce the repulsive field between the fingertip and the thumb*/
-		//	float abserr = finger_error[i];
-		//	if (abserr < 0)
-		//		abserr = -abserr;
-		//	float tip_scalef = 1.f - (1.f / abserr);
-		//	if (tip_scalef < 0.f)
-		//		tip_scalef = 0.f;	//
-
-		//	abserr = finger_error[5];
-		//	if (abserr < 0)
-		//		abserr = -abserr;
-		//	float knuckle_scalef = 1.f - (1.f / abserr);
-		//	if (knuckle_scalef < 0.f)
-		//		knuckle_scalef = 0.f;
-
-		//	for (int thumbref_idx = 0; thumbref_idx < NUM_THUMB_REFPOINTS; thumbref_idx++)
-		//	{
-		//		vect3_t thumb_force_b = vect3_add(o_f_b, vect3_scale(*thumb_pos_b[thumbref_idx], -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
-		//		float m1 = 0;
-		//		for (int r = 0; r < 3; r++)
-		//			m1 += thumb_force_b.v[r] * thumb_force_b.v[r];
-
-		//		for (int r = 0; r < 3; r++)
-		//			knuckle_force_b.v[r] = knuckle_b.v[r] - thumb_pos_b[thumbref_idx]->v[r];
-		//		float m2 = 0;
-		//		for (int r = 0; r < 3; r++)
-		//			m2 += knuckle_force_b.v[r] * knuckle_force_b.v[r];
-
-		//		float weight_m1 = weight[thumbref_idx] * tip_scalef;
-		//		float weight_m2 = weight[thumbref_idx] * knuckle_scalef;
-
-		//		float shirk_v = -weight_m1 / m1 - weight_m2 / m2;
-		//		shirk += shirk_v;	//accumulate thumb rotator torque
-		//	}
-		//}
-		//for(int i = 0; i < 4; i++)
-		//	q[i] += k * finger_error[i];
-		//q[4] += tau4+shirk;
-		//q[5] += tau5;
-		///*END SHIRK TEST*/
-
-
-		//for (int i = 0; i < 4; i++)
-		//{
-		//	/*Get finger position in the base frame*/
-		//	vect3_t o_f_b = psy_hand_bones->finger[i].ef_pos_b;
-		//	//htmatrix_vect3_mult(&psy_hand_bones->finger[i].chain[0].him1_i, &psy_hand_bones->finger[i].ef_pos_0, &o_f_b);	//wow. wordy
-		//	
-		//	/*Set some force to act on the fingertip*/
-		//	vect3_t finger_force_b = { 0, 0, 0 };
-		//	if (i == 0)
-		//		finger_force_b = vect3_add(o_thumb_b, vect3_scale(o_f_b, -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
-		//	else if (i == 1)
-		//		finger_force_b = vect3_add(o_thumb_b, vect3_scale(o_f_b, -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
-
-		//	/*Transform the force from the base frame to the 0 frame*/
-		//	mat4_t hidx0_b = ht_inverse(psy_hand_bones->finger[i].chain[0].him1_i);	//consider loading in the other unoccupied 0 frame transform...?
-		//	for (int r = 0; r < 3; r++)
-		//		hidx0_b.m[r][3] = 0;
-		//	vect3_t force_0;
-		//	htmatrix_vect3_mult(&hidx0_b, &finger_force_b, &force_0);
-
-		//	/*Apply index finger force*/
-		//	for (int r = 0; r < 3; r++)
-		//		f.v[r] = .0003f * force_0.v[r];
-		//	calc_tau3(psy_hand_bones->finger[i].chain, 2, &f, tau);
-		//	q[i] += tau[1];
-		//}
-		///*Create an attraction force between the thumb tip and index + middle finger tip*/
-		//for (int i = 0; i < 2; i++)
-		//{
-		//	vect3_t * o_anchor_b = &psy_hand_bones->finger[i].ef_pos_b;
-		//	for (int r = 0; r < 3; r++)
-		//		thumb_force.v[r] += .0003f * (o_anchor_b->v[r] - o_thumb_b.v[r]);
-		//}
-		///*Apply Thumb force*/
-		//calc_tau3(psy_hand_bones->finger[4].chain, 2, &thumb_force, tau);
-		//q[5] += tau[1];
-		//q[4] -= tau[2];
-
-
-
 
 		//render the psyonic hand
 		// bind diffuse map
@@ -1151,9 +928,6 @@ int main_render_thread(void)
 			}
 		};
 
-		//mat4_t hw_b = Hx(PI / 2 + .2*sin(time) );
-		//hw_b = mat4_t_mult(hw_b, Hy(.2*sin(time + 1)));
-		//hw_b = mat4_t_mult(hw_b, Hz(.2*sin(time + 2)));
 
 		/*create a model meters to mm scale matrix*/
 		mat4_t scale_matrix = {
@@ -1173,7 +947,6 @@ int main_render_thread(void)
 		hw_b.m[1][3] = 2;
 		hw_b.m[2][3] = 10.f;
 
-		parse_abh_fpos_udp_cmd(&abh_lh_finger_soc, qleft);
 
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(qleft, psy_hand_bones);
@@ -1272,150 +1045,7 @@ int main_render_thread(void)
 					printf("    %f,\r\n", rh_z1.joints[i+1].q);	
 				printf("};\r\n");
 			}
-
-
-
-
-			vect3_t lh_xyz;
-			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
-			vect3_t lh_rpy; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
-			//get the wrist rotation angle
-			lh_rpy.v[0] = satv(lh_rpy.v[0], PI / 2);
-			double wrist_rotation_angle = -((lh_rpy.v[0] + 0.2 + PI / 2) - 1.45);
-			wrist_rotation_angle = satv(wrist_rotation_angle, 2.5) + PI / 2;
-			//wrist flexion angle
-			double wrist_flexion_angle = (lh_rpy.v[1] + PI) - 3.57 + 0.39;
-			wrist_flexion_angle = satv(wrist_flexion_angle, 0.5);
-			//and wrist abduction angle
-			double abduction_angle = ((lh_rpy.v[2] + PI / 2) - 1.3);
-			abduction_angle = satv(abduction_angle, 0.5);
-			//xyz conditioning and filter
-			lh_xyz.v[0] = (lh_xyz.v[0] - 0.5);
-			lh_xyz.v[1] = (-lh_xyz.v[1] + 0.5);
-			//restrict the radius of the mapped value to 200mm. i.e. saturate xyz
-			double length = vect_mag(lh_xyz.v, 3);
-			if (length > 150e-3)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					lh_xyz.v[i] *= 200e-3;
-					lh_xyz.v[i] /= length;  //normalize
-				}
-			}
-			mat4_t z1_ik_targ = rh_z1.init_targ();
-			z1_ik_targ = mat4_t_mult(Hy(abduction_angle), z1_ik_targ);
-			z1_ik_targ = mat4_t_mult(Hz(wrist_flexion_angle), z1_ik_targ);
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(wrist_rotation_angle));
-			z1_ik_targ.m[2][3] += 300e-3;
-			z1_ik_targ.m[0][3] += 300e-3;
-			z1_ik_targ.m[2][3] += lh_xyz.v[1];
-			z1_ik_targ.m[0][3] += lh_xyz.v[0];
-			//put the light in the wrist
-			mat4_t z1trg = rh_z1.get_targ_from_cur_cfg();
-			vect3_t starttargorigin = h_origin(z1trg);
-			vect3_t trgw = rh_z1.base_targ_to_world_targ(starttargorigin);
-			light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(trgw.v[0], trgw.v[1], trgw.v[2]);
-			
-			//for (int i = 0; i < 6; i++)
-			//{
-			//	rh_z1.joints[i + 1].q = init_z1_q[i];
-			//}
-			rh_z1.joints[1].q = 0;
-			rh_z1.fk();
-			double err = 1000.;
-			int iters = 0;
-			int iters_per_iter = 100;
-			while (err > .0001)
-			{
-				err = rh_z1.num_ik(&z1_ik_targ, iters_per_iter);
-				iters += iters_per_iter;
-				if (iters > 20000)
-					break;
-			}
-			rh_z1.joints[1].q -= PI / 2;
 		}
-		for (int i = 0; i < 6; i++)
-		{
-			rh_z1.joints[i + 1].q = sos_f(&lh_qlpf[i], rh_z1.joints[i + 1].q);
-		}
-		rh_z1.fk();
-		rh_z1.render_arm(lightingShader);
-		/*connect abh to z1*/
-		rh_abh_2.fk();
-		rh_abh_2.load_q(qleft);
-		mount_abh_to_z1(&rh_z1, &rh_abh_2, 0);
-		rh_abh_2.render(&lightingShader);	//then render
-
-		
-
-
-		{
-
-			vect3_t rh_xyz;
-			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
-			vect3_t rh_rpy; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
-			rh_rpy.v[0] = wrap_2pi(rh_rpy.v[0] - (-2.98));
-			rh_rpy.v[0] = satv(rh_rpy.v[0], PI / 2);
-			double wrist_rotation_angle = -(rh_rpy.v[0]);
-			wrist_rotation_angle = satv(wrist_rotation_angle, 2.5) - PI / 2;
-			//wrist flexion angle
-			double wrist_flexion_angle = rh_rpy.v[1];
-			wrist_flexion_angle = satv(wrist_flexion_angle, 0.2);
-			//and wrist abduction angle
-			
-			double abduction_angle = -wrap_2pi(rh_rpy.v[2] - (-2.5) );
-			abduction_angle = satv(abduction_angle, 0.5);
-			//xyz conditioning and filter
-			rh_xyz.v[0] = -(rh_xyz.v[0] - 0.5);
-			rh_xyz.v[1] = -(rh_xyz.v[1] - 0.5);
-			//restrict the radius of the mapped value to 200mm. i.e. saturate xyz
-			double length = vect_mag(rh_xyz.v, 3);
-			if (length > 150e-3)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					rh_xyz.v[i] *= 200e-3;
-					rh_xyz.v[i] /= length;  //normalize
-				}
-			}
-			mat4_t z1_ik_targ = rh_z1.init_targ();
-			z1_ik_targ = mat4_t_mult(Hy(abduction_angle), z1_ik_targ);
-			z1_ik_targ = mat4_t_mult(Hz(wrist_flexion_angle), z1_ik_targ);
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(wrist_rotation_angle));
-			z1_ik_targ.m[2][3] += 300e-3;
-			z1_ik_targ.m[0][3] += 300e-3;
-			z1_ik_targ.m[2][3] += rh_xyz.v[1];
-			z1_ik_targ.m[0][3] += rh_xyz.v[0];
-
-			//for (int i = 0; i < 6; i++)
-			//{
-			//	lh_z1.joints[i + 1].q = init_z1_q[i];
-			//}	
-			lh_z1.joints[1].q = 0;
-			lh_z1.fk();
-
-			double err = 1000.;
-			int iters = 0;
-			int iters_per_iter = 100;
-			while (err > .0001)
-			{
-				err = lh_z1.num_ik(&z1_ik_targ, iters_per_iter);
-				iters += iters_per_iter;
-				if (iters > 20000)
-					break;
-			}
-			lh_z1.joints[1].q += PI / 2;
-		}
-		for (int i = 0; i < 6; i++)
-		{
-			lh_z1.joints[i + 1].q = sos_f(&rh_qlpf[i], lh_z1.joints[i + 1].q);
-		}
-		lh_z1.fk();
-		lh_z1.render_arm(lightingShader);
-		lh_abh_2.fk();
-		mount_abh_to_z1(&lh_z1, &lh_abh_2, 1);
-		lh_abh_2.load_q(qright);
-		lh_abh_2.render(&lightingShader);
 
 		//manual control of the overhead light position
 		int mnljki = (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) << 0;
@@ -1445,24 +1075,6 @@ int main_render_thread(void)
 
 
 		
-		{
-			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
-			vect3_t rh_rpy; vect3_t rh_xyz; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
-			
-			vect3_t shuffle;
-			shuffle.v[0] = rh_rpy.v[1] + PI;	//good
-			shuffle.v[1] = 0*(rh_rpy.v[2] + PI/2);
-			shuffle.v[2] = rh_rpy.v[0]+2.83+PI+PI/2+PI;	//good
-			mat4_t m = get_rpy_xyz_htmatrix(&rh_xyz, &shuffle);
-			for (int r = 0; r < 3; r++)
-			{
-				for (int c = 0; c < 3; c++)
-				{
-					hw_b.m[r][c] = m.m[r][c]* .01;
-				}
-			}
-		}
-		parse_abh_fpos_udp_cmd(&abh_rh_finger_soc, qright);
 
 		hw_b.m[1][3] = 0;
 		mat4_t hmir = mat4_t_Identity;
@@ -1660,34 +1272,6 @@ int main_render_thread(void)
 
 
 
-		/*
-		* UDP stuff to control a hexapod leg (scale to whole robot later)
-		*/
-		if (tick > udpsend_ts)	//periodically send a ping pessage so the server knows to point the hose at us
-		{
-			udpsend_ts = tick + 750;
-			sendto(robot_client.s, "hello", 5, 0, (struct sockaddr*)&robot_client.si_other, robot_client.slen);
-		}
-		int recieved_length = recvfrom(robot_client.s, (char*)udp_rx_buf, BUFLEN, 0, (struct sockaddr*)&(robot_client.si_other), &robot_client.slen);
-		if (recieved_length > 0)
-		{
-			if ((recieved_length % 4) == 0 && (recieved_length/4) == 18)	//checksum not sent over udp. check size of packet to confirm load
-			{
-				int i = 0;
-				for (int leg = 0; leg < 6; leg++)
-				{
-					for (int joint = 1; joint <= 3; joint++)
-					{
-						int32_t val = ((int32_t*)udp_rx_buf)[i];
-						float fval = (float)val;
-						dynahex_bones->leg[leg].chain[joint].q = fval / 4096.f;
-						i++;
-
-						udp_connected_ts = tick;
-					}
-				}
-			}
-		}
 #ifdef GET_HEXAPOD_OFFSET_VALS
 		/*offset capture:
 		* 1. match the orientation of the robot pre-udp connection
