@@ -83,8 +83,16 @@ add_executable(jesses_crappy_world
 	vboindexer.cpp
 	vect_fixed.cpp
 	
-	tutorial06_keyboard_and_mouse/TransformVertexShader.vertexshader
-	tutorial06_keyboard_and_mouse/TextureFragmentShader.fragmentshader
+	1.model_loading.fragmentshader
+	2.1.basic_lighting.fragmentshader
+	2.1.lamp.fragmentshader
+	6.light_cube.fragmentshader
+	6.multiple_lights.fragmentshader
+	1.model_loading.vs.vertexshader
+	2.1.basic_lighting.vs.vertexshader
+	2.1.lamp.vs.vertexshader
+	6.light_cube.vs.vertexshader
+	6.multiple_lights.vs.vertexshader
 )
 target_link_libraries(jesses_crappy_world
 	${ALL_LIBS}
@@ -102,8 +110,8 @@ SOURCE_GROUP(shaders REGULAR_EXPRESSION ".*/.*shader$" )
 
 if (NOT ${CMAKE_GENERATOR} MATCHES "Xcode" )
 add_custom_command(
-   TARGET tutorial01_first_window POST_BUILD
-   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/tutorial01_first_window${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/tutorial01_first_window/"
+   TARGET jesses_crappy_world POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/jesses_crappy_world${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_CURRENT_SOURCE_DIR}/jesses_crappy_world/"
 )
 
 elseif (${CMAKE_GENERATOR} MATCHES "Xcode" )
