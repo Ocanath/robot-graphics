@@ -1,9 +1,9 @@
-#include <glad/glad.h>	//needs to be first include in file always
+//#include <glad/glad.h>	//needs to be first include in file always
 
 
 #include "utils.h"
 #include <stdio.h>
-#include <GLFW\glfw3.h>
+#include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
