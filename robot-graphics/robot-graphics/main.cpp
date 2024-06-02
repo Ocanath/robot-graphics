@@ -293,12 +293,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = -16.427097;
-	Player.CamRobot.hw_b.m[1][3] = -0.267377;
-	Player.CamRobot.hw_b.m[2][3] = 12.256087;
-	Player.CamRobot.j[1].q = fmod(78.475189 + PI, 2 * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-2.052593 + PI, 2 * PI) - PI;	//Player.CamRobot.j[1].q = 0;
-	//Player.CamRobot.j[2].q = -PI/2;
+	Player.CamRobot.hw_b.m[0][3] = 7.044519;
+	Player.CamRobot.hw_b.m[1][3] = -7.886983;
+	Player.CamRobot.hw_b.m[2][3] = 3.428428;
+	Player.CamRobot.j[1].q = fmod(188.713150 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-1.767589 + PI, 2 * PI) - PI;	//Player.CamRobot.j[2].q = -PI/2;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
