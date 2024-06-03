@@ -1693,23 +1693,41 @@ int main_render_thread(void)
 		{
 			recieved_length = recvfrom(robot_client.s, (char*)udp_rx_buf, BUFLEN, 0, (struct sockaddr*)&(robot_client.si_other), &robot_client.slen);
 		}
-
+		int wordlen = recieved_length / sizeof(int32_t);
 		if (recieved_length > 0)
 		{
-			if ((recieved_length % 4) == 0 && (recieved_length/4) == 18)	//checksum not sent over udp. check size of packet to confirm load
+			if ((recieved_length % 4) == 0)
 			{
-				int i = 0;
-				for (int leg = 0; leg < 6; leg++)
+				if (wordlen == 18 || wordlen == 18*2)	//checksum not sent over udp. check size of packet to confirm load
 				{
-					for (int joint = 1; joint <= 3; joint++)
+					int i = 0;
+					for (int leg = 0; leg < 6; leg++)
 					{
-						int32_t val = ((int32_t*)udp_rx_buf)[i];
-						float fval = (float)val;
-						real_hexapod_qmeas[i] = fval / 4096.f;
-						i++;
-						udp_connected_ts = tick;
+						for (int joint = 1; joint <= 3; joint++)
+						{
+							int32_t val = ((int32_t*)udp_rx_buf)[i];
+							float fval = (float)val;
+							real_hexapod_qmeas[i] = fval / 4096.f;
+							i++;
+						}
 					}
+					if (wordlen == 18*2)	//continue to next set if we have receieved the qd data
+					{	
+						for (int leg = 0; leg < 6; leg++)
+						{
+							for (int joint = 1; joint <= 3; joint++)
+							{
+								int32_t val = ((int32_t*)udp_rx_buf)[i];
+								float fval = (float)val;
+								real_hexapod_qd[i] = fval / 4096.f;
+								i++;
+							}
+						}
+					}
+
+					udp_connected_ts = tick;
 				}
+
 			}
 		}
 
@@ -1774,35 +1792,36 @@ int main_render_thread(void)
 			}
 
 		}
-		//{	//Second render 
-		//	int i = 0;
-		//	for (int leg = 0; leg < 6; leg++)
-		//	{
-		//		for (int joint = 1; joint <= 3; joint++)
-		//		{
-		//			float fval = 0;
-		//			dynahex_bones->leg[leg].chain[joint].q = real_hexapod_qd[i];
-		//			i++;
-		//		}
-		//	}
-		//	forward_kinematics_dynahexleg(dynahex_bones);
-		//	for (int l = 0; l < 6; l++)
-		//	{
-		//		joint* j = dynahex_bones->leg[l].chain;
-		//		vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
-		//		calc_J_point(&j->him1_i, j->child, &o3);
-		//		for (int i = 0; i < 4; i++)
-		//		{
-		//			//dynahex_modellist[i].hb_model = &j[i].hb_i;
-		//			mat4_t hw_i;
-		//			mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
+		if(wordlen == 18*2)
+		{	//Second render 
+			int i = 0;
+			for (int leg = 0; leg < 6; leg++)
+			{
+				for (int joint = 1; joint <= 3; joint++)
+				{
+					float fval = 0;
+					dynahex_bones->leg[leg].chain[joint].q = real_hexapod_qd[i];
+					i++;
+				}
+			}
+			forward_kinematics_dynahexleg(dynahex_bones);
+			for (int l = 0; l < 6; l++)
+			{
+				joint* j = dynahex_bones->leg[l].chain;
+				vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
+				calc_J_point(&j->him1_i, j->child, &o3);
+				for (int i = 0; i < 4; i++)
+				{
+					//dynahex_modellist[i].hb_model = &j[i].hb_i;
+					mat4_t hw_i;
+					mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
 
-		//			model = ht_matrix_to_mat4_t(hw_i);
-		//			lightingShader.setMat4("model", model);
-		//			dynahex_modellist[i].Draw(lightingShader, NULL);
-		//		}
-		//	}
-		//}
+					model = ht_matrix_to_mat4_t(hw_i);
+					lightingShader.setMat4("model", model);
+					dynahex_modellist[i].Draw(lightingShader, NULL);
+				}
+			}
+		}
 
 
 
