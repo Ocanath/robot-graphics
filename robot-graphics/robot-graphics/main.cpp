@@ -35,6 +35,8 @@
 #include "z1.h"
 #include "psyhand_urdf.h"
 
+#include "winserial.h"
+
 #define NUM_LIGHTS 5
 
 //#define GET_HEXAPOD_OFFSET_VALS
@@ -243,6 +245,7 @@ dynahex_t * dynahex_bones = NULL;
 kinematic_hand_t* psy_hand_bones = NULL;
 int main_render_thread(void);
 
+com_ppp_buffer_t combuf = { 0 };
 
 int main(void)
 {
@@ -258,6 +261,7 @@ int main(void)
 	std::thread t1(main_render_thread);
 	t1.join();
 }
+
 
 
 int main_render_thread(void)
@@ -492,7 +496,8 @@ int main_render_thread(void)
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F2-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/F3-stripped.STL"));
 	dynahex_modellist.push_back(AssetModel("misc_models/dynahex/FB-stripped.STL"));
-	
+	vector<float> real_hexapod_qmeas(18);
+	vector<float> real_hexapod_qd(18);
 
 
 	vector<AssetModel> hexapod_modellist;
@@ -502,7 +507,7 @@ int main_render_thread(void)
 	hexapod_modellist.push_back(AssetModel("URDF/render/J2_link2_meters.STL"));
 	hexapod_modellist.push_back(AssetModel("URDF/render/J3_link3_meters.STL"));
 	/*another hexapod structure. this */
-	joint2 hexjoints[18];
+	vector<joint2> hexjoints; for (int i = 0; i < 18; i++) { joint2 tmp = { 0 };  hexjoints.push_back(tmp); }
 	int jointlist_idx = 0;
 	link_t hexbase, hexlink1[6], hexlink2[6], hexlink3[6];
 	hexbase.name = "hexbase";
@@ -703,7 +708,13 @@ int main_render_thread(void)
 		printf("\r\n--------------\r\n");
 	}
 	mat4_t z1_start_cfg = rh_z1.get_targ_from_cur_cfg();
-
+	
+	HANDLE serial_port;
+	int com_connected = auto_connect_com_port(&serial_port, 460800);
+	if (com_connected == 0)
+	{
+		printf("No COM found\r\n");
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -1565,6 +1576,7 @@ int main_render_thread(void)
 		//}
 
 		dynahex_hw_b = Hscale(.005f);
+		dynahex_hw_b = mat4_t_mult(dynahex_hw_b, Hz(PI));
 		dynahex_hw_b.m[1][3] = -6.f;
 		dynahex_hw_b.m[2][3] = 2.f;
 
@@ -1667,7 +1679,21 @@ int main_render_thread(void)
 			udpsend_ts = tick + 750;
 			sendto(robot_client.s, "hello", 5, 0, (struct sockaddr*)&robot_client.si_other, robot_client.slen);
 		}
-		int recieved_length = recvfrom(robot_client.s, (char*)udp_rx_buf, BUFLEN, 0, (struct sockaddr*)&(robot_client.si_other), &robot_client.slen);
+		int recieved_length = 0;
+		//override from com
+		if (com_connected)
+		{
+			recieved_length = get_ppp_pld(&serial_port, &combuf);
+			for(int i = 0; i < recieved_length; i++)
+			{
+				udp_rx_buf[i] = combuf.ppp_payload_buffer[i];
+			}
+		}
+		else
+		{
+			recieved_length = recvfrom(robot_client.s, (char*)udp_rx_buf, BUFLEN, 0, (struct sockaddr*)&(robot_client.si_other), &robot_client.slen);
+		}
+
 		if (recieved_length > 0)
 		{
 			if ((recieved_length % 4) == 0 && (recieved_length/4) == 18)	//checksum not sent over udp. check size of packet to confirm load
@@ -1679,14 +1705,15 @@ int main_render_thread(void)
 					{
 						int32_t val = ((int32_t*)udp_rx_buf)[i];
 						float fval = (float)val;
-						dynahex_bones->leg[leg].chain[joint].q = fval / 4096.f;
+						real_hexapod_qmeas[i] = fval / 4096.f;
 						i++;
-
 						udp_connected_ts = tick;
 					}
 				}
 			}
+			printf("\r\n");
 		}
+
 #ifdef GET_HEXAPOD_OFFSET_VALS
 		/*offset capture:
 		* 1. match the orientation of the robot pre-udp connection
@@ -1711,27 +1738,80 @@ int main_render_thread(void)
 
 
 
+		//do COM load, if there is a COM to load
+
+
 		model = ht_matrix_to_mat4_t(dynahex_hw_b);
 		lightingShader.setMat4("model", model);
 		dynahex_modellist[4].Draw(lightingShader, NULL);
-		forward_kinematics_dynahexleg(dynahex_bones);
-		for (int l = 0; l < 6; l++)
-		{
-			joint* j = dynahex_bones->leg[l].chain;
-			vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
-			calc_J_point(&j->him1_i, j->child, &o3);
-			for (int i = 0; i < 4; i++)
-			{
-				//dynahex_modellist[i].hb_model = &j[i].hb_i;
-				mat4_t hw_i;
-				mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
 
-				model = ht_matrix_to_mat4_t(hw_i);
-				lightingShader.setMat4("model", model);
-				dynahex_modellist[i].Draw(lightingShader, NULL);
+		{
+			int i = 0;
+			for (int leg = 0; leg < 6; leg++)
+			{
+				for (int joint = 1; joint <= 3; joint++)
+				{
+					float fval = 0;
+					dynahex_bones->leg[leg].chain[joint].q = real_hexapod_qmeas[i];
+					i++;
+				}
+			}
+			forward_kinematics_dynahexleg(dynahex_bones);
+			for (int l = 0; l < 6; l++)
+			{
+				joint* j = dynahex_bones->leg[l].chain;
+				vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
+				calc_J_point(&j->him1_i, j->child, &o3);
+				for (int i = 0; i < 4; i++)
+				{
+					//dynahex_modellist[i].hb_model = &j[i].hb_i;
+					mat4_t hw_i;
+					mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
+
+					model = ht_matrix_to_mat4_t(hw_i);
+					lightingShader.setMat4("model", model);
+					dynahex_modellist[i].Draw(lightingShader, NULL);
+				}
+			}
+
+		}
+
+
+		{	//Second render 
+			int i = 0;
+			for (int leg = 0; leg < 6; leg++)
+			{
+				for (int joint = 1; joint <= 3; joint++)
+				{
+					float fval = 0;
+					dynahex_bones->leg[leg].chain[joint].q = real_hexapod_qd[i];
+					i++;
+				}
+			}
+			forward_kinematics_dynahexleg(dynahex_bones);
+			for (int l = 0; l < 6; l++)
+			{
+				joint* j = dynahex_bones->leg[l].chain;
+				vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
+				calc_J_point(&j->him1_i, j->child, &o3);
+				for (int i = 0; i < 4; i++)
+				{
+					//dynahex_modellist[i].hb_model = &j[i].hb_i;
+					mat4_t hw_i;
+					mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
+
+					model = ht_matrix_to_mat4_t(hw_i);
+					lightingShader.setMat4("model", model);
+					dynahex_modellist[i].Draw(lightingShader, NULL);
+				}
 			}
 		}
-		
+
+
+
+
+
+
 		simpletree_jointlist[0]->q = 0.5f* (float)sin(time);
 		simpletree_jointlist[2]->q = 0.5f * (float)sin(time);
 
@@ -1743,7 +1823,7 @@ int main_render_thread(void)
 		
 		for (int joint = 0; joint < 18; joint++)
 		{
-			hexjoints[joint].q = 0;// 1.f + .1f * (float)sin(time * 10.f + (float)joint);
+			hexjoints[joint].q = 1.f + .1f * (float)sin(time * 10.f + (float)joint);
 		}
 		tree_dfs(&hexbase);
 		{
@@ -1751,6 +1831,7 @@ int main_render_thread(void)
 			hw_b.m[0][3] = -5.f;
 			hw_b.m[1][3] = 0;
 			hw_b.m[2][3] = 3.f;
+
 			hw_b = mat4_t_mult(hw_b, Hz(0));
 			for (int i = 0; i < 3; i++)		//assign target to this robot
 				target.v[i] = hw_b.m[i][3];
@@ -1788,6 +1869,8 @@ int main_render_thread(void)
 	
 	
 	delete[] link5.joints;
+
+	CloseHandle(serial_port);
 
 	glfwTerminate();
 	return 0;

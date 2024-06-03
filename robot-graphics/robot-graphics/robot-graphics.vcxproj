@@ -168,6 +168,7 @@
     <ClCompile Include="m_mcpy.cpp" />
     <ClCompile Include="objloader.cpp" />
     <ClCompile Include="physics_thread.cpp" />
+    <ClCompile Include="PPP.cpp" />
     <ClCompile Include="psy-grips.cpp" />
     <ClCompile Include="sin_fast.cpp" />
     <ClCompile Include="sin_lookup_table.cpp" />
@@ -177,6 +178,7 @@
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="vboindexer.cpp" />
     <ClCompile Include="vect_fixed.cpp" />
+    <ClCompile Include="winserial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
@@ -196,6 +198,7 @@
     <ClInclude Include="m_mcpy.h" />
     <ClInclude Include="objloader.hpp" />
     <ClInclude Include="physics_thread.h" />
+    <ClInclude Include="PPP.h" />
     <ClInclude Include="psyhand_urdf.h" />
     <ClInclude Include="RenderRobot.h" />
     <ClInclude Include="shader-reader.h" />
@@ -208,6 +211,7 @@
     <ClInclude Include="utils.h" />
     <ClInclude Include="vboindexer.hpp" />
     <ClInclude Include="vect_fixed.h" />
+    <ClInclude Include="winserial.h" />
     <ClInclude Include="WinUdpBkstServer.h" />
     <ClInclude Include="WinUdpClient.h" />
     <ClInclude Include="z1.h" />
