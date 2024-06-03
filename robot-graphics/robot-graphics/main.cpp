@@ -388,6 +388,7 @@ int main_render_thread(void)
 	unsigned int stone_diffuse_map = loadTexture("img/large_stone_tiled.png");
 	unsigned int stone_specular_map = loadTexture("img/large_stone_tiled_specular.png");
 	unsigned int white_map = loadTexture("img/white.png");
+	unsigned int ghost_map = loadTexture("img/ghost.png");
 
 	AssetModel cube("misc_models/primitive_shapes/cube.obj");
 	cube.hb_model = new mat4_t;
@@ -655,6 +656,7 @@ int main_render_thread(void)
 	robot_client.si_other.sin_addr.S_un.S_addr = robot_client.get_bkst_ip();
 	uint64_t udpsend_ts = 0;
 	uint64_t udp_connected_ts = 0;
+	uint64_t double_render_ts = 0;
 
 	mat4_t lh_htmat = mat4_t_Identity;
 	mat4_t rh_htmat = mat4_t_Identity;
@@ -1149,6 +1151,37 @@ int main_render_thread(void)
 		// bind specular map
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, white_map);
+
+
+
+		simpletree_jointlist[0]->q = 0.5f * (float)sin(time);
+		simpletree_jointlist[2]->q = 0.5f * (float)sin(time);
+
+		simpletree_jointlist[1]->q = 0.5f * (float)sin(time);
+		simpletree_jointlist[5]->q = 0.5f * (float)sin(time);
+
+		simpletree_jointlist[3]->q = .3f * (float)sin(time * 5) - 2;
+		simpletree_jointlist[4]->q = -.3f * (float)sin(time * 5) + 2;
+
+		for (int joint = 0; joint < 18; joint++)
+		{
+			hexjoints[joint].q = 1.f + .1f * (float)sin(time * 10.f + (float)joint);
+		}
+		tree_dfs(&hexbase);
+		{
+			mat4_t hw_b = Hscale(10.f);
+			hw_b.m[0][3] = -5.f;
+			hw_b.m[1][3] = 0;
+			hw_b.m[2][3] = 3.f;
+
+			hw_b = mat4_t_mult(hw_b, Hz(0));
+			for (int i = 0; i < 3; i++)		//assign target to this robot
+				target.v[i] = hw_b.m[i][3];
+			model = ht_matrix_to_mat4_t(hw_b);
+			lightingShader.setMat4("model", model);
+			render_robot(&hw_b, &lightingShader, &hexbase);
+		}
+
 
 		//lightingShader.setFloat("material.shininess", 32.0f);
 		scf = 0.01f;
@@ -1700,29 +1733,30 @@ int main_render_thread(void)
 			{
 				if (wordlen == 18 || wordlen == 18*2)	//checksum not sent over udp. check size of packet to confirm load
 				{
-					int i = 0;
+					int dataidx = 0;
+					int dump_idx = 0;
 					for (int leg = 0; leg < 6; leg++)
 					{
 						for (int joint = 1; joint <= 3; joint++)
 						{
-							int32_t val = ((int32_t*)udp_rx_buf)[i];
+							int32_t val = ((int32_t*)udp_rx_buf)[dataidx++];
 							float fval = (float)val;
-							real_hexapod_qmeas[i] = fval / 4096.f;
-							i++;
+							real_hexapod_qmeas[dump_idx++] = fval / 4096.f;
 						}
 					}
+					dump_idx = 0;
 					if (wordlen == 18*2)	//continue to next set if we have receieved the qd data
 					{	
 						for (int leg = 0; leg < 6; leg++)
 						{
 							for (int joint = 1; joint <= 3; joint++)
 							{
-								int32_t val = ((int32_t*)udp_rx_buf)[i];
+								int32_t val = ((int32_t*)udp_rx_buf)[dataidx++];
 								float fval = (float)val;
-								real_hexapod_qd[i] = fval / 4096.f;
-								i++;
+								//real_hexapod_qd[dump_idx++] = fval / 4096.f;
 							}
 						}
+						double_render_ts = tick;
 					}
 
 					udp_connected_ts = tick;
@@ -1761,7 +1795,7 @@ int main_render_thread(void)
 		model = ht_matrix_to_mat4_t(dynahex_hw_b);
 		lightingShader.setMat4("model", model);
 		dynahex_modellist[4].Draw(lightingShader, NULL);
-
+		
 		{
 			int i = 0;
 			for (int leg = 0; leg < 6; leg++)
@@ -1790,10 +1824,17 @@ int main_render_thread(void)
 					dynahex_modellist[i].Draw(lightingShader, NULL);
 				}
 			}
-
 		}
-		if(wordlen == 18*2)
-		{	//Second render 
+
+		if ( (tick - double_render_ts) < 100)
+		{
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, ghost_map);
+			// bind specular map
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, ghost_map);
+
+			//Second render 
 			int i = 0;
 			for (int leg = 0; leg < 6; leg++)
 			{
@@ -1808,8 +1849,8 @@ int main_render_thread(void)
 			for (int l = 0; l < 6; l++)
 			{
 				joint* j = dynahex_bones->leg[l].chain;
-				vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
-				calc_J_point(&j->him1_i, j->child, &o3);
+				//vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
+				//calc_J_point(&j->him1_i, j->child, &o3);
 				for (int i = 0; i < 4; i++)
 				{
 					//dynahex_modellist[i].hb_model = &j[i].hb_i;
@@ -1826,35 +1867,6 @@ int main_render_thread(void)
 
 
 
-
-
-		simpletree_jointlist[0]->q = 0.5f* (float)sin(time);
-		simpletree_jointlist[2]->q = 0.5f * (float)sin(time);
-
-		simpletree_jointlist[1]->q = 0.5f * (float)sin(time);
-		simpletree_jointlist[5]->q = 0.5f * (float)sin(time);
-
-		simpletree_jointlist[3]->q = .3f*(float)sin(time*5)-2;
-		simpletree_jointlist[4]->q = -.3f*(float)sin(time*5)+2;
-		
-		for (int joint = 0; joint < 18; joint++)
-		{
-			hexjoints[joint].q = 1.f + .1f * (float)sin(time * 10.f + (float)joint);
-		}
-		tree_dfs(&hexbase);
-		{
-			mat4_t hw_b = Hscale(10.f);
-			hw_b.m[0][3] = -5.f;
-			hw_b.m[1][3] = 0;
-			hw_b.m[2][3] = 3.f;
-
-			hw_b = mat4_t_mult(hw_b, Hz(0));
-			for (int i = 0; i < 3; i++)		//assign target to this robot
-				target.v[i] = hw_b.m[i][3];
-			model = ht_matrix_to_mat4_t(hw_b);
-			lightingShader.setMat4("model", model);
-			render_robot(&hw_b, &lightingShader, &hexbase);
-		}
 
 		
 
