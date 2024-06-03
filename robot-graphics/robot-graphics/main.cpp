@@ -1775,37 +1775,35 @@ int main_render_thread(void)
 			}
 
 		}
+		//{	//Second render 
+		//	int i = 0;
+		//	for (int leg = 0; leg < 6; leg++)
+		//	{
+		//		for (int joint = 1; joint <= 3; joint++)
+		//		{
+		//			float fval = 0;
+		//			dynahex_bones->leg[leg].chain[joint].q = real_hexapod_qd[i];
+		//			i++;
+		//		}
+		//	}
+		//	forward_kinematics_dynahexleg(dynahex_bones);
+		//	for (int l = 0; l < 6; l++)
+		//	{
+		//		joint* j = dynahex_bones->leg[l].chain;
+		//		vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
+		//		calc_J_point(&j->him1_i, j->child, &o3);
+		//		for (int i = 0; i < 4; i++)
+		//		{
+		//			//dynahex_modellist[i].hb_model = &j[i].hb_i;
+		//			mat4_t hw_i;
+		//			mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
 
-
-		{	//Second render 
-			int i = 0;
-			for (int leg = 0; leg < 6; leg++)
-			{
-				for (int joint = 1; joint <= 3; joint++)
-				{
-					float fval = 0;
-					dynahex_bones->leg[leg].chain[joint].q = real_hexapod_qd[i];
-					i++;
-				}
-			}
-			forward_kinematics_dynahexleg(dynahex_bones);
-			for (int l = 0; l < 6; l++)
-			{
-				joint* j = dynahex_bones->leg[l].chain;
-				vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
-				calc_J_point(&j->him1_i, j->child, &o3);
-				for (int i = 0; i < 4; i++)
-				{
-					//dynahex_modellist[i].hb_model = &j[i].hb_i;
-					mat4_t hw_i;
-					mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
-
-					model = ht_matrix_to_mat4_t(hw_i);
-					lightingShader.setMat4("model", model);
-					dynahex_modellist[i].Draw(lightingShader, NULL);
-				}
-			}
-		}
+		//			model = ht_matrix_to_mat4_t(hw_i);
+		//			lightingShader.setMat4("model", model);
+		//			dynahex_modellist[i].Draw(lightingShader, NULL);
+		//		}
+		//	}
+		//}
 
 
 
