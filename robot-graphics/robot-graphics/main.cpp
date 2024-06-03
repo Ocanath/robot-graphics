@@ -1711,7 +1711,6 @@ int main_render_thread(void)
 					}
 				}
 			}
-			printf("\r\n");
 		}
 
 #ifdef GET_HEXAPOD_OFFSET_VALS
