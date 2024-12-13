@@ -69,9 +69,6 @@
     <ClCompile Include="dynahex.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
-    <ClCompile Include="physics_thread.cpp">
-      <Filter>Source Files\app-robotics</Filter>
-    </ClCompile>
     <ClCompile Include="dh_hex_fixed.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>

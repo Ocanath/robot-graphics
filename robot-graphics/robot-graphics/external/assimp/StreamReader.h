@@ -3,7 +3,7 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2021, assimp team
+Copyright (c) 2006-2024, assimp team
 
 All rights reserved.
 
@@ -47,11 +47,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define AI_STREAMREADER_H_INCLUDED
 
 #ifdef __GNUC__
-#pragma GCC system_header
+#   pragma GCC system_header
 #endif
 
 #include <assimp/ByteSwapper.h>
-#include <assimp/Defines.h>
 #include <assimp/Exceptional.h>
 #include <assimp/IOStream.hpp>
 
@@ -69,7 +68,7 @@ namespace Assimp {
  *
  *  XXX switch from unsigned int for size types to size_t? or ptrdiff_t?*/
 // --------------------------------------------------------------------------------------------
-template <bool SwapEndianess = false, bool RuntimeSwitch = false>
+template <bool SwapEndianness = false, bool RuntimeSwitch = false>
 class StreamReader {
 public:
     using diff = size_t;
@@ -85,7 +84,7 @@ public:
      *    reads from the current position to the end of the stream.
      *  @param le If @c RuntimeSwitch is true: specifies whether the
      *    stream is in little endian byte order. Otherwise the
-     *    endianness information is contained in the @c SwapEndianess
+     *    endianness information is contained in the @c SwapEndianness
      *    template parameter and this parameter is meaningless.  */
     StreamReader(std::shared_ptr<IOStream> stream, bool le = false) :
             mStream(stream),
@@ -208,7 +207,7 @@ public:
 
     // ---------------------------------------------------------------------
     /** Set current file pointer (Get it from #GetPtr). This is if you
-     *  prefer to do pointer arithmetics on your own or want to copy
+     *  prefer to do pointer arithmetic on your own or want to copy
      *  large chunks of data at once.
      *  @param p The new pointer, which is validated against the size
      *    limit and buffer boundaries. */
@@ -292,7 +291,7 @@ public:
 
         T f;
         ::memcpy(&f, mCurrent, sizeof(T));
-        Intern::Getter<SwapEndianess, T, RuntimeSwitch>()(&f, mLe);
+        Intern::Getter<SwapEndianness, T, RuntimeSwitch>()(&f, mLe);
         mCurrent += sizeof(T);
 
         return f;

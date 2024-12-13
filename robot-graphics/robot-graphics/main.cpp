@@ -252,11 +252,9 @@ int main(void)
 	//tinyxml2::XMLElement* titleElement = doc.FirstChildElement("robot")->FirstChildElement("link");
 	//const char* title = titleElement->GetText();
 	//printf("Name of play (1): %s\n", title);
-
-	std::thread t2(physics_thread);
-	t2.join();
-	std::thread t1(main_render_thread);
-	t1.join();
+	main_render_thread();
+//	std::thread t1(main_render_thread);
+//	t1.join();
 }
 
 
@@ -1260,79 +1258,7 @@ int main_render_thread(void)
 		}
 		
 
-		{
-			vect3_t otarg_b = h_origin(z1_start_cfg);
-			if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
-			{
-				printf("\r\ntargB=");
-				print_vect3(otarg_b);
-				printf("\r\nq = {\r\n");
-				for(int i = 0; i < 6; i++)
-					printf("    %f,\r\n", rh_z1.joints[i+1].q);	
-				printf("};\r\n");
-			}
 
-
-
-
-			vect3_t lh_xyz;
-			int rc = parse_abh_htmat(&abh_lh_pos_soc, &lh_htmat);
-			vect3_t lh_rpy; get_xyz_rpy(&lh_htmat, &lh_xyz, &lh_rpy);
-			//get the wrist rotation angle
-			lh_rpy.v[0] = satv(lh_rpy.v[0], PI / 2);
-			double wrist_rotation_angle = -((lh_rpy.v[0] + 0.2 + PI / 2) - 1.45);
-			wrist_rotation_angle = satv(wrist_rotation_angle, 2.5) + PI / 2;
-			//wrist flexion angle
-			double wrist_flexion_angle = (lh_rpy.v[1] + PI) - 3.57 + 0.39;
-			wrist_flexion_angle = satv(wrist_flexion_angle, 0.5);
-			//and wrist abduction angle
-			double abduction_angle = ((lh_rpy.v[2] + PI / 2) - 1.3);
-			abduction_angle = satv(abduction_angle, 0.5);
-			//xyz conditioning and filter
-			lh_xyz.v[0] = (lh_xyz.v[0] - 0.5);
-			lh_xyz.v[1] = (-lh_xyz.v[1] + 0.5);
-			//restrict the radius of the mapped value to 200mm. i.e. saturate xyz
-			double length = vect_mag(lh_xyz.v, 3);
-			if (length > 150e-3)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					lh_xyz.v[i] *= 200e-3;
-					lh_xyz.v[i] /= length;  //normalize
-				}
-			}
-			mat4_t z1_ik_targ = rh_z1.init_targ();
-			z1_ik_targ = mat4_t_mult(Hy(abduction_angle), z1_ik_targ);
-			z1_ik_targ = mat4_t_mult(Hz(wrist_flexion_angle), z1_ik_targ);
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(wrist_rotation_angle));
-			z1_ik_targ.m[2][3] += 300e-3;
-			z1_ik_targ.m[0][3] += 300e-3;
-			z1_ik_targ.m[2][3] += lh_xyz.v[1];
-			z1_ik_targ.m[0][3] += lh_xyz.v[0];
-			//put the light in the wrist
-			mat4_t z1trg = rh_z1.get_targ_from_cur_cfg();
-			vect3_t starttargorigin = h_origin(z1trg);
-			vect3_t trgw = rh_z1.base_targ_to_world_targ(starttargorigin);
-			light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(trgw.v[0], trgw.v[1], trgw.v[2]);
-			
-			//for (int i = 0; i < 6; i++)
-			//{
-			//	rh_z1.joints[i + 1].q = init_z1_q[i];
-			//}
-			rh_z1.joints[1].q = 0;
-			rh_z1.fk();
-			double err = 1000.;
-			int iters = 0;
-			int iters_per_iter = 100;
-			while (err > .0001)
-			{
-				err = rh_z1.num_ik(&z1_ik_targ, iters_per_iter);
-				iters += iters_per_iter;
-				if (iters > 20000)
-					break;
-			}
-			rh_z1.joints[1].q -= PI / 2;
-		}
 		for (int i = 0; i < 6; i++)
 		{
 			rh_z1.joints[i + 1].q = sos_f(&lh_qlpf[i], rh_z1.joints[i + 1].q);
@@ -1348,63 +1274,7 @@ int main_render_thread(void)
 		
 
 
-		{
 
-			vect3_t rh_xyz;
-			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
-			vect3_t rh_rpy; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
-			rh_rpy.v[0] = wrap_2pi(rh_rpy.v[0] - (-2.98));
-			rh_rpy.v[0] = satv(rh_rpy.v[0], PI / 2);
-			double wrist_rotation_angle = -(rh_rpy.v[0]);
-			wrist_rotation_angle = satv(wrist_rotation_angle, 2.5) - PI / 2;
-			//wrist flexion angle
-			double wrist_flexion_angle = rh_rpy.v[1];
-			wrist_flexion_angle = satv(wrist_flexion_angle, 0.2);
-			//and wrist abduction angle
-			
-			double abduction_angle = -wrap_2pi(rh_rpy.v[2] - (-2.5) );
-			abduction_angle = satv(abduction_angle, 0.5);
-			//xyz conditioning and filter
-			rh_xyz.v[0] = -(rh_xyz.v[0] - 0.5);
-			rh_xyz.v[1] = -(rh_xyz.v[1] - 0.5);
-			//restrict the radius of the mapped value to 200mm. i.e. saturate xyz
-			double length = vect_mag(rh_xyz.v, 3);
-			if (length > 150e-3)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					rh_xyz.v[i] *= 200e-3;
-					rh_xyz.v[i] /= length;  //normalize
-				}
-			}
-			mat4_t z1_ik_targ = rh_z1.init_targ();
-			z1_ik_targ = mat4_t_mult(Hy(abduction_angle), z1_ik_targ);
-			z1_ik_targ = mat4_t_mult(Hz(wrist_flexion_angle), z1_ik_targ);
-			z1_ik_targ = mat4_t_mult(z1_ik_targ, Hx(wrist_rotation_angle));
-			z1_ik_targ.m[2][3] += 300e-3;
-			z1_ik_targ.m[0][3] += 300e-3;
-			z1_ik_targ.m[2][3] += rh_xyz.v[1];
-			z1_ik_targ.m[0][3] += rh_xyz.v[0];
-
-			//for (int i = 0; i < 6; i++)
-			//{
-			//	lh_z1.joints[i + 1].q = init_z1_q[i];
-			//}	
-			lh_z1.joints[1].q = 0;
-			lh_z1.fk();
-
-			double err = 1000.;
-			int iters = 0;
-			int iters_per_iter = 100;
-			while (err > .0001)
-			{
-				err = lh_z1.num_ik(&z1_ik_targ, iters_per_iter);
-				iters += iters_per_iter;
-				if (iters > 20000)
-					break;
-			}
-			lh_z1.joints[1].q += PI / 2;
-		}
 		for (int i = 0; i < 6; i++)
 		{
 			lh_z1.joints[i + 1].q = sos_f(&rh_qlpf[i], lh_z1.joints[i + 1].q);
