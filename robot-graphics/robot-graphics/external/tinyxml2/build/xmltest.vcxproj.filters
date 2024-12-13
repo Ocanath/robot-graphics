@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\xmltest.cpp">
+    <ClCompile Include="C:\Users\ocanath\OcanathProj\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\xmltest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\ocanath\OcanathProj\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{718AF5F9-52DE-3E29-AB30-2D76A5068F6F}</UniqueIdentifier>
+      <UniqueIdentifier>{37D03D93-B911-32A7-8DF2-F45E4D926F4D}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

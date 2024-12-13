@@ -1,17 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CustomBuild Include="C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\build\CMakeFiles\5bf0792720f42117af76873e013ec169\NightlyMemoryCheck.rule">
+    <CustomBuild Include="C:\Users\ocanath\OcanathProj\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\build\CMakeFiles\44e29dc10b76e5d424ba0e16a770b196\NightlyMemoryCheck.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
-    <CustomBuild Include="C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\ocanath\OcanathProj\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\build\CMakeFiles\NightlyMemoryCheck" />
+    <None Include="C:\Users\ocanath\OcanathProj\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\build\CMakeFiles\NightlyMemoryCheck" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CMake Rules">
-      <UniqueIdentifier>{DA01B850-D32E-38ED-BE5B-B9DDA3B27B55}</UniqueIdentifier>
+      <UniqueIdentifier>{33CF8E73-3BFC-3D67-864E-6C81BFBE0B81}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

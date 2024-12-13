@@ -2,10 +2,10 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\build\x64\Debug\ZERO_CHECK</FullPath>
+      <FullPath>C:\Users\ocanath\OcanathProj\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\build\x64\Debug\ZERO_CHECK</FullPath>
     </ProjectOutput>
     <ProjectOutput>
-      <FullPath>C:\Users\Ocanath\OcanathProj\VS\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\build\Debug\xmltest.exe</FullPath>
+      <FullPath>C:\Users\ocanath\OcanathProj\robot-graphics\robot-graphics\robot-graphics\external\tinyxml2\build\Debug\xmltest.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />
