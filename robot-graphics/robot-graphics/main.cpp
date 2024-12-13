@@ -40,25 +40,6 @@
 //#define GET_HEXAPOD_OFFSET_VALS
 
 
-void mount_abh_to_z1(Z1_arm* z1, void* abh, uint8_t is_left)
-{
-	mat4_t hwb_sc = mat4_t_mult(z1->hw_b, z1->scale_matrix);
-	mat4_t hw_z16 = mat4_t_mult(hwb_sc, z1->joints[6].hb_i);
-	mat4_t hz16_abhw = get_rpy_xyz_mat4(0, 1.57079632679, 0, 103.e-3, 0, 0);
-	if (is_left)
-	{
-		AbilityHandLeftUrdf* pHand = (AbilityHandLeftUrdf*)abh;
-		pHand->hw_b = mat4_t_mult(hw_z16, hz16_abhw);
-		pHand->hw_b = mat4_t_mult(pHand->hw_b, Hz(-PI / 2));
-	}
-	else
-	{
-		AbilityHandRightUrdf* pHand = (AbilityHandRightUrdf*)abh;
-		pHand->hw_b = mat4_t_mult(hw_z16, hz16_abhw);
-		pHand->hw_b = mat4_t_mult(pHand->hw_b, Hz(-PI / 2));
-	}
-}
-
 /*
 Generic hex checksum calculation.
 TODO: use this in the psyonic API
@@ -291,11 +272,11 @@ int main_render_thread(void)
 	init_cam(&Player, cam_joints);
 	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = 7.044519;
-	Player.CamRobot.hw_b.m[1][3] = -7.886983;
-	Player.CamRobot.hw_b.m[2][3] = 3.428428;
-	Player.CamRobot.j[1].q = fmod(188.713150 + PI, 2 * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-1.767589 + PI, 2 * PI) - PI;	//Player.CamRobot.j[2].q = -PI/2;
+	Player.CamRobot.hw_b.m[0][3] = -4.513633;
+	Player.CamRobot.hw_b.m[1][3] = 5.127673;
+	Player.CamRobot.hw_b.m[2][3] = 3.961596;
+	Player.CamRobot.j[1].q = fmod(35.200199 + PI, 2 * PI) - PI;
+	Player.CamRobot.j[2].q = fmod(-1.785593 + PI, 2 * PI) - PI;
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 	
@@ -659,17 +640,7 @@ int main_render_thread(void)
 		m_mcpy(&rh_qlpf[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
 	}
 
-	AbilityHandLeftUrdf lh_abh_2;
-	lh_abh_2.filter_inputs = 1;
-	Z1_arm lh_z1;
-	lh_z1.hw_b = Hz(PI);
-	lh_z1.hw_b.m[0][3] = 0;
-	lh_z1.hw_b.m[1][3] = -1;
-	lh_z1.hw_b.m[2][3] = 2.0f;
-	lh_z1.fk();
 
-	AbilityHandRightUrdf rh_abh_2;
-	rh_abh_2.filter_inputs = 1;
 	Z1_arm rh_z1;
 	rh_z1.hw_b = Hz(PI);
 	rh_z1.hw_b.m[0][3] = 0;
@@ -686,19 +657,9 @@ int main_render_thread(void)
 	{
 		for (int i = 0; i < 6; i++)
 		{
-			rh_z1.joints[i + 1].q = init_z1_q[i];
+			rh_z1.joints[i + 1].q = 0;
 		}
 		rh_z1.fk();
-		mat4_t z1trg = rh_z1.get_targ_from_cur_cfg();
-		vect3_t starttargorigin = h_origin(z1trg);
-		printf("origin of target in init config, base frame\r\n");
-		print_vect3(starttargorigin);
-		printf("\r\n--------------\r\n");
-		vect3_t trgw = rh_z1.base_targ_to_world_targ(starttargorigin);
-		light[KEYBOARD_CONTROLLED_LIGHT_IDX].position = glm::vec3(trgw.v[0], trgw.v[1], trgw.v[2]);
-		printf("origin target in world\r\n");
-		print_vect3(trgw);
-		printf("\r\n--------------\r\n");
 	}
 	mat4_t z1_start_cfg = rh_z1.get_targ_from_cur_cfg();
 
@@ -964,168 +925,8 @@ int main_render_thread(void)
 		for (int ch = 0; ch < NUM_CHANNELS; ch++)
 			qd[ch] = system_griplist_default[cfg_idx]->wp[ch].qd;
 
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-		{
-			debug_msg_queued = 1;
-		}
-		if (debug_msg_queued && glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
-		{
-			debug_msg_queued = 0;
 
-
-			/*prepare message*/
-			{
-				printf("index q1 = %f\r\n", psy_hand_bones->finger[0].chain[1].q*RAD_TO_DEG);
-				printf("index q2 = %f\r\n", psy_hand_bones->finger[0].chain[2].q*RAD_TO_DEG);
-
-				for (int link = 1; link <= 2; link++)
-				{
-					printf("index h_link_%d:\r\n", link);
-					print_mat4_t(psy_hand_bones->finger[0].chain[link].h_link);
-					printf("\r\n\r\n");
-				}
-				for (int link = 1; link <= 2; link++)
-				{
-					vect3_t xyz, rpy;
-					get_xyz_rpy(&psy_hand_bones->finger[0].chain[link].h_link, &xyz, &rpy);
-					printf("link %d xyz = ", link);
-					print_vect3(xyz);
-					printf("rpy = ");
-					print_vect3(rpy);
-					printf("\r\n");
-				}
-			}
-		}
 		
-
-
-		//printf("link transformed = \n");
-		//print_mat4_t(psy_hand_bones->finger[0].chain[1].him1_i);
-		//printf("\nlink dh-original= \n");
-		//print_mat4_t(psy_hand_bones->finger[0].chain[1].h_link);
-		//printf("\nfinger hb_0\n");
-		//print_mat4_t(psy_hand_bones->finger[0].chain[0].hb_i);
-
-		float tau[3] = { 0,0,0 };	//num joints + 1
-		vect3_t f = { 0,0,0 };
-		vect3_t thumb_force = { 0,0,0 };
-		vect3_t o_thumb_b = psy_hand_bones->finger[4].ef_pos_b;
-
-
-
-		///*Shirk Implementation/Test*/
-		//float k = .02f;
-		//
-		////float tau4 = k * get_vect_err(DEG_TO_RAD * qd[4], DEG_TO_RAD * q[4]) * RAD_TO_DEG;
-		////float tau5 = k * get_vect_err(DEG_TO_RAD * qd[5], DEG_TO_RAD * q[5]) * RAD_TO_DEG;
-		//float finger_error[6];
-		//for (int i = 0; i < 6; i++)
-		//	finger_error[i] = get_vect_err(DEG_TO_RAD * qd[i], DEG_TO_RAD * q[i]) * RAD_TO_DEG;
-		//float tau4 = k * finger_error[4];
-		//float tau5 = k * finger_error[5];
-
-		//#define NUM_THUMB_REFPOINTS 4
-		//vect3_t o_thumb_mid, o_thumb_low, o_thumb_side;
-		//vect3_t thumb_midref_2 = { -21.39, -9.25, -2.81 };
-		//vect3_t thumb_lowref_2 = { -46.09, -5.32, -2.58 };
-		//vect3_t thumb_sideref_2 = { -34.52f, 0, 11.f };
-		//htmatrix_vect3_mult(&psy_hand_bones->finger[4].chain[2].hb_i, &thumb_midref_2, &o_thumb_mid);
-		//htmatrix_vect3_mult(&psy_hand_bones->finger[4].chain[2].hb_i, &thumb_lowref_2, &o_thumb_low);
-		//htmatrix_vect3_mult(&psy_hand_bones->finger[4].chain[2].hb_i, &thumb_sideref_2, &o_thumb_side);
-		//vect3_t* thumb_pos_b[NUM_THUMB_REFPOINTS] = { &o_thumb_b, &o_thumb_mid, &o_thumb_low, &o_thumb_side };
-		//float weight[NUM_THUMB_REFPOINTS] = { 44.f, 44.f, 44.f, 44.f };
-		//		
-		//float shirk = 0;
-		//for (int i = 0; i < 4; i++)
-		//{
-		//	joint* j = psy_hand_bones->finger[i].chain;
-		//	vect3_t o_f_b = psy_hand_bones->finger[i].ef_pos_b;
-		//	//htmatrix_vect3_mult(&j[0].him1_i, &psy_hand_bones->finger[i].ef_pos_0, &o_f_b);	//wow. wordy
-
-		//	vect3_t knuckle_1 = { -15.44f, -6.91f, 0.f, };
-		//	vect3_t knuckle_b, knuckle_force_b;
-		//	htmatrix_vect3_mult(&j[1].hb_i, &knuckle_1, &knuckle_b);
-
-		//	/*As the figner approaches its setpoint, reduce the repulsive field between the fingertip and the thumb*/
-		//	float abserr = finger_error[i];
-		//	if (abserr < 0)
-		//		abserr = -abserr;
-		//	float tip_scalef = 1.f - (1.f / abserr);
-		//	if (tip_scalef < 0.f)
-		//		tip_scalef = 0.f;	//
-
-		//	abserr = finger_error[5];
-		//	if (abserr < 0)
-		//		abserr = -abserr;
-		//	float knuckle_scalef = 1.f - (1.f / abserr);
-		//	if (knuckle_scalef < 0.f)
-		//		knuckle_scalef = 0.f;
-
-		//	for (int thumbref_idx = 0; thumbref_idx < NUM_THUMB_REFPOINTS; thumbref_idx++)
-		//	{
-		//		vect3_t thumb_force_b = vect3_add(o_f_b, vect3_scale(*thumb_pos_b[thumbref_idx], -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
-		//		float m1 = 0;
-		//		for (int r = 0; r < 3; r++)
-		//			m1 += thumb_force_b.v[r] * thumb_force_b.v[r];
-
-		//		for (int r = 0; r < 3; r++)
-		//			knuckle_force_b.v[r] = knuckle_b.v[r] - thumb_pos_b[thumbref_idx]->v[r];
-		//		float m2 = 0;
-		//		for (int r = 0; r < 3; r++)
-		//			m2 += knuckle_force_b.v[r] * knuckle_force_b.v[r];
-
-		//		float weight_m1 = weight[thumbref_idx] * tip_scalef;
-		//		float weight_m2 = weight[thumbref_idx] * knuckle_scalef;
-
-		//		float shirk_v = -weight_m1 / m1 - weight_m2 / m2;
-		//		shirk += shirk_v;	//accumulate thumb rotator torque
-		//	}
-		//}
-		//for(int i = 0; i < 4; i++)
-		//	q[i] += k * finger_error[i];
-		//q[4] += tau4+shirk;
-		//q[5] += tau5;
-		///*END SHIRK TEST*/
-
-
-		//for (int i = 0; i < 4; i++)
-		//{
-		//	/*Get finger position in the base frame*/
-		//	vect3_t o_f_b = psy_hand_bones->finger[i].ef_pos_b;
-		//	//htmatrix_vect3_mult(&psy_hand_bones->finger[i].chain[0].him1_i, &psy_hand_bones->finger[i].ef_pos_0, &o_f_b);	//wow. wordy
-		//	
-		//	/*Set some force to act on the fingertip*/
-		//	vect3_t finger_force_b = { 0, 0, 0 };
-		//	if (i == 0)
-		//		finger_force_b = vect3_add(o_thumb_b, vect3_scale(o_f_b, -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
-		//	else if (i == 1)
-		//		finger_force_b = vect3_add(o_thumb_b, vect3_scale(o_f_b, -1.f));	//idx force IN THE BASE FRAME. FRAME CHANGE NECESSARY
-
-		//	/*Transform the force from the base frame to the 0 frame*/
-		//	mat4_t hidx0_b = ht_inverse(psy_hand_bones->finger[i].chain[0].him1_i);	//consider loading in the other unoccupied 0 frame transform...?
-		//	for (int r = 0; r < 3; r++)
-		//		hidx0_b.m[r][3] = 0;
-		//	vect3_t force_0;
-		//	htmatrix_vect3_mult(&hidx0_b, &finger_force_b, &force_0);
-
-		//	/*Apply index finger force*/
-		//	for (int r = 0; r < 3; r++)
-		//		f.v[r] = .0003f * force_0.v[r];
-		//	calc_tau3(psy_hand_bones->finger[i].chain, 2, &f, tau);
-		//	q[i] += tau[1];
-		//}
-		///*Create an attraction force between the thumb tip and index + middle finger tip*/
-		//for (int i = 0; i < 2; i++)
-		//{
-		//	vect3_t * o_anchor_b = &psy_hand_bones->finger[i].ef_pos_b;
-		//	for (int r = 0; r < 3; r++)
-		//		thumb_force.v[r] += .0003f * (o_anchor_b->v[r] - o_thumb_b.v[r]);
-		//}
-		///*Apply Thumb force*/
-		//calc_tau3(psy_hand_bones->finger[4].chain, 2, &thumb_force, tau);
-		//q[5] += tau[1];
-		//q[4] -= tau[2];
-
 
 
 
@@ -1261,31 +1062,12 @@ int main_render_thread(void)
 
 		for (int i = 0; i < 6; i++)
 		{
-			rh_z1.joints[i + 1].q = sos_f(&lh_qlpf[i], rh_z1.joints[i + 1].q);
+			//rh_z1.joints[i + 1].q = sos_f(&rh_qlpf[i], rh_z1.joints[i + 1].q);
 		}
 		rh_z1.fk();
 		rh_z1.render_arm(lightingShader);
-		/*connect abh to z1*/
-		rh_abh_2.fk();
-		rh_abh_2.load_q(qleft);
-		mount_abh_to_z1(&rh_z1, &rh_abh_2, 0);
-		rh_abh_2.render(&lightingShader);	//then render
 
 		
-
-
-
-		for (int i = 0; i < 6; i++)
-		{
-			lh_z1.joints[i + 1].q = sos_f(&rh_qlpf[i], lh_z1.joints[i + 1].q);
-		}
-		lh_z1.fk();
-		lh_z1.render_arm(lightingShader);
-		lh_abh_2.fk();
-		mount_abh_to_z1(&lh_z1, &lh_abh_2, 1);
-		lh_abh_2.load_q(qright);
-		lh_abh_2.render(&lightingShader);
-
 		//manual control of the overhead light position
 		int mnljki = (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) << 0;
 		mnljki |= (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) << 1;
