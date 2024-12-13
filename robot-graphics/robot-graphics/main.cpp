@@ -34,6 +34,7 @@
 #include "IIRsos.h"
 #include "z1.h"
 #include "psyhand_urdf.h"
+#include "serial-thread.h"
 
 #define NUM_LIGHTS 5
 
@@ -233,9 +234,10 @@ int main(void)
 	//tinyxml2::XMLElement* titleElement = doc.FirstChildElement("robot")->FirstChildElement("link");
 	//const char* title = titleElement->GetText();
 	//printf("Name of play (1): %s\n", title);
-	main_render_thread();
-//	std::thread t1(main_render_thread);
-//	t1.join();
+	std::thread t1(main_render_thread);
+	std::thread t2(serial_thread);
+	t1.join();
+	t2.join();
 }
 
 

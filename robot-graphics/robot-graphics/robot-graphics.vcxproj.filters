@@ -102,6 +102,18 @@
     <ClCompile Include="model.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
+    <ClCompile Include="serial-thread.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="args-parsing.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="PPP.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
+    <ClCompile Include="winserial.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -199,6 +211,21 @@
     </ClInclude>
     <ClInclude Include="psyhand_urdf.h">
       <Filter>Header Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="args-parsing.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="PPP.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="winserial.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="u32_fmt_t.h">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="serial-thread.h">
+      <Filter>Source Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

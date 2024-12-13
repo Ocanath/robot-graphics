@@ -152,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="args-parsing.cpp" />
     <ClCompile Include="dh_hex_fixed.cpp" />
     <ClCompile Include="dynahex.cpp" />
     <ClCompile Include="external\tinyxml2\tinyxml2.cpp" />
@@ -167,7 +168,9 @@
     <ClCompile Include="model.cpp" />
     <ClCompile Include="m_mcpy.cpp" />
     <ClCompile Include="objloader.cpp" />
+    <ClCompile Include="PPP.cpp" />
     <ClCompile Include="psy-grips.cpp" />
+    <ClCompile Include="serial-thread.cpp" />
     <ClCompile Include="sin_fast.cpp" />
     <ClCompile Include="sin_lookup_table.cpp" />
     <ClCompile Include="spatialAlgebra.cpp" />
@@ -176,8 +179,10 @@
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="vboindexer.cpp" />
     <ClCompile Include="vect_fixed.cpp" />
+    <ClCompile Include="winserial.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="args-parsing.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="dh_hex_fixed.h" />
     <ClInclude Include="dynahex.h" />
@@ -195,8 +200,10 @@
     <ClInclude Include="m_mcpy.h" />
     <ClInclude Include="objloader.hpp" />
     <ClInclude Include="physics_thread.h" />
+    <ClInclude Include="PPP.h" />
     <ClInclude Include="psyhand_urdf.h" />
     <ClInclude Include="RenderRobot.h" />
+    <ClInclude Include="serial-thread.h" />
     <ClInclude Include="shader-reader.h" />
     <ClInclude Include="sin_fast.h" />
     <ClInclude Include="spatialAlgebra.h" />
@@ -204,9 +211,11 @@
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="texture.hpp" />
     <ClInclude Include="trig_fixed.h" />
+    <ClInclude Include="u32_fmt_t.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="vboindexer.hpp" />
     <ClInclude Include="vect_fixed.h" />
+    <ClInclude Include="winserial.h" />
     <ClInclude Include="WinUdpBkstServer.h" />
     <ClInclude Include="WinUdpClient.h" />
     <ClInclude Include="z1.h" />
