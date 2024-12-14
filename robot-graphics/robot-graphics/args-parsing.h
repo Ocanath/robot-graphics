@@ -1,5 +1,6 @@
 #ifndef ARGS_PARSING_H
 #define ARGS_PARSING_H
+
 #include <stdint.h>
 #include "u32_fmt_t.h"
 

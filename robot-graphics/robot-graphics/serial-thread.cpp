@@ -28,6 +28,8 @@ static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
 static uint8_t gl_ser_readbuf[512] = { 0 };
 static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
+uint8_t gl_ser_pkt_done = 0;
+float gl_arm_angles[6] = { 0 };
 
 /*
 Generic hex checksum calculation.
@@ -56,7 +58,7 @@ uint16_t get_checksum16(uint16_t* arr, int size)
 
 
 static const float offsets[] = { -2.700014, -1.099270, -1.576392, 1.654050, -2.082925, -0.006566 };
-static const float signs[] = { 1,1,1,1,1,1 };
+static const float signs[] = { -1,-1,1,-1,-1,-1 };
 
 
 
@@ -104,9 +106,6 @@ void write_encoder_command(HANDLE* pSer, uint16_t address)
 	int wfrc = WriteFile(*pSer, stuff_buf, nb, written, NULL);
 }
 
-uint8_t gl_ser_pkt_done = 0;
-float gl_arm_angles[6] = { 0 };
-
 void main_loop(HANDLE* pSer)
 {
 	int pld_size = 0;
@@ -119,7 +118,7 @@ void main_loop(HANDLE* pSer)
 	float angles[(sizeof(addresses) / sizeof(uint16_t))] = { 0 };
 	int addr_idx = 0;
 	uint64_t tx_ts = 0;
-	//uint8_t done = 0;
+	uint8_t done = 0;
 	while (1)
 	{
 		write_encoder_command(pSer, addresses[addr_idx]);
@@ -145,7 +144,7 @@ void main_loop(HANDLE* pSer)
 					if (addr_idx >= num_addresses)
 					{
 						addr_idx = 0;
-						gl_ser_pkt_done = 1;
+						done = 1;
 					}
 
 				}
@@ -157,21 +156,29 @@ void main_loop(HANDLE* pSer)
 				if (addr_idx >= num_addresses)
 				{
 					addr_idx = 0;
-					gl_ser_pkt_done = 1;
+					done = 1;
 				}
 
 			}
 		}
 
 
-		if (gl_ser_pkt_done != 0)
+		if (done != 0)
 		{
+			if (gl_ser_pkt_done == 0)
+			{
+				for (int i = 0; i < 6; i++)
+				{
+					gl_arm_angles[i] = angles[i];
+				}
+				gl_ser_pkt_done = 1;
+			}
 			//for (int i = 0; i < num_addresses; i++)
 			//{
 			//	printf("%.2f, ", angles[i] * 180. / 3.14159265);
 			//}
 			//printf("\n");
-			gl_ser_pkt_done = 0;
+			done = 0;
 		}
 	}
 }

@@ -1060,11 +1060,14 @@ int main_render_thread(void)
 			}
 		}
 		
-
-
-		for (int i = 0; i < 6; i++)
+		if (gl_ser_pkt_done != 0)
 		{
-			//rh_z1.joints[i + 1].q = sos_f(&rh_qlpf[i], rh_z1.joints[i + 1].q);
+			for (int i = 0; i < 6; i++)
+			{
+				//rh_z1.joints[i + 1].q = sos_f(&rh_qlpf[i], rh_z1.joints[i + 1].q);
+				rh_z1.joints[i + 1].q = gl_arm_angles[i];
+			}
+			gl_ser_pkt_done = 0;
 		}
 		rh_z1.fk();
 		rh_z1.render_arm(lightingShader);
