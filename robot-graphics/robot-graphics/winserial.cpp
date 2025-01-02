@@ -1,6 +1,26 @@
 #include "winserial.h"
 #include <stdint.h>
 #include<stdio.h>
+#include "PPP.h"
+
+
+int auto_connect_com_port(HANDLE* serial_handle, unsigned long baud)
+{
+	char namestr[16] = { 0 };
+	uint8_t found = 0;
+	for (int i = 0; i < 255; i++)
+	{
+		int rl = sprintf_s(namestr, "\\\\.\\COM%d", i);
+		int rc = connect_to_usb_serial(serial_handle, namestr, baud);
+		if (rc != 0)
+		{
+			printf("Connected to COM port %s successfully\n", namestr);
+			found = 1;
+			return found;
+		}
+	}
+	return found;
+}
 
 
 int connect_to_usb_serial(HANDLE* serial_handle, const char* com_port_name, unsigned long baud)
@@ -30,4 +50,21 @@ int connect_to_usb_serial(HANDLE* serial_handle, const char* com_port_name, unsi
 		SetCommTimeouts((*serial_handle), &timeouts);
 	}
 	return rc;
+}
+
+int get_ppp_pld(HANDLE* serialhandle, com_ppp_buffer_t* cb)
+{
+	LPDWORD num_bytes_read = 0;
+	int pld_size = 0;
+	int rc = ReadFile(*serialhandle, cb->ser_readbuf, PPP_BUFFER_SIZE, (LPDWORD)(&num_bytes_read), NULL);	//should be a DOUBLE BUFFER!
+	for (int i = 0; i < (int)num_bytes_read; i++)
+	{
+		uint8_t new_byte = cb->ser_readbuf[i];
+		pld_size = parse_PPP_stream(new_byte, cb->ppp_payload_buffer, PPP_BUFFER_SIZE, cb->ppp_unstuffing_buffer, PPP_UNSTUFF_BUFFER_SIZE, &cb->ppp_bidx);
+		if (pld_size > 0)
+		{
+			return pld_size;
+		}
+	}
+	return pld_size;
 }
