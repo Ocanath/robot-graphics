@@ -114,6 +114,9 @@
     <ClCompile Include="winserial.cpp">
       <Filter>Source Files\app-robotics</Filter>
     </ClCompile>
+    <ClCompile Include="WinUdpParsing.cpp">
+      <Filter>Header Files\networking</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -226,6 +229,9 @@
     </ClInclude>
     <ClInclude Include="serial-thread.h">
       <Filter>Source Files\app-robotics</Filter>
+    </ClInclude>
+    <ClInclude Include="WinUdpParsing.h">
+      <Filter>Header Files\networking</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

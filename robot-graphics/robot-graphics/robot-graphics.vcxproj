@@ -180,6 +180,7 @@
     <ClCompile Include="vboindexer.cpp" />
     <ClCompile Include="vect_fixed.cpp" />
     <ClCompile Include="winserial.cpp" />
+    <ClCompile Include="WinUdpParsing.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="args-parsing.h" />
@@ -218,6 +219,7 @@
     <ClInclude Include="winserial.h" />
     <ClInclude Include="WinUdpBkstServer.h" />
     <ClInclude Include="WinUdpClient.h" />
+    <ClInclude Include="WinUdpParsing.h" />
     <ClInclude Include="z1.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
