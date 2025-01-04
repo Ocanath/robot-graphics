@@ -345,10 +345,10 @@ CMakeFiles/MyOpenGLProject.dir/main.cpp.o: \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/trig_fixed.h \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/log_fixed.h \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/model.h \
+ /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp/config.h \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp/Importer.hpp \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp/types.h \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp/defs.h \
- /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp/config.h \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp/vector2.h \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp/vector3.h \
  /home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp/color4.h \

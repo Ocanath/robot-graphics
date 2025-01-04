@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external
+CXX_INCLUDES = -I/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external -I/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/external/assimp
 
 CXX_FLAGS = -Wall -Wextra -Wpedantic -std=c++17
 

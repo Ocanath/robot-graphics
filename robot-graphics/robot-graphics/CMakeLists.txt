@@ -40,6 +40,7 @@ set(SOURCES
 
 # Include Directories
 include_directories(external)
+include_directories(external/assimp)
 
 # Find OpenGL
 find_package(OpenGL REQUIRED)
@@ -63,6 +64,14 @@ if (NOT glfw3_FOUND)
 endif()
 
 include_directories(${GLFW_INCLUDE_DIRS})
+
+# Find Assimp
+find_package(assimp REQUIRED)
+
+if (NOT assimp_FOUND)
+    message(FATAL_ERROR "Assimp not found!")
+endif()
+
 
 # Add Executable
 add_executable(${PROJECT_NAME} ${SOURCES})

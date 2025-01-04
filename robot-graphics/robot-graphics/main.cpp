@@ -34,7 +34,6 @@
 #include "psyhand_urdf.h"
 #include "serial-thread.h"
 
-
 #define NUM_LIGHTS 5
 
 //#define GET_HEXAPOD_OFFSET_VALS
