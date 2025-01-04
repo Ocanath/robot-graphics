@@ -1,0 +1,7 @@
+/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/build/CMakeFiles/MyOpenGLProject.dir
+/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/build/CMakeFiles/edit_cache.dir
+/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/build/CMakeFiles/rebuild_cache.dir
+/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/build/CMakeFiles/list_install_components.dir
+/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/build/CMakeFiles/install.dir
+/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/build/CMakeFiles/install/local.dir
+/home/admin/OcanathProj/robot-graphics/robot-graphics/robot-graphics/build/CMakeFiles/install/strip.dir

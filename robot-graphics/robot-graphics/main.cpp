@@ -27,15 +27,13 @@
 #include "m_mcpy.h"
 
 #include "hexapod_footpath.h"
-#include "WinUdpBkstServer.h"
-#include "WinUdpClient.h"
 
 #include "external/tinyxml2/tinyxml2.h"
 #include "IIRsos.h"
 #include "z1.h"
 #include "psyhand_urdf.h"
 #include "serial-thread.h"
-#include "winserial.h"
+
 
 #define NUM_LIGHTS 5
 
@@ -61,48 +59,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	// make sure the viewport matches the new window dimensions; note that width and 
 	// height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
-}
-uint8_t parse_abh_htmat(WinUdpBkstServer* soc, mat4_t * m)
-{
-	int rc = soc->read();
-	if (rc != WSAEWOULDBLOCK && soc->recv_len == 64)
-	{
-		int bidx = 0;
-		u32_fmt_t pfmt;
-		for (int r = 0; r < 4; r++)
-		{
-			for (int c = 0; c < 4; c++)
-			{
-				for (int i = 0; i < sizeof(float); i++)
-				{
-					pfmt.ui8[i] = soc->r_buf[bidx++];
-				}
-				m->m[r][c] = pfmt.f32;
-			}
-		}
-		return 1;
-	}
-	return 0;
-}
-
-void parse_abh_fpos_udp_cmd(WinUdpBkstServer * soc, float * q)
-{
-	int rc = soc->read();
-	if (rc != WSAEWOULDBLOCK && soc->recv_len == 15)
-	{
-		//u32_fmt_t* pfmt = (u32_fmt_t*)((uint8_t*)udp_server.r_buf);
-		u32_fmt_t pfmt;
-		int bidx = 2;
-		for (int ch = 0; ch < 6; ch++)
-		{
-			for (int i = 0; i < sizeof(int16_t); i++)
-			{
-				pfmt.ui8[i] = soc->r_buf[bidx];
-				bidx++;
-			}
-			q[ch] = ((float)pfmt.i16[0]) * 150.f / 32767.f;
-		}
-	}
 }
 
 // utility function for loading a 2D texture from file
@@ -225,10 +181,6 @@ int8_t get_checksum(uint8_t* arr, int size)
 dynahex_t * dynahex_bones = NULL;
 kinematic_hand_t* psy_hand_bones = NULL;
 int main_render_thread(void);
-
-
-com_ppp_buffer_t combuf = { 0 };
-
 
 int main(void)
 {
@@ -613,42 +565,8 @@ int main_render_thread(void)
 	double movement_press_time = 0.f;
 
 
-	uint8_t debug_msg_queued = 0;
+	
 
-
-
-	HANDLE serial_port;
-	int com_connected = auto_connect_com_port(&serial_port, 460800);
-	if (com_connected == 0)
-	{
-		printf("No COM found\r\n");
-	}
-
-	WinUdpBkstServer udp_server(50134);
-	if (udp_server.set_nonblocking() != NO_ERROR)
-		printf("socket at port %d set to non-blocking ok\r\n", udp_server.port);
-
-
-	WinUdpBkstServer abh_lh_pos_soc(7242);
-	if(abh_lh_pos_soc.set_nonblocking() != NO_ERROR)
-		printf("socket at port %d set to non-blocking ok\r\n", abh_lh_pos_soc.port);
-	WinUdpBkstServer abh_rh_pos_soc(7240);
-	if (abh_rh_pos_soc.set_nonblocking() != NO_ERROR)
-		printf("socket at port %d set to non-blocking ok\r\n", abh_rh_pos_soc.port);
-	WinUdpBkstServer abh_lh_finger_soc(23234);
-	abh_lh_finger_soc.set_nonblocking();
-	WinUdpBkstServer abh_rh_finger_soc(34345);
-	abh_rh_finger_soc.set_nonblocking(); 
-
-
-	/*UDP client for ESP32 udp server that points the hose at us if we ping it*/
-	uint8_t udp_rx_buf[BUFLEN];	//large udp recive buffer
-	WinUdpClient robot_client(3145);
-	robot_client.set_nonblocking();
-	robot_client.si_other.sin_addr.S_un.S_addr = robot_client.get_bkst_ip();
-	uint64_t udpsend_ts = 0;
-	uint64_t udp_connected_ts = 0;
-	uint64_t double_render_ts = 0;
 
 	mat4_t lh_htmat = mat4_t_Identity;
 	mat4_t rh_htmat = mat4_t_Identity;
@@ -689,7 +607,7 @@ int main_render_thread(void)
 		double time = glfwGetTime();
 		double fps = 1.0 / (time - prev_time);
 		prev_time = time;
-		uint64_t tick = GetTickCount64();
+		uint64_t tick = (uint64_t)(time*1000.);
 
 		// render
 		// ------
@@ -710,59 +628,30 @@ int main_render_thread(void)
 		for (int i = 0; i < NUM_LIGHTS; i++)
 		{
 			char buf[32] = { 0 };
-			sprintf_s(buf, "pointLights[%d].position", i);
+			snprintf(buf, sizeof(buf), "pointLights[%d].position", i);
 			lightingShader.setVec3(buf, light[i].position);
 
-			sprintf_s(buf, "pointLights[%d].ambient", i);
-			lightingShader.setVec3(buf, light[i].ambient);
+			snprintf(buf, sizeof(buf),"pointLights[%d].ambient", i);
+			lightingShader.setVec3(buf, sizeof(buf), light[i].ambient);
 
-			sprintf_s(buf, "pointLights[%d].diffuse", i);
+			snprintf(buf, sizeof(buf),"pointLights[%d].diffuse", i);
 			lightingShader.setVec3(buf, light[i].diffuse);
 
-			sprintf_s(buf, "pointLights[%d].specular", i);
-			lightingShader.setVec3(buf, light[i].specular);
+			snprintf(buf, sizeof(buf), "pointLights[%d].specular", i);
+			lightingShader.setVec3(buf, sizeof(buf), light[i].specular);
 
-			sprintf_s(buf, "pointLights[%d].constant", i);
-			lightingShader.setFloat(buf, light[i].constant);
+			snprintf(buf, sizeof(buf), "pointLights[%d].constant", i);
+			lightingShader.setFloat(buf, sizeof(buf), light[i].constant);
 
-			sprintf_s(buf, "pointLights[%d].linear", i);
-			lightingShader.setFloat(buf, light[i].linear);
+			snprintf(buf, sizeof(buf), "pointLights[%d].linear", i);
+			lightingShader.setFloat(buf, sizeof(buf), light[i].linear);
 
-			sprintf_s(buf, "pointLights[%d].quadratic", i);
-			lightingShader.setFloat(buf, light[i].quadratic);			
+			snprintf(buf, sizeof(buf), "pointLights[%d].quadratic", i);
+			lightingShader.setFloat(buf, sizeof(buf), light[i].quadratic);			
 		}
 
 
 
-		if ((tick - udp_connected_ts) < 300)	//connected
-		{
-			//for (int i = 0; i < NUM_LIGHTS; i++)
-			{
-				int i = ROBOT_CONNECTED_LIGHT_IDX;
-				light[i].ambient = glm::vec3(0.07f, 0.07f, 0.07f);
-				light[i].diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-				light[i].specular = glm::vec3(0.9f, 0.9f, 0.9f);
-				light[i].base_color = glm::vec4(1.f);
-			}
-		}
-		else
-		{
-			//for (int i = 0; i < NUM_LIGHTS; i++)
-			{
-				int i = ROBOT_CONNECTED_LIGHT_IDX;
-				light[i].ambient = glm::vec3(0.07f, 0, 0);
-				light[i].diffuse = glm::vec3(0.7f, 0, 0);
-				light[i].specular = glm::vec3(0.9f, 0.0f, 0.0f);
-				light[i].base_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-			}
-			for (int l = 0; l < NUM_LEGS; l++)
-			{
-				joint* j = dynahex_bones->leg[l].chain;
-				j[1].q = q1_calib;
-				j[2].q = q2_calib;
-				j[3].q = q3_calib;
-			}
-		}
 		// spotLight
 		//lightingShader.setVec3("spotLight.position", camera_position);
 		//lightingShader.setVec3("spotLight.direction", glm::vec3(1,0,0) );
@@ -991,8 +880,7 @@ int main_render_thread(void)
 		hw_b.m[1][3] = 2;
 		hw_b.m[2][3] = 10.f;
 
-		parse_abh_fpos_udp_cmd(&abh_lh_finger_soc, qleft);
-
+		
 		//do the math for the psyonic hand
 		transform_mpos_to_kpos(qleft, psy_hand_bones);
 		finger_kinematics(psy_hand_bones);
@@ -1125,24 +1013,6 @@ int main_render_thread(void)
 
 
 		
-		{
-			int rc = parse_abh_htmat(&abh_rh_pos_soc, &rh_htmat);
-			vect3_t rh_rpy; vect3_t rh_xyz; get_xyz_rpy(&rh_htmat, &rh_xyz, &rh_rpy);
-			
-			vect3_t shuffle;
-			shuffle.v[0] = rh_rpy.v[1] + PI;	//good
-			shuffle.v[1] = 0*(rh_rpy.v[2] + PI/2);
-			shuffle.v[2] = rh_rpy.v[0]+2.83+PI+PI/2+PI;	//good
-			mat4_t m = get_rpy_xyz_htmatrix(&rh_xyz, &shuffle);
-			for (int r = 0; r < 3; r++)
-			{
-				for (int c = 0; c < 3; c++)
-				{
-					hw_b.m[r][c] = m.m[r][c]* .01;
-				}
-			}
-		}
-		parse_abh_fpos_udp_cmd(&abh_rh_finger_soc, qright);
 
 		hw_b.m[1][3] = 0;
 		mat4_t hmir = mat4_t_Identity;
@@ -1340,65 +1210,6 @@ int main_render_thread(void)
 
 
 
-		/*
-		* UDP stuff to control a hexapod leg (scale to whole robot later)
-		*/
-		if (tick > udpsend_ts)	//periodically send a ping pessage so the server knows to point the hose at us
-		{
-			udpsend_ts = tick + 750;
-			sendto(robot_client.s, "hello", 5, 0, (struct sockaddr*)&robot_client.si_other, robot_client.slen);
-		}
-		int recieved_length = 0;
-		if (com_connected)
-		{
-			recieved_length = get_ppp_pld(&serial_port, &combuf);
-			for (int i = 0; i < recieved_length; i++)
-			{
-				udp_rx_buf[i] = combuf.ppp_payload_buffer[i];
-			}
-		}
-		else
-		{
-			recieved_length = recvfrom(robot_client.s, (char*)udp_rx_buf, BUFLEN, 0, (struct sockaddr*)&(robot_client.si_other), &robot_client.slen);
-		}
-		int wordlen = recieved_length / sizeof(int32_t);
-		if (recieved_length > 0)
-		{
-			if ((recieved_length % 4) == 0)
-			{
-				if (wordlen == 18 || wordlen == 18 * 2)	//checksum not sent over udp. check size of packet to confirm load
-				{
-					int dataidx = 0;
-					int dump_idx = 0;
-					for (int leg = 0; leg < 6; leg++)
-					{
-						for (int joint = 1; joint <= 3; joint++)
-						{
-							int32_t val = ((int32_t*)udp_rx_buf)[dataidx++];
-							float fval = (float)val;
-							real_hexapod_qmeas[dump_idx++] = fval / 4096.f;
-						}
-					}
-					dump_idx = 0;
-					if (wordlen == 18 * 2)	//continue to next set if we have receieved the qd data
-					{
-						for (int leg = 0; leg < 6; leg++)
-						{
-							for (int joint = 1; joint <= 3; joint++)
-							{
-								int32_t val = ((int32_t*)udp_rx_buf)[dataidx++];
-								float fval = (float)val;
-								real_hexapod_qd[dump_idx++] = fval / 4096.f;
-							}
-		}
-						double_render_ts = tick;
-					}
-
-					udp_connected_ts = tick;
-				}
-
-			}
-		}
 #ifdef GET_HEXAPOD_OFFSET_VALS
 		/*offset capture:
 		* 1. match the orientation of the robot pre-udp connection
@@ -1516,48 +1327,6 @@ int main_render_thread(void)
 
 
 
-
-		if ((tick - double_render_ts) < 100)
-		{
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, ghost_map);
-			// bind specular map
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, ghost_map);
-
-			//Second render 
-			int i = 0;
-			for (int leg = 0; leg < 6; leg++)
-			{
-				for (int joint = 1; joint <= 3; joint++)
-				{
-					float fval = 0;
-					dynahex_bones->leg[leg].chain[joint].q = real_hexapod_qd[i];
-					i++;
-				}
-			}
-			forward_kinematics_dynahexleg(dynahex_bones);
-			for (int l = 0; l < 6; l++)
-			{
-				joint* j = dynahex_bones->leg[l].chain;
-				//vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
-				//calc_J_point(&j->him1_i, j->child, &o3);
-				for (int i = 0; i < 4; i++)
-				{
-					//dynahex_modellist[i].hb_model = &j[i].hb_i;
-					mat4_t hw_i;
-					mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
-
-					model = ht_matrix_to_mat4_t(hw_i);
-					lightingShader.setMat4("model", model);
-					dynahex_modellist[i].Draw(lightingShader, NULL);
-				}
-			}
-		}
-
-
-
-		
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();
