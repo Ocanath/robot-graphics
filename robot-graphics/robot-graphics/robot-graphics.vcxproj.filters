@@ -117,6 +117,9 @@
     <ClCompile Include="WinUdpParsing.cpp">
       <Filter>Header Files\networking</Filter>
     </ClCompile>
+    <ClCompile Include="ability-hand-rendering.cpp">
+      <Filter>Source Files\app-robotics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kinematics.h">
@@ -232,6 +235,9 @@
     </ClInclude>
     <ClInclude Include="WinUdpParsing.h">
       <Filter>Header Files\networking</Filter>
+    </ClInclude>
+    <ClInclude Include="ability-hand-rendering.h">
+      <Filter>Source Files\app-robotics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

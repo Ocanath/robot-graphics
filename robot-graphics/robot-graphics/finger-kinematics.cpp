@@ -5,6 +5,8 @@
 #include "kinematics.h"
 
 
+
+
 //static const float l0 = 9.47966f;
 static const vect3_t p3 = { 9.47966f, -0.62133f, 0 };
 static const float l1 = 38.6104f;
@@ -13,6 +15,20 @@ static const float l3 = 9.1241f;
 
 
 enum { INDEX, MIDDLE, RING, PINKY, THUMB };
+
+
+
+void transform_mpos_to_kpos(float qin[6], kinematic_hand_t* hand)
+{
+	enum { THR = 5, THF = 4 };	//thumb mapping enum
+	for (int finger = 0; finger < 4; finger++)
+	{
+		float fangle = qin[finger] * PI / 180.f;
+		hand->finger[finger].chain[1].q = fangle;
+	}
+	hand->finger[4].chain[1].q = qin[THR] * PI / 180.f;
+	hand->finger[4].chain[2].q = qin[THF] * PI / 180.f;
+}
 
 /*helper function to copy memory vect3s*/
 void copy_vect3(vect3_t* dest, vect3_t* ref)

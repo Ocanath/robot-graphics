@@ -37,7 +37,6 @@ vect6_t spatial_vect6_cross(vect6_t a, vect6_t b)
 	return ret;
 }
 
-
 mat6_t spatial_cross_operator(vect6_t v)
 {
 	vect3_t a;

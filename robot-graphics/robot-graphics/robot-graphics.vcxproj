@@ -152,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ability-hand-rendering.cpp" />
     <ClCompile Include="args-parsing.cpp" />
     <ClCompile Include="dh_hex_fixed.cpp" />
     <ClCompile Include="dynahex.cpp" />
@@ -183,6 +184,7 @@
     <ClCompile Include="WinUdpParsing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ability-hand-rendering.h" />
     <ClInclude Include="args-parsing.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="dh_hex_fixed.h" />

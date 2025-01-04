@@ -137,7 +137,7 @@ CamControlStruct P, the player
 OUTPUT:
 Completely initialized cam control struct
 */
-void init_cam(CamControlStruct * P, joint * j)
+void init_cam(CamControlStruct * P, float x, float y, float z, float q1, float q2)
 {
 	int i;
 	//glew stuff
@@ -154,7 +154,7 @@ void init_cam(CamControlStruct * P, joint * j)
 	P->telV = .2;											//
 	//Robot kinematics stuff
 	P->CamRobot.num_frames = CAM_NUM_FRAMES;
-	P->CamRobot.j = j;
+	P->CamRobot.j = P->camera_joints;
 	//DH table definition
 	//P->CamRobot.DH_Table[1].d = 0;			P->CamRobot.DH_Table[1].a = 0;			P->CamRobot.DH_Table[1].alpha = PI / 2;
 	//P->CamRobot.DH_Table[2].d = 0;			P->CamRobot.DH_Table[2].a = 0;			P->CamRobot.DH_Table[2].alpha = -PI / 2; 
@@ -180,6 +180,14 @@ void init_cam(CamControlStruct * P, joint * j)
 	 P->CamRobot.j[0].hb_i = mat4_t_I();
 	 P->CamRobot.j[0].him1_i = mat4_t_I();
 	init_forward_kinematics_dh(P->CamRobot.j, cambot_dh, P->CamRobot.num_frames-1);
+	P->CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
+	P->CamRobot.hw_b = mat4_t_I();		//END initializing camera
+
+	P->CamRobot.hw_b.m[0][3] = x;
+	P->CamRobot.hw_b.m[1][3] = y;
+	P->CamRobot.hw_b.m[2][3] = z;
+	P->lock_in_flag = 0;
+	P->look_at_flag = 0;
 }
 
 

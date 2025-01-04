@@ -2,6 +2,7 @@
 #define FINGER_KINEMATICS_H
 #include "stdint.h"
 #include "kinematics.h"
+#define NUM_GRIPKEYS 12
 
 enum {REPEL, STOP, ATTRACT, NEUTRAL};	//concept for flag setting of conflict avoidance subroutine
 
@@ -23,6 +24,7 @@ float get_4bar_driven_angle(float q1);
 
 //void htmatrix_vect3_mult(mat4_t_t * m, vect3_t * v, vect3_t * ret);
 void htmatrix_vect3_mult(mat4_t* m, vect3_t* v, vect3_t* ret);
+void transform_mpos_to_kpos(float qin[6], kinematic_hand_t* hand);
 
 /*
 Procedure:

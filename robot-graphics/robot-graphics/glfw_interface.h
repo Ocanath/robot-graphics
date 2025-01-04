@@ -36,7 +36,8 @@ typedef struct CamControlStruct
 	double telV;
 	vect3_t cur_V;
 	kinematic_chain CamRobot;
-	
+	joint camera_joints[CAM_NUM_FRAMES];
+
 }CamControlStruct;
 
 typedef struct VBOModelStruct
@@ -63,12 +64,7 @@ typedef struct VBOModelStruct
 	
 }VBOModelStruct;
 
-
-//void init_cam(CamControlStruct * P, dh_entry * DH_table, float * q, float * qdot, ht_matrix * HTadj, ht_matrix * H0_idx);
-//void init_cam(CamControlStruct * P, float * q, float * qdot, joint * j);
-void init_cam(CamControlStruct * P, joint * j);
-
-
+void init_cam(CamControlStruct* P, float x, float y, float z, float q1, float q2);
 
 glm::mat4 ht_matrix_to_mat4_t(mat4_t H);
 //glm::mat4 keyboard_cam_control(GLFWwindow* window, CamControlStruct * P, double fps);

@@ -37,23 +37,9 @@
 #include "serial-thread.h"
 #include "winserial.h"
 #include "WinUdpParsing.h"
+#include "ability-hand-rendering.h"
 
 #define NUM_LIGHTS 5
-
-//#define GET_HEXAPOD_OFFSET_VALS
-
-
-/*
-Generic hex checksum calculation.
-TODO: use this in the psyonic API
-*/
-uint32_t get_checksum32(uint32_t* arr, int size)
-{
-	int32_t checksum = 0;
-	for (int i = 0; i < size; i++)
-		checksum += (int32_t)arr[i];
-	return -checksum;
-}
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
@@ -117,77 +103,14 @@ typedef struct light_params_t
 	float quadratic;
 }light_params_t;
 
-/*Core function wrapping my linear spring vector controller*/
-float get_vect_err(float targ, float ref)
-{
-	float thr = fmod_2pi(ref + PI) - PI;
-	float vr1 = cos_fast(thr);
-	float vr2 = sin_fast(thr);
-
-	float th_targ = fmod_2pi(targ + PI) - PI;
-	float vt1 = cos_fast(th_targ);
-	float vt2 = sin_fast(th_targ);
-
-	float vd1 = vt1 - vr1;
-	float vd2 = vt2 - vr2;
-
-	return (vr1 * vd2 - vr2 * vd1);	//control error
-}
-
-void transform_mpos_to_kpos(float qin[6], kinematic_hand_t * hand)
-{
-	enum { THR = 5, THF = 4 };	//thumb mapping enum
-	for (int finger = 0; finger < 4; finger++)
-	{
-		float fangle = qin[finger] * PI / 180.f;
-		hand->finger[finger].chain[1].q = fangle;
-	}
-	hand->finger[4].chain[1].q = qin[THR] * PI / 180.f;
-	hand->finger[4].chain[2].q = qin[THF] * PI / 180.f;
-}
-
-#define NUM_GRIPKEYS 12
-
-struct key_lookup_entry
-{
-	int key_val;
-	int grip_cfg_idx;
-};
-const struct key_lookup_entry key_lookup[NUM_GRIPKEYS] = {
-	{GLFW_KEY_1, CHUCK_GRASP_CFG_IDX},
-	{GLFW_KEY_2, CHUCK_OK_GRASP_CFG_IDX},
-	{GLFW_KEY_3, PINCH_GRASP_CFG_IDX},
-	{GLFW_KEY_4, POWER_GRASP_CFG_IDX},
-	{GLFW_KEY_5, KEY_GRASP_CFG_IDX},
-	{GLFW_KEY_6, HANDSHAKE_CFG_IDX},
-	{GLFW_KEY_7, TRIGGER_CFG_IDX},
-	{GLFW_KEY_8, POINT_GRASP_CFG_IDX},
-	{GLFW_KEY_T, SIGN_OF_THE_HORNS_CFG_IDX},
-	{GLFW_KEY_Y, RUDE_POINT_GRASP_CFG_IDX},
-	{GLFW_KEY_U, MODE_SWITCH_CLOSE_CFG_IDX},
-	{GLFW_KEY_I, UTILITY_GRASP_CFG_IDX},
-};
-
-/*
-Generic hex checksum calculation.
-TODO: use this in the psyonic API
- */
-int8_t get_checksum(uint8_t* arr, int size)
-{
-
-	int8_t checksum = 0;
-	for (int i = 0; i < size; i++)
-		checksum += (int8_t)arr[i];
-	return -checksum;
-}
 
 dynahex_t * dynahex_bones = NULL;
 kinematic_hand_t* psy_hand_bones = NULL;
-int main_render_thread(void);
 
 
 com_ppp_buffer_t combuf = { 0 };
 
+int main_render_thread(void);
 
 int main(void)
 {
@@ -223,10 +146,6 @@ int main_render_thread(void)
 	glViewport(0, 0, winx, winy);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	
-
-
-
-
 	glEnable(GL_DEPTH_TEST);
 	//glDepthFunc(GL_LESS);
 
@@ -235,18 +154,10 @@ int main_render_thread(void)
 	glm::mat4 View = glm::mat4(1.0);
 	glm::mat4 Model = glm::mat4(1.0);
 	glm::mat4 MVP = CameraProjection * View * Model;
-	joint cam_joints[CAM_NUM_FRAMES];
+
+
 	CamControlStruct Player;				//specialized camera structure. carries around movement parameters
-	init_cam(&Player, cam_joints);
-	Player.CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
-	Player.CamRobot.hw_b = mat4_t_I();		//END initializing camera
-	Player.CamRobot.hw_b.m[0][3] = -0.839070;
-	Player.CamRobot.hw_b.m[1][3] = -6.121749;
-	Player.CamRobot.hw_b.m[2][3] = 8.701856;
-	Player.CamRobot.j[1].q = fmod(84.193222 + PI, 2 * PI) - PI;
-	Player.CamRobot.j[2].q = fmod(-3.042592 + PI, 2 * PI) - PI;
-	Player.lock_in_flag = 0;
-	Player.look_at_flag = 0;
+	init_cam(&Player, -0.839070, -6.121749, 8.701856, fmod(84.193222 + PI, 2 * PI) - PI, fmod(-3.042592 + PI, 2 * PI) - PI);
 	
 
 	glfwSetCursorPos(window, winx / 2, winy / 2);
