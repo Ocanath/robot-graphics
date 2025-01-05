@@ -1284,53 +1284,53 @@ int main_render_thread(void)
 
 
 
-		//model = ht_matrix_to_mat4_t(dynahex_hw_b);
-		//lightingShader.setMat4("model", model);
-		//dynahex_modellist[4].Draw(lightingShader, NULL);
-		//forward_kinematics_dynahexleg(dynahex_bones);
-		//for (int l = 0; l < 6; l++)
-		//{
-		//	joint* j = dynahex_bones->leg[l].chain;
-		//	vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
-		//	calc_J_point(&j->him1_i, j->child, &o3);
-		//	for (int i = 0; i < 4; i++)
-		//	{
-		//		//dynahex_modellist[i].hb_model = &j[i].hb_i;
-		//		mat4_t hw_i;
-		//		mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
+		model = ht_matrix_to_mat4_t(dynahex_hw_b);
+		lightingShader.setMat4("model", model);
+		dynahex_modellist[4].Draw(lightingShader, NULL);
+		forward_kinematics_dynahexleg(dynahex_bones);
+		for (int l = 0; l < 6; l++)
+		{
+			joint* j = dynahex_bones->leg[l].chain;
+			vect3_t o3 = h_origin(dynahex_bones->leg[l].chain[3].hb_i);
+			calc_J_point(&j->him1_i, j->child, &o3);
+			for (int i = 0; i < 4; i++)
+			{
+				//dynahex_modellist[i].hb_model = &j[i].hb_i;
+				mat4_t hw_i;
+				mat4_t_mult_pbr(&dynahex_hw_b, &j[i].hb_i, &hw_i);
 
-		//		model = ht_matrix_to_mat4_t(hw_i);
-		//		lightingShader.setMat4("model", model);
-		//		dynahex_modellist[i].Draw(lightingShader, NULL);
-		//	}
-		//}
-		//
-		//simpletree_jointlist[0]->q = 0.5f* (float)sin(time);
-		//simpletree_jointlist[2]->q = 0.5f * (float)sin(time);
+				model = ht_matrix_to_mat4_t(hw_i);
+				lightingShader.setMat4("model", model);
+				dynahex_modellist[i].Draw(lightingShader, NULL);
+			}
+		}
+		
+		simpletree_jointlist[0]->q = 0.5f* (float)sin(time);
+		simpletree_jointlist[2]->q = 0.5f * (float)sin(time);
 
-		//simpletree_jointlist[1]->q = 0.5f * (float)sin(time);
-		//simpletree_jointlist[5]->q = 0.5f * (float)sin(time);
+		simpletree_jointlist[1]->q = 0.5f * (float)sin(time);
+		simpletree_jointlist[5]->q = 0.5f * (float)sin(time);
 
-		//simpletree_jointlist[3]->q = .3f*(float)sin(time*5)-2;
-		//simpletree_jointlist[4]->q = -.3f*(float)sin(time*5)+2;
-		//
-		//for (int joint = 0; joint < 18; joint++)
-		//{
-		//	hexjoints[joint].q = 0;// 1.f + .1f * (float)sin(time * 10.f + (float)joint);
-		//}
-		//tree_dfs(&hexbase);
-		//{
-		//	mat4_t hw_b = Hscale(10.f);
-		//	hw_b.m[0][3] = -5.f;
-		//	hw_b.m[1][3] = 0;
-		//	hw_b.m[2][3] = 3.f;
-		//	hw_b = mat4_t_mult(hw_b, Hz(0));
-		//	for (int i = 0; i < 3; i++)		//assign target to this robot
-		//		target.v[i] = hw_b.m[i][3];
-		//	model = ht_matrix_to_mat4_t(hw_b);
-		//	lightingShader.setMat4("model", model);
-		//	render_robot(&hw_b, &lightingShader, &hexbase);
-		//}
+		simpletree_jointlist[3]->q = .3f*(float)sin(time*5)-2;
+		simpletree_jointlist[4]->q = -.3f*(float)sin(time*5)+2;
+		
+		for (int joint = 0; joint < 18; joint++)
+		{
+			hexjoints[joint].q = 0;// 1.f + .1f * (float)sin(time * 10.f + (float)joint);
+		}
+		tree_dfs(&hexbase);
+		{
+			mat4_t hw_b = Hscale(10.f);
+			hw_b.m[0][3] = -5.f;
+			hw_b.m[1][3] = 0;
+			hw_b.m[2][3] = 3.f;
+			hw_b = mat4_t_mult(hw_b, Hz(0));
+			for (int i = 0; i < 3; i++)		//assign target to this robot
+				target.v[i] = hw_b.m[i][3];
+			model = ht_matrix_to_mat4_t(hw_b);
+			lightingShader.setMat4("model", model);
+			render_robot(&hw_b, &lightingShader, &hexbase);
+		}
 
 
 		//do COM load, if there is a COM to load

@@ -182,7 +182,8 @@ void init_cam(CamControlStruct * P, float x, float y, float z, float q1, float q
 	init_forward_kinematics_dh(P->CamRobot.j, cambot_dh, P->CamRobot.num_frames-1);
 	P->CamRobot.hb_0 = mat4_t_mult(Hx(PI), mat4_t_I());
 	P->CamRobot.hw_b = mat4_t_I();		//END initializing camera
-
+	P->CamRobot.j[1].q = q1;
+	P->CamRobot.j[2].q = q2;
 	P->CamRobot.hw_b.m[0][3] = x;
 	P->CamRobot.hw_b.m[1][3] = y;
 	P->CamRobot.hw_b.m[2][3] = z;
