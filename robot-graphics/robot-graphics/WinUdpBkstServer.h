@@ -53,7 +53,7 @@ public:
 		//server.sin_addr = in4addr_any;	//assign the desired port # to the special address 0.0.0.0, which is a 'meta address' used to specify that the server can have any IP address we like on the LAN!
 		server.sin_port = htons(port);
 
-		char inet_addr_buf[256] = { 0 };	/*Buffer to be used for displaying string-format IP addresses*/
+		char inet_addr_buf[256] = {};	/*Buffer to be used for displaying string-format IP addresses*/
 		inet_ntop(AF_INET, &server.sin_addr.s_addr, (PSTR)inet_addr_buf, 256);	//convert again the value we copied thru and display
 		printf("Binding to server address: %s with port %d\r\n", inet_addr_buf, port);
 

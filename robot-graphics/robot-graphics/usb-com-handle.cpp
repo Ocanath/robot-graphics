@@ -27,7 +27,7 @@ DWORD dwbytesread;
 int connect_com_port(const char * port)
 {
 	serial_handle = CreateFile(port, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	DCB serial_params = { 0 };
+	DCB serial_params = {};
 	serial_params.DCBlength = sizeof(serial_params);
 	
 	GetCommState(serial_handle, &serial_params);
@@ -53,7 +53,7 @@ void usb_COM_handle_thread()
 {
 	connect_com_port("\\\\.\\COM4");
 
-	COMMTIMEOUTS timeout = { 0 };
+	COMMTIMEOUTS timeout = {};
 	timeout.ReadIntervalTimeout = 3;
 	timeout.ReadTotalTimeoutConstant = 0;
 	timeout.ReadTotalTimeoutMultiplier = 0;

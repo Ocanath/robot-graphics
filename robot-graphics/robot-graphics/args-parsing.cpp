@@ -20,7 +20,7 @@ cmd_options_t gl_options = {
 };
 
 std::string gl_csvheader;
-static char printstr[128] = { 0 };
+static char printstr[128] = {};
 /*
 * Parse any and all arguments coming in
 */

@@ -23,13 +23,13 @@ typedef struct fpoint_t
 }fpoint_t;
 
 static int gl_ppp_bidx = 0;
-static uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = { 0 };	//buffer
-static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = { 0 };
-static uint8_t gl_ser_readbuf[512] = { 0 };
-static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
+static uint8_t gl_ppp_payload_buffer[PAYLOAD_SIZE] = {};	//buffer
+static uint8_t gl_ppp_unstuffing_buffer[UNSTUFFING_BUFFER_SIZE] = {};
+static uint8_t gl_ser_readbuf[512] = {};
+static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = {};
 
 uint8_t gl_ser_pkt_done = 0;
-float gl_arm_angles[6] = { 0 };
+float gl_arm_angles[6] = {};
 
 /*
 Generic hex checksum calculation.
@@ -99,7 +99,7 @@ void parse_read(uint8_t* input_buf, int input_size, float* parsed_data, int pars
 
 void write_encoder_command(HANDLE* pSer, uint16_t address)
 {
-	uint8_t stuff_buf[sizeof(address) * 2 + 2] = { 0 };
+	uint8_t stuff_buf[sizeof(address) * 2 + 2] = {};
 
 	int nb = PPP_stuff((uint8_t*)(&address), sizeof(address), stuff_buf, sizeof(stuff_buf));
 	LPDWORD written = 0;
@@ -115,7 +115,7 @@ void main_loop(HANDLE* pSer)
 
 	uint16_t addresses[] = { 1,2,3,4 ,5, 6 };
 	int num_addresses = (sizeof(addresses) / sizeof(uint16_t));
-	float angles[(sizeof(addresses) / sizeof(uint16_t))] = { 0 };
+	float angles[(sizeof(addresses) / sizeof(uint16_t))] = {};
 	int addr_idx = 0;
 	uint64_t tx_ts = 0;
 	uint8_t done = 0;
@@ -187,7 +187,7 @@ void main_loop(HANDLE* pSer)
 int serial_thread(void)
 {
 	HANDLE serialport;
-	char namestr[16] = { 0 };
+	char namestr[16] = {};
 	uint8_t found = 0;
 	for (int i = 0; i < 255; i++)
 	{

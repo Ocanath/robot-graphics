@@ -11,7 +11,7 @@
 class Z1_arm
 {
 private:
-	mat4_t homecfg_targ = { 0 };
+	mat4_t homecfg_targ = {};
 	const vect3_t z1_joints_rpy[NUM_JOINTS_Z1 + 1] =
 	{
 		{0,0,0},
@@ -61,10 +61,10 @@ private:
 public:
 	mat4_t hw_b;
 	std::vector<AssetModel> modellist;
-	joint joints[NUM_JOINTS_Z1 + 1] = { 0 };
+	joint joints[NUM_JOINTS_Z1 + 1] = {};
 	mat4_t hw_i;
 	double render_scale = 10.;
-	mat4_t scale_matrix = { 0 };
+	mat4_t scale_matrix = {};
 
 	const vect3_t targ_anchors[4] = {	//this set of points can be arbitrary, but best performance should theoretically be some homogeneous transformation of the arm anchors. This one is hand transformed with a very simple transform.
 		{{0.0, 0, 0}},

@@ -569,8 +569,8 @@ int main_render_thread(void)
 
 	mat4_t lh_htmat = mat4_t_Identity;
 	mat4_t rh_htmat = mat4_t_Identity;
-	iirSOS lh_qlpf[6] = { 0 };
-	iirSOS rh_qlpf[6] = { 0 };
+	iirSOS lh_qlpf[6] = {};
+	iirSOS rh_qlpf[6] = {};
 	for (int i = 0; i < 6; i++)
 	{
 		m_mcpy(&lh_qlpf[i], (iirSOS*)(&lpf_template), sizeof(iirSOS));
@@ -626,27 +626,27 @@ int main_render_thread(void)
 		
 		for (int i = 0; i < NUM_LIGHTS; i++)
 		{
-			char buf[32] = { 0 };
+			char buf[32] = {};
 			snprintf(buf, sizeof(buf), "pointLights[%d].position", i);
 			lightingShader.setVec3(buf, light[i].position);
 
 			snprintf(buf, sizeof(buf),"pointLights[%d].ambient", i);
-			lightingShader.setVec3(buf, sizeof(buf), light[i].ambient);
+			lightingShader.setVec3(buf, light[i].ambient);
 
 			snprintf(buf, sizeof(buf),"pointLights[%d].diffuse", i);
 			lightingShader.setVec3(buf, light[i].diffuse);
 
 			snprintf(buf, sizeof(buf), "pointLights[%d].specular", i);
-			lightingShader.setVec3(buf, sizeof(buf), light[i].specular);
+			lightingShader.setVec3(buf, light[i].specular);
 
 			snprintf(buf, sizeof(buf), "pointLights[%d].constant", i);
-			lightingShader.setFloat(buf, sizeof(buf), light[i].constant);
+			lightingShader.setFloat(buf, light[i].constant);
 
 			snprintf(buf, sizeof(buf), "pointLights[%d].linear", i);
-			lightingShader.setFloat(buf, sizeof(buf), light[i].linear);
+			lightingShader.setFloat(buf, light[i].linear);
 
 			snprintf(buf, sizeof(buf), "pointLights[%d].quadratic", i);
-			lightingShader.setFloat(buf, sizeof(buf), light[i].quadratic);			
+			lightingShader.setFloat(buf, light[i].quadratic);			
 		}
 
 

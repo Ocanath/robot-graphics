@@ -170,7 +170,7 @@ void ik_closedform_hexapod(mat4_t * hb_0, joint * start, vect3_t * targ_b)
 	targ_1.v[2] = 0.f;	//set z value to 0, since it doesn't matter how we slide around z in our plane
 		
 	vect3_t zero = { {0,0,0} };
-	vect3_t sols[2] = { 0 };
+	vect3_t sols[2] = {};
 	get_intersection_circles(&zero, -hexleg_dh[2].a, &targ_1, -hexleg_dh[3].a, sols);
 	
 	int solidx = 1;

@@ -21,13 +21,13 @@ static const iirSOS fingerfilt_lpf_template = {
 class AbilityHandLeftUrdf
 {
 	private:
-		joint2 abhjoints[11] = { 0 };
-		link_t wrist = { 0 };
-		link_t palm = { 0 };
-		link_t fl1[4] = { 0 };
-		link_t fl2[4] = { 0 };
-		link_t tl1 = { 0 };
-		link_t tl2 = { 0 };
+		joint2 abhjoints[11] = {};
+		link_t wrist = {};
+		link_t palm = {};
+		link_t fl1[4] = {};
+		link_t fl2[4] = {};
+		link_t tl1 = {};
+		link_t tl2 = {};
 
 		const char* model_names[NUM_MODELS] = {
 			"abh_models/wristmesh.STL",
@@ -37,12 +37,12 @@ class AbilityHandLeftUrdf
 			"abh_models/thumb-F1.STL",
 			"abh_models/thumb-F2-left.STL"
 		};
-		iirSOS lpfs[6] = { 0 };
+		iirSOS lpfs[6] = {};
 		
 	public:
 		uint8_t filter_inputs = 0;
 		vector<AssetModel> modellist;
-		mat4_t hw_b = { 0 };
+		mat4_t hw_b = {};
 		AbilityHandLeftUrdf()
 		{
 			hw_b = mat4_t_Identity;//identity to start
@@ -163,13 +163,13 @@ class AbilityHandLeftUrdf
 class AbilityHandRightUrdf
 {
 private:
-	joint2 abhjoints[11] = { 0 };
-	link_t wrist = { 0 };
-	link_t palm = { 0 };
-	link_t fl1[4] = { 0 };
-	link_t fl2[4] = { 0 };
-	link_t tl1 = { 0 };
-	link_t tl2 = { 0 };
+	joint2 abhjoints[11] = {};
+	link_t wrist = {};
+	link_t palm = {};
+	link_t fl1[4] = {};
+	link_t fl2[4] = {};
+	link_t tl1 = {};
+	link_t tl2 = {};
 
 	const char* model_names[NUM_MODELS] = {
 		"abh_models/wristmesh.STL",
@@ -179,12 +179,12 @@ private:
 		"abh_models/thumb-F1-MIR.STL",
 		"abh_models/thumb-F2-right.STL"
 	};
-	iirSOS lpfs[6] = { 0 };
+	iirSOS lpfs[6] = {};
 	
 public:
 	uint8_t filter_inputs = 0;	//flag to control whether lpf is applied
 	vector<AssetModel> modellist;
-	mat4_t hw_b = { 0 };
+	mat4_t hw_b = {};
 	AbilityHandRightUrdf()
 	{
 		hw_b = mat4_t_Identity;//identity to start
