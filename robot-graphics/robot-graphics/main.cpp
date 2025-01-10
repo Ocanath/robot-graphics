@@ -39,6 +39,7 @@
 #include "WinUdpParsing.h"
 #include "ability-hand-rendering.h"
 #include "create_prism.h"
+#include "arrow.h"
 
 #define NUM_LIGHTS 5
 
@@ -306,10 +307,6 @@ int main_render_thread(void)
 
 
 	AssetModel arrow("misc_models/Arrow.STL");
-
-
-
-
 
 	/**/
 	vector<AssetModel> simpletree_modellist;
@@ -607,12 +604,12 @@ int main_render_thread(void)
 		glm::vec3 camera_position = glm::vec3(cam_origin.v[0], cam_origin.v[1], cam_origin.v[2]);
 		lightingShader.setVec3("viewPos", camera_position);
 		lightingShader.setFloat("material.shininess", shininess);
-		
+
 		lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
 		lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
 		lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
 		lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-		
+
 		for (int i = 0; i < NUM_LIGHTS; i++)
 		{
 			char buf[32] = { 0 };
@@ -635,7 +632,7 @@ int main_render_thread(void)
 			lightingShader.setFloat(buf, light[i].linear);
 
 			sprintf_s(buf, "pointLights[%d].quadratic", i);
-			lightingShader.setFloat(buf, light[i].quadratic);			
+			lightingShader.setFloat(buf, light[i].quadratic);
 		}
 
 
@@ -682,7 +679,7 @@ int main_render_thread(void)
 		//lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 		View = keyboard_cam_control(window, &Player, fps, target);
 		MVP = CameraProjection * View * Model;
-		
+
 
 
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
@@ -702,8 +699,8 @@ int main_render_thread(void)
 		}
 		if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
-			float v =(float)( .01f * (time - ambient_press_time));
-			light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient += glm::vec3(v,v,v);
+			float v = (float)(.01f * (time - ambient_press_time));
+			light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient += glm::vec3(v, v, v);
 			float mag = 0;
 			for (int r = 0; r < 3; r++)
 				mag += light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient[r] * light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient[r];
@@ -712,7 +709,7 @@ int main_render_thread(void)
 		else if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
 			float v = (float)(.01f * (time - ambient_press_time));
-			light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient += glm::vec3(-v,-v,-v);
+			light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient += glm::vec3(-v, -v, -v);
 			float mag = 0;
 			for (int r = 0; r < 3; r++)
 				mag += light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient[r] * light[KEYBOARD_CONTROLLED_LIGHT_IDX].ambient[r];
@@ -720,7 +717,7 @@ int main_render_thread(void)
 		}
 		else
 			ambient_press_time = time;
-		
+
 		//vect3_t player_pos;
 		//for(int r = 0; r < 3; r++)
 		//	player_pos.v[r] = Player.CamRobot.hw_b.m[r][3];
@@ -746,7 +743,7 @@ int main_render_thread(void)
 		glBindVertexArray(cubeVAO);
 
 		const float bcd = 20;
-		float scf = bcd*2;
+		float scf = bcd * 2;
 		const float zoff = 20.f;
 		mat4_t hw_cube[6] =
 		{
@@ -811,7 +808,6 @@ int main_render_thread(void)
 
 
 		//draw_prism(&lightingShader, prismVAO);
-
 
 		// don't forget to enable shader before setting uniforms
 		//model_shader.use();// view/projection transformations
@@ -1460,16 +1456,16 @@ int main_render_thread(void)
 		// bind specular map
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, ghost_map);
-		{
-			mat4_t hw_prism = {};
-			for (int rc = 0; rc < 4; rc++)
-				hw_prism.m[rc][rc] = 1.0f;
-			hw_prism.m[2][3] = 2.0;
-			glm::mat4 model = ht_matrix_to_mat4_t(hw_prism);
-			lightingShader.setMat4("model", model);
-			arrow.Draw(lightingShader, NULL);
-		}
-		
+
+		vect3_t v1;
+		for (int r = 0; r < 3; r++)
+			v1.v[r] = light[0].position[r];
+		vect3_t v2;
+		for (int r = 0; r < 3; r++)
+			v2.v[r] = light[4].position[r];
+		printf("%f,%f,%f, %f,%f,%f\n", v2.v[0], v2.v[1], v2.v[2], v1.v[0], v1.v[1], v1.v[2]);
+		draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader);
+
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();
