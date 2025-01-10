@@ -158,12 +158,204 @@ int main_render_thread(void)
 
 	CamControlStruct Player;				//specialized camera structure. carries around movement parameters
 	init_cam(&Player, -0.839070, -6.121749, 8.701856, fmod(84.193222 + PI, 2 * PI) - PI, fmod(-3.042592 + PI, 2 * PI) - PI);
-	
+	Player.look_at_flag = 1;
 
 	glfwSetCursorPos(window, winx / 2, winy / 2);
 
 	Shader lightingShader("6.multiple_lights.vs", "6.multiple_lights.fs");
 	Shader lightCubeShader("6.light_cube.vs", "6.light_cube.fs");
+
+	int vertex_idx = 0;
+
+	float triangularprism_vertices[8*3*8] = {};
+	{
+		float bottom_radius = 0.5;
+		float top_radius = 0.25;
+		float height = 1.0;
+		vect3_t top_vertices[3] = {};
+		vect3_t bottom_vertices[3] = {};
+		//setup of the base core triangle
+		for (int i = 0; i < 3; i++)
+		{
+			top_vertices[i].v[0] = top_radius * cos((float)i * 120.f * DEG_TO_RAD);
+			top_vertices[i].v[1] = top_radius * sin((float)i * 120.f * DEG_TO_RAD);
+			top_vertices[i].v[2] = height;
+		}
+		//setup of the base core triangle
+		for (int i = 0; i < 3; i++)
+		{
+			bottom_vertices[i].v[0] = bottom_radius * cos((float)i * 120.f * DEG_TO_RAD);
+			bottom_vertices[i].v[1] = bottom_radius * sin((float)i * 120.f * DEG_TO_RAD);
+			bottom_vertices[i].v[2] = 0;
+		}
+
+
+		//base
+		for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				triangularprism_vertices[vertex_idx++] = top_vertices[triangle_idx].v[i];
+			}
+			triangularprism_vertices[vertex_idx++] = 0.f;
+			triangularprism_vertices[vertex_idx++] = 0.f;
+			triangularprism_vertices[vertex_idx++] = -1.f;
+
+			triangularprism_vertices[vertex_idx++] = top_vertices[triangle_idx].v[0];
+			triangularprism_vertices[vertex_idx++] = top_vertices[triangle_idx].v[1];
+		}
+
+		//top
+		for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				triangularprism_vertices[vertex_idx++] = bottom_vertices[triangle_idx].v[i];
+			}
+			triangularprism_vertices[vertex_idx++] = 0.f;
+			triangularprism_vertices[vertex_idx++] = 0.f;
+			triangularprism_vertices[vertex_idx++] = -1.f;
+
+			triangularprism_vertices[vertex_idx++] = bottom_vertices[triangle_idx].v[0];
+			triangularprism_vertices[vertex_idx++] = bottom_vertices[triangle_idx].v[1];
+		}
+
+
+
+		{
+			vect3_t* varr[3] = { &bottom_vertices[0], &bottom_vertices[1], &top_vertices[0] };
+			vect3_t norm = {};
+			cross_pbr(varr[0], varr[1], &norm);
+			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
+				}
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = norm.v[i];
+				}
+				triangularprism_vertices[vertex_idx++] = 0;
+				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
+			}
+		}
+
+		{
+			vect3_t* varr[3] = { &top_vertices[0], &top_vertices[1], &bottom_vertices[1] };
+			vect3_t norm = {};
+			cross_pbr(varr[0], varr[1], &norm);
+			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
+				}
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = norm.v[i];
+				}
+				triangularprism_vertices[vertex_idx++] = 0;
+				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
+			}
+		}
+
+		{
+			vect3_t* varr[3] = { &bottom_vertices[1], &bottom_vertices[2], &top_vertices[1] };
+			vect3_t norm = {};
+			cross_pbr(varr[0], varr[1], &norm);
+			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
+				}
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = norm.v[i];
+				}
+				triangularprism_vertices[vertex_idx++] = 0;
+				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
+			}
+		}
+
+		{
+			vect3_t* varr[3] = { &top_vertices[1], &top_vertices[2], &bottom_vertices[2] };
+			vect3_t norm = {};
+			cross_pbr(varr[0], varr[1], &norm);
+			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
+				}
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = norm.v[i];
+				}
+				triangularprism_vertices[vertex_idx++] = 0;
+				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
+			}
+		}
+
+
+		{
+			vect3_t* varr[3] = { &bottom_vertices[2], &bottom_vertices[0], &top_vertices[2] };
+			vect3_t norm = {};
+			cross_pbr(varr[0], varr[1], &norm);
+			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
+				}
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = norm.v[i];
+				}
+				triangularprism_vertices[vertex_idx++] = 0;
+				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
+			}
+		}
+
+		{
+			vect3_t* varr[3] = { &top_vertices[2], &top_vertices[0], &bottom_vertices[0] };
+			vect3_t norm = {};
+			cross_pbr(varr[0], varr[1], &norm);
+			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
+				}
+				for (int i = 0; i < 3; i++)
+				{
+					triangularprism_vertices[vertex_idx++] = norm.v[i];
+				}
+				triangularprism_vertices[vertex_idx++] = 0;
+				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
+			}
+		}
+
+	}
+	
+	// first, configure the cube's VAO (and VBO)
+	unsigned int VBO, prismVAO;
+	glGenVertexArrays(1, &prismVAO);
+	glGenBuffers(1, &VBO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangularprism_vertices), triangularprism_vertices, GL_STATIC_DRAW);
+
+	glBindVertexArray(prismVAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 // ------------------------------------------------------------------
@@ -172,6 +364,7 @@ int main_render_thread(void)
 		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
 		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
 		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+
 		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
 		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
@@ -179,6 +372,7 @@ int main_render_thread(void)
 		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
 		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
 		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+
 		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
 		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
 		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
@@ -186,6 +380,7 @@ int main_render_thread(void)
 		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
 		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+
 		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
 		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
 		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
@@ -193,27 +388,38 @@ int main_render_thread(void)
 		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
 		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+		
 		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
 		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
 		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
+
+
+
+
 		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
 		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
 		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+		 
 		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
 		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
 		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
 
+
+
+
+
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
 		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
 		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+		
 		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
 		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
 	};
 
 	// first, configure the cube's VAO (and VBO)
-	unsigned int VBO, cubeVAO;
+	unsigned int cubeVAO;
 	glGenVertexArrays(1, &cubeVAO);
 	glGenBuffers(1, &VBO);
 
@@ -406,7 +612,7 @@ int main_render_thread(void)
 	tree_assign_parent(&hexbase);
 	tree_dfs(&hexbase);
 
-	vect3_t target = { {-5.0, 0.f, 3.f} };
+	vect3_t target = { {0.0, 0.f, 2.f} };
 
 
 	
@@ -534,8 +740,8 @@ int main_render_thread(void)
 	Z1_arm rh_z1;
 	rh_z1.hw_b = Hz(PI);
 	rh_z1.hw_b.m[0][3] = 0;
-	rh_z1.hw_b.m[1][3] = 1;
-	rh_z1.hw_b.m[2][3] = 2.0f;
+	rh_z1.hw_b.m[1][3] = 0;
+	rh_z1.hw_b.m[2][3] = 10.0f;
 	float init_z1_q[6] = {
 		0.000672,
 		1.400176,
@@ -771,6 +977,21 @@ int main_render_thread(void)
 
 			glBindVertexArray(cubeVAO);
 			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+
+		{
+			glBindVertexArray(prismVAO);
+
+			mat4_t hw_prism = {};
+			for (int rc = 0; rc < 4; rc++)
+				hw_prism.m[rc][rc] = 1.0f;
+			hw_prism.m[2][3] = 2.0;
+			glm::mat4 model = ht_matrix_to_mat4_t(hw_prism);		//this is so fucking wasteful to do it this way holy shit. Maybe rewrite setMat4 for efficiency
+			lightingShader.setMat4("model", model);
+
+			glBindVertexArray(prismVAO);
+			glDrawArrays(GL_TRIANGLES, 0, 24);
 		}
 
 		// don't forget to enable shader before setting uniforms
