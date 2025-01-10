@@ -154,6 +154,7 @@
   <ItemGroup>
     <ClCompile Include="ability-hand-rendering.cpp" />
     <ClCompile Include="args-parsing.cpp" />
+    <ClCompile Include="create_prism.cpp" />
     <ClCompile Include="dh_hex_fixed.cpp" />
     <ClCompile Include="dynahex.cpp" />
     <ClCompile Include="external\tinyxml2\tinyxml2.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="ability-hand-rendering.h" />
     <ClInclude Include="args-parsing.h" />
     <ClInclude Include="camera.h" />
+    <ClInclude Include="create_prism.h" />
     <ClInclude Include="dh_hex_fixed.h" />
     <ClInclude Include="dynahex.h" />
     <ClInclude Include="external\tinyxml2\tinyxml2.h" />

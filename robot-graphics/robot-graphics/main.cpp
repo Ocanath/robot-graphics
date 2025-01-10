@@ -38,6 +38,7 @@
 #include "winserial.h"
 #include "WinUdpParsing.h"
 #include "ability-hand-rendering.h"
+#include "create_prism.h"
 
 #define NUM_LIGHTS 5
 
@@ -165,188 +166,15 @@ int main_render_thread(void)
 	Shader lightingShader("6.multiple_lights.vs", "6.multiple_lights.fs");
 	Shader lightCubeShader("6.light_cube.vs", "6.light_cube.fs");
 
-	int vertex_idx = 0;
 
 	float triangularprism_vertices[8*3*8] = {};
-	{
-		float bottom_radius = 0.5;
-		float top_radius = 0.25;
-		float height = 1.0;
-		vect3_t top_vertices[3] = {};
-		vect3_t bottom_vertices[3] = {};
-		//setup of the base core triangle
-		for (int i = 0; i < 3; i++)
-		{
-			top_vertices[i].v[0] = top_radius * cos((float)i * 120.f * DEG_TO_RAD);
-			top_vertices[i].v[1] = top_radius * sin((float)i * 120.f * DEG_TO_RAD);
-			top_vertices[i].v[2] = height;
-		}
-		//setup of the base core triangle
-		for (int i = 0; i < 3; i++)
-		{
-			bottom_vertices[i].v[0] = bottom_radius * cos((float)i * 120.f * DEG_TO_RAD);
-			bottom_vertices[i].v[1] = bottom_radius * sin((float)i * 120.f * DEG_TO_RAD);
-			bottom_vertices[i].v[2] = 0;
-		}
-
-
-		//base
-		for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
-		{
-			for (int i = 0; i < 3; i++)
-			{
-				triangularprism_vertices[vertex_idx++] = top_vertices[triangle_idx].v[i];
-			}
-			triangularprism_vertices[vertex_idx++] = 0.f;
-			triangularprism_vertices[vertex_idx++] = 0.f;
-			triangularprism_vertices[vertex_idx++] = -1.f;
-
-			triangularprism_vertices[vertex_idx++] = top_vertices[triangle_idx].v[0];
-			triangularprism_vertices[vertex_idx++] = top_vertices[triangle_idx].v[1];
-		}
-
-		//top
-		for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
-		{
-			for (int i = 0; i < 3; i++)
-			{
-				triangularprism_vertices[vertex_idx++] = bottom_vertices[triangle_idx].v[i];
-			}
-			triangularprism_vertices[vertex_idx++] = 0.f;
-			triangularprism_vertices[vertex_idx++] = 0.f;
-			triangularprism_vertices[vertex_idx++] = -1.f;
-
-			triangularprism_vertices[vertex_idx++] = bottom_vertices[triangle_idx].v[0];
-			triangularprism_vertices[vertex_idx++] = bottom_vertices[triangle_idx].v[1];
-		}
-
-
-
-		{
-			vect3_t* varr[3] = { &bottom_vertices[0], &bottom_vertices[1], &top_vertices[0] };
-			vect3_t norm = {};
-			cross_pbr(varr[0], varr[1], &norm);
-			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
-				}
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = norm.v[i];
-				}
-				triangularprism_vertices[vertex_idx++] = 0;
-				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
-			}
-		}
-
-		{
-			vect3_t* varr[3] = { &top_vertices[0], &top_vertices[1], &bottom_vertices[1] };
-			vect3_t norm = {};
-			cross_pbr(varr[0], varr[1], &norm);
-			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
-				}
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = norm.v[i];
-				}
-				triangularprism_vertices[vertex_idx++] = 0;
-				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
-			}
-		}
-
-		{
-			vect3_t* varr[3] = { &bottom_vertices[1], &bottom_vertices[2], &top_vertices[1] };
-			vect3_t norm = {};
-			cross_pbr(varr[0], varr[1], &norm);
-			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
-				}
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = norm.v[i];
-				}
-				triangularprism_vertices[vertex_idx++] = 0;
-				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
-			}
-		}
-
-		{
-			vect3_t* varr[3] = { &top_vertices[1], &top_vertices[2], &bottom_vertices[2] };
-			vect3_t norm = {};
-			cross_pbr(varr[0], varr[1], &norm);
-			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
-				}
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = norm.v[i];
-				}
-				triangularprism_vertices[vertex_idx++] = 0;
-				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
-			}
-		}
-
-
-		{
-			vect3_t* varr[3] = { &bottom_vertices[2], &bottom_vertices[0], &top_vertices[2] };
-			vect3_t norm = {};
-			cross_pbr(varr[0], varr[1], &norm);
-			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
-				}
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = norm.v[i];
-				}
-				triangularprism_vertices[vertex_idx++] = 0;
-				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
-			}
-		}
-
-		{
-			vect3_t* varr[3] = { &top_vertices[2], &top_vertices[0], &bottom_vertices[0] };
-			vect3_t norm = {};
-			cross_pbr(varr[0], varr[1], &norm);
-			for (int triangle_idx = 0; triangle_idx < 3; triangle_idx++)
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = varr[triangle_idx]->v[i];
-				}
-				for (int i = 0; i < 3; i++)
-				{
-					triangularprism_vertices[vertex_idx++] = norm.v[i];
-				}
-				triangularprism_vertices[vertex_idx++] = 0;
-				triangularprism_vertices[vertex_idx++] = 1;	//placeholder for now
-			}
-		}
-
-	}
-	
+	create_prism_voxel(triangularprism_vertices);
 	// first, configure the cube's VAO (and VBO)
 	unsigned int VBO, prismVAO;
 	glGenVertexArrays(1, &prismVAO);
 	glGenBuffers(1, &VBO);
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(triangularprism_vertices), triangularprism_vertices, GL_STATIC_DRAW);
-
 	glBindVertexArray(prismVAO);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -476,6 +304,8 @@ int main_render_thread(void)
 	AssetModel psy_palm("misc_models/psyonic-hand/PALM_BASE_FRAME.STL");
 	AssetModel psy_crosslink("misc_models/psyonic-hand/crosslink.STL");
 
+
+	AssetModel arrow("misc_models/Arrow.STL");
 
 
 
@@ -980,19 +810,8 @@ int main_render_thread(void)
 		}
 
 
-		{
-			glBindVertexArray(prismVAO);
+		//draw_prism(&lightingShader, prismVAO);
 
-			mat4_t hw_prism = {};
-			for (int rc = 0; rc < 4; rc++)
-				hw_prism.m[rc][rc] = 1.0f;
-			hw_prism.m[2][3] = 2.0;
-			glm::mat4 model = ht_matrix_to_mat4_t(hw_prism);		//this is so fucking wasteful to do it this way holy shit. Maybe rewrite setMat4 for efficiency
-			lightingShader.setMat4("model", model);
-
-			glBindVertexArray(prismVAO);
-			glDrawArrays(GL_TRIANGLES, 0, 24);
-		}
 
 		// don't forget to enable shader before setting uniforms
 		//model_shader.use();// view/projection transformations
@@ -1636,6 +1455,20 @@ int main_render_thread(void)
 
 
 
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, ghost_map);
+		// bind specular map
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, ghost_map);
+		{
+			mat4_t hw_prism = {};
+			for (int rc = 0; rc < 4; rc++)
+				hw_prism.m[rc][rc] = 1.0f;
+			hw_prism.m[2][3] = 2.0;
+			glm::mat4 model = ht_matrix_to_mat4_t(hw_prism);
+			lightingShader.setMat4("model", model);
+			arrow.Draw(lightingShader, NULL);
+		}
 		
 
 		// also draw the lamp object(s)
