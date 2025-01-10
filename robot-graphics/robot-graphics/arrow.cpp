@@ -23,7 +23,7 @@ void draw_arrow(AssetModel * arrow, Shader * shader, mat4_t * hw_arrow)
 	arrow->Draw(*shader, NULL);
 }
 
-void draw_arrow_between_two_points(vect3_t * p1, vect3_t * p2, AssetModel * arrow, Shader * shader)
+void draw_arrow_between_two_points(vect3_t * p1, vect3_t * p2, AssetModel * arrow, Shader * shader, float thinfactor)
 {
 	vect3_t dif;
 	for (int i = 0; i < 3; i++)
@@ -39,17 +39,17 @@ void draw_arrow_between_two_points(vect3_t * p1, vect3_t * p2, AssetModel * arro
 
 	vect3_t ref_vector;
 	for (int r = 0; r < 3; r++)
-		ref_vector.v[r] = dif.v[2 - r];
+		ref_vector.v[r] = dif.v[2 - r];	//load reference. easy method to make sure the cross product cannot ever be zero
 	vect3_t res;
 	cross_pbr(&dif, &ref_vector, &res);	
 	vect_normalize(res.v, 3);
 	for (int r = 0; r < 3; r++)
-		hw_arrow.m[r][1] = res.v[r];
+		hw_arrow.m[r][1] = res.v[r]*thinfactor;
 
 	cross_pbr(&res, &dif, &ref_vector);	//load into ref_vector to avoid having to copy res into something else
 	vect_normalize(ref_vector.v, 3);
 	for (int r = 0; r < 3; r++)
-		hw_arrow.m[r][0] = ref_vector.v[r];
+		hw_arrow.m[r][0] = ref_vector.v[r]*thinfactor;
 
 	draw_arrow(arrow, shader, &hw_arrow);
 }
