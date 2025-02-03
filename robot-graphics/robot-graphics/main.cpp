@@ -159,8 +159,8 @@ int main_render_thread(void)
 
 
 	CamControlStruct Player;				//specialized camera structure. carries around movement parameters
-	init_cam(&Player, 1.573690, -0.293944, 3.487601, fmod(106.966202 + PI, 2 * PI) - PI, fmod(-2.100594 + PI, 2 * PI) - PI);
-	Player.lock_in_flag = 1;
+	init_cam(&Player, 1.789822, -0.090985, 3.487601, fmod(0.152049 + PI, 2 * PI) - PI, fmod(-2.100594 + PI, 2 * PI) - PI);
+	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 
 	glfwSetCursorPos(window, winx / 2, winy / 2);
@@ -278,7 +278,13 @@ int main_render_thread(void)
 	unsigned int stone_diffuse_map = loadTexture("img/large_stone_tiled.png");
 	unsigned int stone_specular_map = loadTexture("img/large_stone_tiled_specular.png");
 	unsigned int white_map = loadTexture("img/white.png");
+	unsigned int gray_map = loadTexture("img/gray.png");
 	unsigned int ghost_map = loadTexture("img/ghost.png");
+	unsigned int red_map = loadTexture("img/red.png");
+	unsigned int green_map = loadTexture("img/green.png");
+	unsigned int blue_map = loadTexture("img/blue.png");
+	
+
 
 	AssetModel cube("misc_models/primitive_shapes/cube.obj");
 	cube.hb_model = new mat4_t;
@@ -860,10 +866,10 @@ int main_render_thread(void)
 		//render the psyonic hand
 		// bind diffuse map
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, white_map);
+		glBindTexture(GL_TEXTURE_2D, gray_map);
 		// bind specular map
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, white_map);
+		glBindTexture(GL_TEXTURE_2D, gray_map);
 
 		//lightingShader.setFloat("material.shininess", 32.0f);
 		scf = 0.01f;
@@ -1369,10 +1375,10 @@ int main_render_thread(void)
 
 		//do COM load, if there is a COM to load
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, white_map);
+		glBindTexture(GL_TEXTURE_2D, gray_map);
 		// bind specular map
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, white_map);
+		glBindTexture(GL_TEXTURE_2D, gray_map);
 
 
 		model = ht_matrix_to_mat4_t(dynahex_hw_b);
@@ -1451,14 +1457,6 @@ int main_render_thread(void)
 		}
 
 
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, ghost_map);
-		// bind specular map
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, ghost_map);
-
-
 		//vect3_t v1 = {};
 		//for (float sv = 0.f; sv < TWO_PI*4; sv+=0.1)
 		//{
@@ -1467,13 +1465,36 @@ int main_render_thread(void)
 		//		draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 0.5);
 		//	v1 = v2;
 		//}
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, white_map);
+		// bind specular map
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, white_map);
 		vect3_t v1 = {};
 		v1.v[2] = 2.5;
 		vect3_t v2 = {};
+		vect3_t weights = { 1,1,1 };
 		for (int i = 0; i < 3; i++)
-			v2.v[i] = v1.v[i] + gl_magsensor_xyz[i]*.001;
-		draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 0.5);
+			v2.v[i] = v1.v[i] + gl_magsensor_xyz[i]*weights.v[i]*.001;
+		draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 1.0);
 		//printf("%f, %f, %f\r\n", gl_magsensor_xyz[0], gl_magsensor_xyz[1], gl_magsensor_xyz[2]);
+
+		unsigned int map[3] = { red_map, green_map, blue_map };
+		for (int r = 0; r < 3; r++)
+		{
+			for (int c = 0; c < 3; c++)
+			{
+				v2.v[c] = v1.v[c] + mat4_t_Identity.m[r][c]*1.0;
+			}
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, map[r]);
+			// bind specular map
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, map[r]);
+
+			draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 1.0);	//should enumerate between red, green and blue primary colors instead
+		}
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();

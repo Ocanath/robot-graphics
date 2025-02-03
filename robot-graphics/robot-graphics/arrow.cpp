@@ -39,7 +39,7 @@ void draw_arrow_between_two_points(vect3_t * p1, vect3_t * p2, AssetModel * arro
 
 	vect3_t ref_vector;
 	for (int r = 0; r < 3; r++)
-		ref_vector.v[r] = dif.v[2 - r];	//load reference. easy method to make sure the cross product cannot ever be zero
+		ref_vector.v[r] = dif.v[2 - r]+.1;	//load reference. easy method to make sure the cross product cannot ever be zero
 	vect3_t res;
 	cross_pbr(&dif, &ref_vector, &res);	
 	vect_normalize(res.v, 3);
