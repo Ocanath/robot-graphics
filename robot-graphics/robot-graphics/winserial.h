@@ -14,9 +14,12 @@ typedef struct com_ppp_buffer_t
 	int ppp_bidx;
 }com_ppp_buffer_t;
 
+extern HANDLE gl_serialwrite_serialport;
 
 int auto_connect_com_port(HANDLE* serial_handle, unsigned long baud);
 int connect_to_usb_serial(HANDLE* serial_handle, const char* com_port_name, unsigned long baud);
 int get_ppp_pld(HANDLE* serialhandle, com_ppp_buffer_t* cb);
+int serial_write(uint8_t* data, int size);
+int read_serial(uint8_t* readbuf, int bufsize);
 
 #endif

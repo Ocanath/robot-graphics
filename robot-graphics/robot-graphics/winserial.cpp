@@ -68,3 +68,19 @@ int get_ppp_pld(HANDLE* serialhandle, com_ppp_buffer_t* cb)
 	}
 	return pld_size;
 }
+
+HANDLE gl_serialwrite_serialport;
+
+int serial_write(uint8_t* data, int size)
+{
+	LPDWORD written = 0;
+	int wfrc = WriteFile(gl_serialwrite_serialport, data, size, written, NULL);
+	return (int)written;
+}
+
+int read_serial(uint8_t* readbuf, int bufsize)
+{
+	LPDWORD num_bytes_read = 0;
+	int rc = ReadFile(gl_serialwrite_serialport, readbuf, bufsize, (LPDWORD)(&num_bytes_read), NULL);	//
+	return (int)num_bytes_read;
+}

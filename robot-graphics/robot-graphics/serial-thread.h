@@ -4,6 +4,7 @@
 
 extern uint8_t gl_ser_pkt_done;
 extern float gl_arm_angles[6];
+extern float gl_magsensor_xyz[3];
 
 int serial_thread(void);
 

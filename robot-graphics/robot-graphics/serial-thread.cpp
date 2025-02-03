@@ -8,6 +8,7 @@
 #include "args-parsing.h"
 #include "sin_fast.h"
 #include <algorithm>
+#include "magsensor.h"
 
 #define PAYLOAD_SIZE 512
 #define UNSTUFFING_BUFFER_SIZE (PAYLOAD_SIZE * 2 + 2)
@@ -30,6 +31,8 @@ static float gl_valdump[PAYLOAD_SIZE / sizeof(float)] = { 0 };
 
 uint8_t gl_ser_pkt_done = 0;
 float gl_arm_angles[6] = { 0 };
+
+float gl_magsensor_xyz[3] = {};
 
 /*
 Generic hex checksum calculation.
@@ -61,6 +64,31 @@ static const float offsets[] = { -2.700014, -1.099270, -1.576392, 1.654050, -2.0
 static const float signs[] = { -1,-1,1,-1,-1,-1 };
 
 
+/*
+* Inputs:
+*	input_buf: raw unstuffed data buffer
+* Outputs:
+*	parsed_data: floats, parsed from input buffer
+* Returns: number of parsed values
+*/
+void parse_magsensor_response(uint8_t* input_buf, int payload_size, float* parsed_data, int parsed_data_array_size, int* parsed_data_size)
+{
+	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
+	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
+	int wordsize = payload_size / sizeof(uint32_t);
+	if (wordsize > parsed_data_array_size)
+		return;	//array bounds safety
+	int i = 0;
+	for (i = 0; i < wordsize - 1; i++)
+	{
+		parsed_data[i] = ((float)pbi32[i]);
+		//printf("%d ", pbi32[i]);
+	}
+	//printf("\n");
+	parsed_data[i] = ((float)pbu32[i]) / 1000.f;
+
+	*parsed_data_size = wordsize;
+}
 
 /*
 * Inputs:
@@ -106,6 +134,12 @@ void write_encoder_command(HANDLE* pSer, uint16_t address)
 	int wfrc = WriteFile(*pSer, stuff_buf, nb, written, NULL);
 }
 
+void delay(uint32_t ms)
+{
+	uint32_t start = GetTickCount();
+	while ((GetTickCount() - start) < ms);
+}
+
 void main_loop(HANDLE* pSer)
 {
 	int pld_size = 0;
@@ -113,7 +147,31 @@ void main_loop(HANDLE* pSer)
 	int wordsize = 0;
 	int wordsize_match_count = 0;
 
-	uint16_t addresses[] = { 1,2,3,4 ,5, 6 };
+	gl_serialwrite_serialport = *pSer;
+
+	mlx_write(0x77, MT_RESET);
+	delay(100);
+	mlx_write(0x77, MT_EXIT_MODE);
+	delay(100);
+	mlx_write(0x77, MT_RESET);
+	printf("Sensor Reset Complete\r\n");
+
+	uint8_t gain = 7 & 0x7;
+	mlx_write_register(0x77, 0x0, (gain << 4));
+	delay(100);
+	printf("Write Gain Complete\r\n");
+	
+	uint8_t res = 3;
+	uint16_t resw = (res << 5) | (res << 7) | (res << 9);
+	mlx_write_register(0x77, 0x2, resw);	//set res. works
+	delay(100);
+	printf("Write Res Complete\r\n");
+
+
+	//uint16_t addresses[] = { 1,2,3,4 ,5, 6, MAGSENSOR_RS485ADDRESS };
+	uint16_t addresses[] = { MAGSENSOR_RS485ADDRESS };
+	int skipcount[sizeof(addresses) / sizeof(uint16_t)] = {};
+
 	int num_addresses = (sizeof(addresses) / sizeof(uint16_t));
 	float angles[(sizeof(addresses) / sizeof(uint16_t))] = { 0 };
 	int addr_idx = 0;
@@ -121,7 +179,14 @@ void main_loop(HANDLE* pSer)
 	uint8_t done = 0;
 	while (1)
 	{
-		write_encoder_command(pSer, addresses[addr_idx]);
+		if (addresses[addr_idx] != MAGSENSOR_RS485ADDRESS)
+		{
+			write_encoder_command(pSer, addresses[addr_idx]);
+		}
+		else
+		{
+			mlx_write(MAGSENSOR_RS485ADDRESS, MT_READ_XYZ);
+		}
 
 		uint8_t poll_for_response = 1;
 		uint64_t start_ts = GetTickCount64();
@@ -137,7 +202,18 @@ void main_loop(HANDLE* pSer)
 				pld_size = parse_PPP_stream(new_byte, gl_ppp_payload_buffer, PAYLOAD_SIZE, gl_ppp_unstuffing_buffer, UNSTUFFING_BUFFER_SIZE, &gl_ppp_bidx);
 				if (pld_size > 0)
 				{
-					parse_read(gl_ppp_payload_buffer, pld_size, angles, num_addresses);
+					if (addresses[addr_idx] != MAGSENSOR_RS485ADDRESS)
+					{
+						parse_read(gl_ppp_payload_buffer, pld_size, angles, num_addresses);
+					}
+					else
+					{
+						float raw_magsense[5] = {};	//xyzt, ms
+						parse_magsensor_response(gl_ppp_payload_buffer, pld_size, raw_magsense, sizeof(raw_magsense)/sizeof(float), &wordsize);
+						gl_magsensor_xyz[0] = raw_magsense[0] * gain_res_xy[gain][res];
+						gl_magsensor_xyz[1] = raw_magsense[1] * gain_res_xy[gain][res];
+						gl_magsensor_xyz[2] = raw_magsense[2] * gain_res_z[gain][res];
+					}
 					poll_for_response = 0;
 
 					addr_idx = (addr_idx + 1);
@@ -145,12 +221,16 @@ void main_loop(HANDLE* pSer)
 					{
 						addr_idx = 0;
 						done = 1;
-					}
-
+					}	
 				}
 			}
-			if (tick - start_ts > 1)
+			uint64_t timeout = 1;
+			if (addresses[addr_idx] == MAGSENSOR_RS485ADDRESS)
+				timeout = 50;
+
+			if (tick - start_ts > timeout)
 			{
+				skipcount[addr_idx]++;
 				poll_for_response = 0;
 				addr_idx = (addr_idx + 1);
 				if (addr_idx >= num_addresses)

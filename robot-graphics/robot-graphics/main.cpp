@@ -123,9 +123,9 @@ int main(void)
 	//const char* title = titleElement->GetText();
 	//printf("Name of play (1): %s\n", title);
 	std::thread t1(main_render_thread);
-	//std::thread t2(serial_thread);
+	std::thread t2(serial_thread);
 	t1.join();
-	//t2.join();
+	t2.join();
 }
 
 
@@ -159,7 +159,7 @@ int main_render_thread(void)
 
 
 	CamControlStruct Player;				//specialized camera structure. carries around movement parameters
-	init_cam(&Player, -15.362446, -9.488471, 5.127066, fmod(-3.733799 + PI, 2 * PI) - PI, fmod(-1.815592 + PI, 2 * PI) - PI);
+	init_cam(&Player, 1.573690, -0.293944, 3.487601, fmod(106.966202 + PI, 2 * PI) - PI, fmod(-2.100594 + PI, 2 * PI) - PI);
 	Player.lock_in_flag = 1;
 	Player.look_at_flag = 0;
 
@@ -1459,15 +1459,21 @@ int main_render_thread(void)
 		glBindTexture(GL_TEXTURE_2D, ghost_map);
 
 
+		//vect3_t v1 = {};
+		//for (float sv = 0.f; sv < TWO_PI*4; sv+=0.1)
+		//{
+		//	vect3_t v2 = { sin(sv), cos(sv), 2+0.5*sin(time*.1*20+sv/TWO_PI*10)};
+		//	if (sv > 0)
+		//		draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 0.5);
+		//	v1 = v2;
+		//}
 		vect3_t v1 = {};
-		for (float sv = 0.f; sv < TWO_PI*4; sv+=0.1)
-		{
-			vect3_t v2 = { sin(sv), cos(sv), 2+0.5*sin(time*.1*20+sv/TWO_PI*10)};
-			if (sv > 0)
-				draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 0.5);
-			v1 = v2;
-		}
-		
+		v1.v[2] = 2.5;
+		vect3_t v2 = {};
+		for (int i = 0; i < 3; i++)
+			v2.v[i] = v1.v[i] + gl_magsensor_xyz[i]*.001;
+		draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 0.5);
+		//printf("%f, %f, %f\r\n", gl_magsensor_xyz[0], gl_magsensor_xyz[1], gl_magsensor_xyz[2]);
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();
