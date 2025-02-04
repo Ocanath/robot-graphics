@@ -60,7 +60,7 @@ uint16_t get_checksum16(uint16_t* arr, int size)
 }
 
 
-static const float offsets[] = { -2.700014, -1.099270, -1.576392, 1.654050, -2.082925, -0.006566 };
+static const float offsets[] = { -2.700014, -1.099270, -1.576392, 1.654050, -2.082925, -0.178326 };
 static const float signs[] = { -1,-1,1,-1,-1,-1 };
 
 
@@ -76,6 +76,8 @@ void parse_magsensor_response(uint8_t* input_buf, int payload_size, float* parse
 	uint32_t* pbu32 = (uint32_t*)(&input_buf[0]);
 	int32_t* pbi32 = (int32_t*)(&input_buf[0]);
 	int wordsize = payload_size / sizeof(uint32_t);
+	if (wordsize != 5)
+		return;
 	if (wordsize > parsed_data_array_size)
 		return;	//array bounds safety
 	int i = 0;
@@ -162,14 +164,16 @@ void main_loop(HANDLE* pSer)
 	printf("Write Gain Complete\r\n");
 	
 	uint8_t res = 3;
-	uint16_t resw = (res << 5) | (res << 7) | (res << 9);
-	mlx_write_register(0x77, 0x2, resw);	//set res. works
+	uint16_t regw = (res << 5) | (res << 7) | (res << 9);
+	uint8_t dig_filt = 2;	//datashit says that dig_filt = 0 and OSR=0, chip won't work right so have to select non-default settings!?!?!?!!?!?!?!?!?
+	regw |= (dig_filt & 0b111) << 2;
+	mlx_write_register(0x77, 0x2, regw);	//set res. works
 	delay(100);
 	printf("Write Res Complete\r\n");
 
 
-	//uint16_t addresses[] = { 1,2,3,4 ,5, 6, MAGSENSOR_RS485ADDRESS };
-	uint16_t addresses[] = { MAGSENSOR_RS485ADDRESS };
+	uint16_t addresses[] = { 1,2,3,4 ,5, 6, MAGSENSOR_RS485ADDRESS };
+	//uint16_t addresses[] = { MAGSENSOR_RS485ADDRESS };
 	int skipcount[sizeof(addresses) / sizeof(uint16_t)] = {};
 
 	int num_addresses = (sizeof(addresses) / sizeof(uint16_t));
@@ -190,6 +194,7 @@ void main_loop(HANDLE* pSer)
 
 		uint8_t poll_for_response = 1;
 		uint64_t start_ts = GetTickCount64();
+		float raw_magsense[5] = {};	//xyzt, ms
 		while (poll_for_response != 0)
 		{
 			uint64_t tick = GetTickCount64();
@@ -208,7 +213,6 @@ void main_loop(HANDLE* pSer)
 					}
 					else
 					{
-						float raw_magsense[5] = {};	//xyzt, ms
 						parse_magsensor_response(gl_ppp_payload_buffer, pld_size, raw_magsense, sizeof(raw_magsense)/sizeof(float), &wordsize);
 						gl_magsensor_xyz[0] = raw_magsense[0] * gain_res_xy[gain][res];
 						gl_magsensor_xyz[1] = raw_magsense[1] * gain_res_xy[gain][res];
@@ -250,6 +254,7 @@ void main_loop(HANDLE* pSer)
 				for (int i = 0; i < 6; i++)
 				{
 					gl_arm_angles[i] = angles[i];
+					//printf("%f\n", angles[5]);
 				}
 				gl_ser_pkt_done = 1;
 			}

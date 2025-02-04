@@ -106,6 +106,38 @@ typedef struct light_params_t
 }light_params_t;
 
 
+/*
+* Arguments:
+* 
+* pFrame: the coordinate frame which we are drawing in the SoftWaRe
+* map: red_map, green_map, blue_map  - the color map for x, y, z, which generally should be handles pointing to gl textures of red green and blue things
+* scale: the scale of the vectors to be drawn. Generally can keep it 1, but depending on rendering scale
+* arrow: pointer to the arrow model
+* lightingShader: pointer to shader
+*/
+void draw_coordinate_frame(mat4_t* pFrame, unsigned int map[3], double scale, AssetModel * arrow, Shader * lightingShader)
+{
+	vect3_t v1;
+	for (int r = 0; r < 3; r++)
+		v1.v[r] = pFrame->m[r][3];	//compose the first position which is the origin of the frame
+	vect3_t v2;
+	for (int c = 0; c < 3; c++)
+	{
+		for (int r = 0; r < 3; r++)
+		{
+			v2.v[r] = v1.v[r] + pFrame->m[r][c] * scale;
+		}
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, map[c]);
+		// bind specular map
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, map[c]);
+
+		draw_arrow_between_two_points(&v1, &v2, arrow, lightingShader, 1.0);	//should enumerate between red, green and blue primary colors instead
+	}
+}
+
+
 dynahex_t * dynahex_bones = NULL;
 kinematic_hand_t* psy_hand_bones = NULL;
 
@@ -159,7 +191,7 @@ int main_render_thread(void)
 
 
 	CamControlStruct Player;				//specialized camera structure. carries around movement parameters
-	init_cam(&Player, 1.789822, -0.090985, 3.487601, fmod(0.152049 + PI, 2 * PI) - PI, fmod(-2.100594 + PI, 2 * PI) - PI);
+	init_cam(&Player, 6.701464, 5.702275, 6.159458, fmod(149.929184 + PI, 2 * PI) - PI, fmod(-1.920593 + PI, 2 * PI) - PI);
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 
@@ -572,10 +604,10 @@ int main_render_thread(void)
 
 
 	Z1_arm rh_z1;
-	rh_z1.hw_b = Hz(PI);
+	//rh_z1.hw_b = Hz(PI);
 	rh_z1.hw_b.m[0][3] = 0;
 	rh_z1.hw_b.m[1][3] = 0;
-	rh_z1.hw_b.m[2][3] = 10.0f;
+	rh_z1.hw_b.m[2][3] = 3.0f;
 	float init_z1_q[6] = {
 		0.000672,
 		1.400176,
@@ -592,7 +624,7 @@ int main_render_thread(void)
 		rh_z1.fk();
 	}
 	mat4_t z1_start_cfg = rh_z1.get_targ_from_cur_cfg();
-
+	uint8_t render_z1 = 0;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -1001,8 +1033,10 @@ int main_render_thread(void)
 			gl_ser_pkt_done = 0;
 		}
 		rh_z1.fk();
-		rh_z1.render_arm(lightingShader);
-
+		if(render_z1)
+			rh_z1.render_arm(lightingShader);
+		render_z1 = ~render_z1 & 1;
+		
 		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
 		{
 			printf("%f\n", real_hexapod_qmeas[6]);
@@ -1466,35 +1500,59 @@ int main_render_thread(void)
 		//	v1 = v2;
 		//}
 
+		//printf("%f, %f, %f\r\n", gl_magsensor_xyz[0], gl_magsensor_xyz[1], gl_magsensor_xyz[2]);
+
+		mat4_t z1Origin = {};
+		for (int rc = 0; rc < 3; rc++)
+			z1Origin.m[rc][rc] = 1.0;
+		z1Origin.m[2][3] = 2.0;
+		unsigned int map[3] = { red_map, green_map, blue_map };
+		draw_coordinate_frame(&z1Origin, map, 1., &arrow, &lightingShader);
+
+		mat4_t hwsc_b = mat4_t_mult(rh_z1.hw_b, rh_z1.scale_matrix);
+		mat4_t h6_magsensorspot = {
+			{
+				{1,0,0,0.051},
+				{0,1,0,0},
+				{0,0,1,0},
+				{0,0,0,1}
+			}
+		};		
+		mat4_t hb_magsensorspot = mat4_t_mult(rh_z1.joints[6].hb_i, h6_magsensorspot);
+		mat4_t hw_magsensorspot = mat4_t_mult(hwsc_b, hb_magsensorspot);
+		mat4_t h_magsensorspot_magsensorframe = mat4_t_mult(Hy(PI / 2), Hz(PI));
+		mat4_t hw_msf = mat4_t_mult(hw_magsensorspot, h_magsensorspot_magsensorframe);
+		for (int r = 0; r < 3; r++)
+		{
+			for (int c = 0; c < 3; c++)
+			{
+				hw_msf.m[r][c] /= rh_z1.scale_matrix.m[0][0];	//assuming uniform scaling
+			}
+		}
+		draw_coordinate_frame(&hw_msf, map, 1.0, &arrow, &lightingShader);
+
+
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, white_map);
 		// bind specular map
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, white_map);
 		vect3_t v1 = {};
-		v1.v[2] = 2.5;
+		for (int r = 0; r < 3; r++)
+			v1.v[r] = hw_msf.m[r][3];
+		vect3_t magsensor_xyz;
+		for (int i = 0; i < 3; i++)
+			magsensor_xyz.v[i] = gl_magsensor_xyz[i];
+		vect3_t magsensor_xyz_w = {};
+		htmatrix_vect3_mult(&hw_msf, &magsensor_xyz, &magsensor_xyz_w);
 		vect3_t v2 = {};
 		vect3_t weights = { 1,1,1 };
 		for (int i = 0; i < 3; i++)
-			v2.v[i] = v1.v[i] + gl_magsensor_xyz[i]*weights.v[i]*.001;
+			v2.v[i] = v1.v[i] + magsensor_xyz_w.v[i] * weights.v[i] * .001;
+
 		draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 1.0);
-		//printf("%f, %f, %f\r\n", gl_magsensor_xyz[0], gl_magsensor_xyz[1], gl_magsensor_xyz[2]);
 
-		unsigned int map[3] = { red_map, green_map, blue_map };
-		for (int r = 0; r < 3; r++)
-		{
-			for (int c = 0; c < 3; c++)
-			{
-				v2.v[c] = v1.v[c] + mat4_t_Identity.m[r][c]*1.0;
-			}
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, map[r]);
-			// bind specular map
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, map[r]);
 
-			draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 1.0);	//should enumerate between red, green and blue primary colors instead
-		}
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();
