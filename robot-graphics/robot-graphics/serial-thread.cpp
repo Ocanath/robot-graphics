@@ -142,6 +142,9 @@ void delay(uint32_t ms)
 	while ((GetTickCount() - start) < ms);
 }
 
+uint8_t gl_subtraction_enable_flag = 0;
+uint8_t gl_subtraction_disable_flag = 0;
+
 void main_loop(HANDLE* pSer)
 {
 	int pld_size = 0;
@@ -158,7 +161,7 @@ void main_loop(HANDLE* pSer)
 	mlx_write(0x77, MT_RESET);
 	printf("Sensor Reset Complete\r\n");
 
-	uint8_t gain = 7 & 0x7;
+	uint8_t gain = 0 & 0x7;
 	mlx_write_register(0x77, 0x0, (gain << 4));
 	delay(100);
 	printf("Write Gain Complete\r\n");
@@ -172,12 +175,13 @@ void main_loop(HANDLE* pSer)
 	printf("Write Res Complete\r\n");
 
 
-	uint16_t addresses[] = { 1,2,3,4 ,5, 6, MAGSENSOR_RS485ADDRESS };
-	//uint16_t addresses[] = { MAGSENSOR_RS485ADDRESS };
+	//uint16_t addresses[] = { 1,2,3,4 ,5, 6, MAGSENSOR_RS485ADDRESS };
+	//uint16_t addresses[] = { 1,2,3,4 ,5, 6 };
+	uint16_t addresses[] = { MAGSENSOR_RS485ADDRESS };
 	int skipcount[sizeof(addresses) / sizeof(uint16_t)] = {};
 
 	int num_addresses = (sizeof(addresses) / sizeof(uint16_t));
-	float angles[(sizeof(addresses) / sizeof(uint16_t))] = { 0 };
+	float angles[(sizeof(addresses) / sizeof(uint16_t))] = {  };
 	int addr_idx = 0;
 	uint64_t tx_ts = 0;
 	uint8_t done = 0;
@@ -191,6 +195,25 @@ void main_loop(HANDLE* pSer)
 		{
 			mlx_write(MAGSENSOR_RS485ADDRESS, MT_READ_XYZ);
 		}
+
+
+		if (gl_subtraction_disable_flag)
+		{
+			delay(100);
+			gl_subtraction_disable_flag = 0;
+			mlx_write(MAGSENSOR_RS485ADDRESS, MT_DISABLE_SUBTRACTION);
+			printf("sent disable command\r\n");
+			delay(100);
+		}
+		if (gl_subtraction_enable_flag)
+		{
+			delay(100);
+			gl_subtraction_enable_flag = 0;
+			mlx_write(MAGSENSOR_RS485ADDRESS, MT_ENABLE_SUBTRACTION);
+			printf("sent enable command\r\n");
+			delay(100);
+		}
+
 
 		uint8_t poll_for_response = 1;
 		uint64_t start_ts = GetTickCount64();
@@ -230,7 +253,7 @@ void main_loop(HANDLE* pSer)
 			}
 			uint64_t timeout = 1;
 			if (addresses[addr_idx] == MAGSENSOR_RS485ADDRESS)
-				timeout = 50;
+				timeout = 20;
 
 			if (tick - start_ts > timeout)
 			{
@@ -245,16 +268,19 @@ void main_loop(HANDLE* pSer)
 
 			}
 		}
+		uint32_t delstart = GetTickCount();
+		while  ((GetTickCount() - delstart) <= 15);
 
 
 		if (done != 0)
 		{
 			if (gl_ser_pkt_done == 0)
 			{
-				for (int i = 0; i < 6; i++)
+				for (int i = 0; i < 6 && i < num_addresses; i++)
 				{
 					gl_arm_angles[i] = angles[i];
 					//printf("%f\n", angles[5]);
+					printf("%f uT\n", gl_magsensor_xyz[2]);
 				}
 				gl_ser_pkt_done = 1;
 			}

@@ -41,7 +41,19 @@
 #include "create_prism.h"
 #include "arrow.h"
 
+
 #define NUM_LIGHTS 5
+
+typedef struct vector_pair_t
+{
+	vect3_t v1;
+	vect3_t v2;
+}vector_pair_t;
+
+double scaleVector(double v, double Vmax, double alpha = 10.0)
+{
+	return (std::log(1 + alpha * v) / std::log(1 + alpha * Vmax)) * Vmax;
+}
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
@@ -191,7 +203,7 @@ int main_render_thread(void)
 
 
 	CamControlStruct Player;				//specialized camera structure. carries around movement parameters
-	init_cam(&Player, 6.701464, 5.702275, 6.159458, fmod(149.929184 + PI, 2 * PI) - PI, fmod(-1.920593 + PI, 2 * PI) - PI);
+	init_cam(&Player, 10.042475, -18.548803, 5.489113, fmod(780.295044 + PI, 2 * PI) - PI, fmod(-1.671592 + PI, 2 * PI) - PI);
 	Player.lock_in_flag = 0;
 	Player.look_at_flag = 0;
 
@@ -625,6 +637,12 @@ int main_render_thread(void)
 	}
 	mat4_t z1_start_cfg = rh_z1.get_targ_from_cur_cfg();
 	uint8_t render_z1 = 0;
+	
+	int keystate[] = { 0,0 };	//c,v
+	vector<vector_pair_t> field_lines;
+	vect3_t magsensor_prev_pos = {};
+	double field_scale = 1.0;
+	double vector_width_scale = 1.0;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -757,6 +775,20 @@ int main_render_thread(void)
 		else
 			ambient_press_time = time;
 
+		{
+			int cp = glfwGetKey(window, GLFW_KEY_C);
+			if (cp == GLFW_RELEASE && keystate[0] == GLFW_PRESS)
+			{
+				gl_subtraction_disable_flag = 1;
+			}
+			int vp = glfwGetKey(window, GLFW_KEY_V);
+			if (vp == GLFW_RELEASE && keystate[1] == GLFW_PRESS)
+			{
+				gl_subtraction_enable_flag = 1;
+			}
+			keystate[0] = glfwGetKey(window, GLFW_KEY_C);
+			keystate[1] = glfwGetKey(window, GLFW_KEY_V);
+		}
 		//vect3_t player_pos;
 		//for(int r = 0; r < 3; r++)
 		//	player_pos.v[r] = Player.CamRobot.hw_b.m[r][3];
@@ -1530,8 +1562,7 @@ int main_render_thread(void)
 			}
 		}
 		draw_coordinate_frame(&hw_msf, map, 1.0, &arrow, &lightingShader);
-
-
+		
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, white_map);
 		// bind specular map
@@ -1548,11 +1579,65 @@ int main_render_thread(void)
 		vect3_t v2 = {};
 		vect3_t weights = { 1,1,1 };
 		for (int i = 0; i < 3; i++)
-			v2.v[i] = v1.v[i] + magsensor_xyz_w.v[i] * weights.v[i] * .001;
+			v2.v[i] = v1.v[i] + magsensor_xyz_w.v[i] * weights.v[i] * .0001;
 
 		draw_arrow_between_two_points(&v1, &v2, &arrow, &lightingShader, 1.0);
 
-
+		{
+			vect3_t dif = {};
+			for (int i = 0; i < 3; i++)
+			{
+				dif.v[i] = v1.v[i] - magsensor_prev_pos.v[i];
+			}
+			float mag = vect_mag(dif.v, 3);
+			float mag2 = vect_mag(magsensor_xyz_w.v, 3);
+			if (mag > 0.001 && mag2 > 30)
+			{
+				vector_pair_t tvp = { v1, v2 };
+				field_lines.push_back(tvp);
+				magsensor_prev_pos = v1;
+			}
+		}
+		for (int i = 0; i < field_lines.size(); i++)
+		{
+			vect3_t fieldvect_scaled = {};
+			for (int r = 0; r < 3; r++)
+			{
+				fieldvect_scaled.v[r] = (field_lines[i].v2.v[r]-field_lines[i].v1.v[r]);
+			}
+			//float mag = vect_mag(fieldvect_scaled.v, 3);
+			//double logsv = scaleVector(mag, 10, 10)/ (mag* field_scale);
+			for (int r = 0; r < 3; r++)
+			{
+				fieldvect_scaled.v[r] = (fieldvect_scaled.v[r])*field_scale + field_lines[i].v1.v[r];
+			}
+			draw_arrow_between_two_points(&field_lines[i].v1, &fieldvect_scaled, &arrow, &lightingShader, 0.1*vector_width_scale);
+		}
+		if (glfwGetKey(window, GLFW_KEY_BACKSPACE) == GLFW_PRESS)
+		{
+			field_lines.clear();
+			printf("OBLITERATION\r\n");
+		}
+		if (glfwGetKey(window, GLFW_KEY_7)==GLFW_PRESS)
+		{
+			field_scale *= 1.01;
+			printf("%f\r\n", field_scale);
+		}
+		if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
+		{
+			field_scale *= 0.99;
+			printf("%f\r\n", field_scale);
+		}
+		if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+		{
+			vector_width_scale *= 1.01;
+			printf("%f\r\n", vector_width_scale);
+		}
+		if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+		{
+			vector_width_scale *= 0.99;
+			printf("%f\r\n", vector_width_scale);
+		}
 
 		// also draw the lamp object(s)
 		lightCubeShader.use();

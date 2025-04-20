@@ -17,7 +17,10 @@ enum
 
 	MT_READ_XYZ = 0xA0,	//wrapper for the read call
 	MT_ENABLE_AUTOREAD = 0xA1,
-	MT_DISABLE_AUTOREAD = 0xA2
+	MT_DISABLE_AUTOREAD = 0xA2,
+
+	MT_DISABLE_SUBTRACTION = 0xB0,
+	MT_ENABLE_SUBTRACTION = 0xB1
 };
 
 extern double gain_res_xy[8][4];
